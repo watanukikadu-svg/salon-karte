@@ -116,7 +116,8 @@ h2{font-size:20px;margin:18px 0 10px;line-height:1.2}
 .book .bkrow{grid-column:1/-1;margin:0}
 .book .t{font:600 22px/1.1 Outfit,sans-serif}
 .book .t small{display:block;font-size:13px;color:var(--sub);font-weight:500;margin-top:4px}
-.book .who{font-weight:700;font-size:17px}
+.book .who{font-weight:700;font-size:17px;display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}
+.av.sm{width:32px;height:32px;font-size:14px}
 .book .menu{color:var(--sub);font-size:14px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
 .btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:15px;font-weight:500;cursor:pointer}
@@ -454,7 +455,7 @@ function bookView() {
   const items = list.map(b => {
     const c = cust(b.customer_id), end = new Date(b.booked_on + 'T' + hm(b.start_time)); end.setMinutes(end.getMinutes() + (+b.duration_min || 60));
     return `<li><div class="t num">${hm(b.start_time)}<small>〜${pad(end.getHours())}:${pad(end.getMinutes())}</small></div>
-    <div><div class="who">${esc(c.name)} 様 ${c.allergy ? '<span class="tag warn">アレルギー</span>' : ''}</div>
+    <div><div class="who">${avatar(c, 'av sm')}<span>${esc(c.name)} 様</span> ${c.allergy ? '<span class="tag warn">アレルギー</span>' : ''}</div>
     <div class="menu">${esc((b.menu_names || []).join('・'))}・<span class="num">${yen(b.price)}</span></div>
     ${b.stylist_id ? `<div class="menu">担当：${esc(staffName(b.stylist_id))}${b.nominated ? ' <span class="tag">指名</span>' : ''}</div>` : ''}
     </div><div class="row bkrow">${b.status === 'done' ? '<span class="tag done">来店済み・カルテ記録済み</span>' : `<button class="btn sm pri" data-done="${b.id}">来店完了</button><button class="btn sm" data-eb="${b.id}">変更</button>`}
