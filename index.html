@@ -179,6 +179,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .trialbar{display:block;width:100%;text-align:left;background:var(--accSoft);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;margin:0 0 12px;font:inherit;font-size:13px;cursor:pointer}
 .link.delink{display:block;margin:22px auto 4px;color:var(--acc)}
 .pk-list{margin-top:6px}
+.mv{display:flex;gap:6px}.mv .btn{min-width:44px}.mv .btn:disabled{opacity:.3;cursor:default}
 .msel{position:relative}.msel select{width:100%;padding-right:96px}.msel .mp{position:absolute;right:36px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:15px;pointer-events:none}
 .bkb{display:flex;align-items:center;gap:4px;width:max-content;margin-top:4px;padding:2px 8px;border-radius:999px;background:var(--accSoft);color:var(--acc);font-size:12px;font-weight:700}.bkb svg{width:14px;height:14px}
 .pk-row,.pk-sel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 2px;font:inherit;color:inherit;cursor:pointer}
@@ -287,6 +288,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v) } catch (e) {} };
 /* ===== 状態 ===== */
 const S = { salon: null, me: null, staff: [], menus: [], products: [], customers: [], visits: [], bookings: [] };
 const urlCache = {};
+let menuSorting = false;
 let bview = lsGet('bview') === 'tl' ? 'tl' : 'list', tlSel = null;
 let tab = 'cust', day = T, calM = T.slice(0, 7), detail = null, month = T.slice(0, 7), undoFn = null, tt = null, lastLoad = 0, busy = false;
 let smode = 'month', syear = today.getFullYear(), sfrom = ymd(addDays(today, -29)), sto = T;
@@ -602,12 +604,15 @@ function salesView() {
 
 function adminView() {
   const em = can('edit_master');
-  const ml = S.menus.map(m => `<li><span><b>${esc(m.name)}</b><br><small>${m.duration_min}分</small></span><span class="num">${yen(m.price)}</span>${em ? `<button class="btn sm" data-em="${m.id}">編集</button>` : '<span></span>'}</li>`).join('');
+  const sorting = em && menuSorting;
+  const ml = S.menus.map((m, i) => `<li><span><b>${esc(m.name)}</b><br><small>${m.duration_min}分</small></span><span class="num">${yen(m.price)}</span>${sorting
+    ? `<span class="mv"><button class="btn sm" data-mmv="${m.id}:-1" aria-label="${esc(m.name)}を上へ" ${i ? '' : 'disabled'}>↑</button><button class="btn sm" data-mmv="${m.id}:1" aria-label="${esc(m.name)}を下へ" ${i < S.menus.length - 1 ? '' : 'disabled'}>↓</button></span>`
+    : em ? `<button class="btn sm" data-em="${m.id}">編集</button>` : '<span></span>'}</li>`).join('');
   const pl = S.products.map(p => `<li><span><b>${esc(p.name)}</b><br><small class="${p.stock <= 2 ? 'low' : ''}">在庫 ${p.stock}${p.stock <= 2 ? '（残りわずか）' : ''}</small></span><span class="num">${yen(p.price)}</span>${em ? `<button class="btn sm" data-ep="${p.id}">編集</button>` : '<span></span>'}</li>`).join('');
   const PL = { view_sales: '売上', edit_master: 'メニュー・店販', delete_customers: '顧客削除', manage_staff: 'スタッフ管理' };
   const sl = S.staff.map(s => `<li><span><b>${esc(s.display_name)}</b>${s.role === 'owner' ? ' <span class="tag">オーナー</span>' : ''}${!s.active ? ' <span class="tag warn">停止中</span>' : ''}<br><small>ID：${esc(s.login_id)}${s.role !== 'owner' ? '・' + (Object.keys(PL).filter(k => s['can_' + k]).map(k => PL[k]).join('・') || '基本のみ') : ''}</small></span><span></span>${can('manage_staff') && (s.role !== 'owner' || S.me.role === 'owner') ? `<button class="btn sm" data-es="${s.id}">設定</button>` : '<span></span>'}</li>`).join('');
-  return `<h2>サロンメニュー</h2><ul class="adm">${ml || '<li class="empty">メニューがありません</li>'}</ul>
-  ${em ? '<button class="btn pri wide" id="addM">＋ メニューを追加</button>' : ''}
+  return `<div class="bhead"><h2>サロンメニュー</h2>${em && S.menus.length > 1 ? `<button class="btn sm${sorting ? ' pri' : ''}" id="menuSort">${sorting ? '完了' : '並び替え'}</button>` : ''}</div><ul class="adm">${ml || '<li class="empty">メニューがありません</li>'}</ul>
+  ${em && !sorting ? '<button class="btn pri wide" id="addM">＋ メニューを追加</button>' : ''}${sorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。予約や施術記録のメニューもこの順番で並びます。</p>' : ''}
   <h2 style="margin-top:28px">店販商品</h2><ul class="adm">${pl || '<li class="empty">商品がありません</li>'}</ul>
   ${em ? '<button class="btn pri wide" id="addP">＋ 店販商品を追加</button>' : '<p class="hint">メニュー・店販の編集はオーナーか権限のある人ができます</p>'}
   <h2 style="margin-top:28px">スタッフ</h2><ul class="adm">${sl}</ul>
@@ -908,6 +913,15 @@ $('#view').addEventListener('click', async e => {
     else if (d.delb) { const b = S.bookings.find(x => x.id === d.delb); await q(sb.from('bookings').update({ status: 'cancelled' }).eq('id', b.id)); S.bookings = S.bookings.filter(x => x !== b); render(); toast('予約を取り消しました', async () => { await q(sb.from('bookings').update({ status: 'booked' }).eq('id', b.id)); b.status = 'booked'; S.bookings.push(b) }) }
 
     else if (d.em) menuForm(S.menus.find(x => x.id === d.em));
+    else if (t.id === 'menuSort') { menuSorting = !menuSorting; render() }
+    else if (d.mmv) {
+      // メニューの順番を入れかえて、変わったものだけ保存する
+      const [id, dir] = d.mmv.split(':'), i = S.menus.findIndex(m => m.id === id), j = i + (+dir);
+      if (i < 0 || j < 0 || j >= S.menus.length) return;
+      [S.menus[i], S.menus[j]] = [S.menus[j], S.menus[i]]; render();
+      const changed = S.menus.map((m, k) => [m, k]).filter(([m, k]) => m.sort !== k);
+      await Promise.all(changed.map(([m, k]) => q(sb.from('menus').update({ sort: k }).eq('id', m.id), '並び順を保存できませんでした').then(() => { m.sort = k })));
+    }
     else if (d.ep) prodForm(S.products.find(x => x.id === d.ep));
     else if (d.es) staffForm(S.staff.find(x => x.id === d.es));
     else if (t.id === 'addM') menuForm();
