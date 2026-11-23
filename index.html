@@ -624,14 +624,14 @@ function adminView() {
   const ssorting = S.me.role === 'owner' && staffSorting;
   const sl = S.staff.map((s, i) => `<li><span><b>${esc(s.display_name)}</b>${s.role === 'owner' ? ' <span class="tag">オーナー</span>' : ''}${!s.active ? ' <span class="tag warn">停止中</span>' : ''}<br><small>ID：${esc(s.login_id)}${s.role !== 'owner' ? '・' + (Object.keys(PL).filter(k => s['can_' + k]).map(k => PL[k]).join('・') || '基本のみ') : ''}</small></span><span></span>${ssorting ? mvBtns('smv', S.staff, s, i) : can('manage_staff') && (s.role !== 'owner' || S.me.role === 'owner') ? `<button class="btn sm" data-es="${s.id}">設定</button>` : '<span></span>'}</li>`).join('');
   const head = (title, n, btns) => `<div class="sech"><h2>${title}${n != null ? ` <span class="tag">${n}</span>` : ''}</h2><div class="row">${btns}</div></div>`;
-  return `<section class="sec">${head('サロンメニュー', S.menus.length, (em && S.menus.length > 1 ? `<button class="btn sm${sorting ? ' pri' : ''}" id="menuSort">${sorting ? '完了' : '並び替え'}</button>` : '') + (em && !sorting ? '<button class="btn sm add" id="addM">＋ 追加</button>' : ''))}
+  return `<section class="sec">${head('サロンメニュー', S.menus.length, (em ? `<button class="btn sm${sorting ? ' pri' : ''}" id="menuSort">${sorting ? '完了' : '並び替え'}</button>` : '') + (em && !sorting ? '<button class="btn sm add" id="addM">＋ 追加</button>' : ''))}
   <ul class="adm">${ml || '<li class="empty">メニューがありません</li>'}</ul>
   ${sorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。予約や施術記録のメニューもこの順番で並びます。</p>' : ''}</section>
-  <section class="sec">${head('店販商品', S.products.length, (em && S.products.length > 1 ? `<button class="btn sm${psorting ? ' pri' : ''}" id="prodSort">${psorting ? '完了' : '並び替え'}</button>` : '') + (em && !psorting ? '<button class="btn sm add" id="addP">＋ 追加</button>' : ''))}
+  <section class="sec">${head('店販商品', S.products.length, (em ? `<button class="btn sm${psorting ? ' pri' : ''}" id="prodSort">${psorting ? '完了' : '並び替え'}</button>` : '') + (em && !psorting ? '<button class="btn sm add" id="addP">＋ 追加</button>' : ''))}
   <ul class="adm">${pl || '<li class="empty">商品がありません</li>'}</ul>
   ${psorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。予約や施術記録の店販もこの順番で並びます。</p>' : ''}
   ${em ? '' : '<p class="hint">メニュー・店販の編集はオーナーか権限のある人ができます</p>'}</section>
-  <section class="sec">${head('スタッフ', S.staff.length, (S.me.role === 'owner' && S.staff.length > 1 ? `<button class="btn sm${ssorting ? ' pri' : ''}" id="staffSort">${ssorting ? '完了' : '並び替え'}</button>` : '') + (can('manage_staff') && !ssorting ? '<button class="btn sm add" id="addS">＋ 追加</button>' : ''))}
+  <section class="sec">${head('スタッフ', S.staff.length, (S.me.role === 'owner' ? `<button class="btn sm${ssorting ? ' pri' : ''}" id="staffSort">${ssorting ? '完了' : '並び替え'}</button>` : '') + (can('manage_staff') && !ssorting ? '<button class="btn sm add" id="addS">＋ 追加</button>' : ''))}
   <ul class="adm">${sl}</ul>${ssorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。担当スタイリストの選択肢や、予約のタイムラインもこの順番で並びます。</p>' : ''}</section>
   <section class="sec">${head('アカウント', null, '')}
   ${S.trial ? `<div class="carte trial"><b>お試し中（登録なし）</b>
@@ -968,9 +968,12 @@ $('#view').addEventListener('click', async e => {
     else if (d.delb) { const b = S.bookings.find(x => x.id === d.delb); await q(sb.from('bookings').update({ status: 'cancelled' }).eq('id', b.id)); S.bookings = S.bookings.filter(x => x !== b); render(); toast('予約を取り消しました', async () => { await q(sb.from('bookings').update({ status: 'booked' }).eq('id', b.id)); b.status = 'booked'; S.bookings.push(b) }) }
 
     else if (d.em) menuForm(S.menus.find(x => x.id === d.em));
-    else if (t.id === 'menuSort') { menuSorting = !menuSorting; render() }
-    else if (t.id === 'prodSort') { prodSorting = !prodSorting; render() }
-    else if (t.id === 'staffSort') { staffSorting = !staffSorting; render() }
+    else if (['menuSort', 'prodSort', 'staffSort'].includes(t.id)) {
+      const [list, on] = t.id === 'menuSort' ? [S.menus, menuSorting] : t.id === 'prodSort' ? [S.products, prodSorting] : [S.staff, staffSorting];
+      if (!on && list.length < 2) { toast('2つ以上あると並び替えできます'); return }
+      if (t.id === 'menuSort') menuSorting = !menuSorting; else if (t.id === 'prodSort') prodSorting = !prodSorting; else staffSorting = !staffSorting;
+      render();
+    }
     else if (d.mmv || d.pmv || d.smv) {
       // 順番を入れかえて、変わったものだけ保存する（メニュー：menus、店販：products、スタッフ：staff）
       const [list, table] = d.mmv ? [S.menus, 'menus'] : d.pmv ? [S.products, 'products'] : [S.staff, 'staff'];
