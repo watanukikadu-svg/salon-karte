@@ -614,7 +614,8 @@ function adminView() {
     <p>${mdj(trialEnd())}まで登録なしで使えます。お店コードとパスワードを登録すると、<b>スタッフの追加</b>や<b>別のスマホ・パソコン</b>からも使えるようになります。データはそのまま引き継がれます。</p>
     <button class="btn pri wide" id="regBtn">お店を登録する</button></div>` : ''}
   <div class="carte"><dl><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd></dl>
-  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button>${S.trial ? '' : '<button class="btn sm danger" id="logout">ログアウト</button>'}</div></div>`;
+  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button>${S.trial ? '' : '<button class="btn sm danger" id="logout">ログアウト</button>'}</div></div>
+  <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを削除する' : '自分のアカウントを削除する'}</button>`;
 }
 
 /* ===== シート（入力画面） ===== */
@@ -908,6 +909,7 @@ $('#view').addEventListener('click', async e => {
     else if (t.id === 'addP') prodForm();
     else if (t.id === 'addS') S.trial ? regForm('スタッフを追加するには、先にお店の登録が必要です（1分で終わります）') : staffForm();
     else if (t.id === 'regBtn') regForm();
+    else if (t.id === 'delAcc') delAccForm();
     else if (t.id === 'addB') bookForm();
     else if (t.id === 'addC') custForm();
     else if (t.id === 'back') { detail = null; render() }
@@ -921,6 +923,24 @@ $('#view').addEventListener('click', async e => {
     else if (t.id === 'logout') { await sb.auth.signOut(); Object.assign(S, { me: null }); showLogin() }
   } catch (err) { /* 失敗はトーストで表示済み */ }
 });
+// アカウント削除（ストアの決まりで、アプリの中から消せる必要がある）
+function delAccForm() {
+  const owner = S.me.role === 'owner';
+  open(`<h3>${owner ? 'お店とアカウントを削除' : '自分のアカウントを削除'}</h3>
+  ${owner ? `<p><b>「${esc(S.salon.name)}」のすべてのデータが消えます。元に戻せません。</b></p>
+  <ul class="hint" style="padding-left:1.2em;margin:6px 0 10px"><li>お客様のカルテ・来店履歴・写真</li><li>予約・売上の記録</li><li>メニュー・店販商品</li><li>スタッフ全員のアカウント（だれもログインできなくなります）</li></ul>`
+  : `<p>あなた（${esc(S.me.display_name)}）のログインが消え、このアプリに入れなくなります。お店のデータ（お客様・来店記録など）は消えずに残ります。</p>`}
+  <label for="dc">確認のため「削除」と入力してください</label><input id="dc" name="confirm" autocomplete="off" required placeholder="削除">`, async fd => {
+    if (fd.get('confirm').trim() !== '削除') throw userErr('「削除」と入力してください');
+    await staffAdmin({ action: 'delete_account', confirm: '削除' }).catch(e => { throw userErr(e.message) });
+    if (owner) lsSet('salon-code', '');
+    close(); Object.assign(S, { me: null }); await sb.auth.signOut();
+    showLogin(); $('#start').hidden = !owner; $('#loginForm').hidden = owner;
+    $(owner ? '#smsg' : '#lmsg').textContent = owner ? 'お店とアカウントを削除しました。ご利用ありがとうございました' : 'アカウントを削除しました';
+    return false;
+  }, '削除する');
+  $('#form [type=submit]').classList.add('dangerbtn');
+}
 function regForm(why) {
   const auto = /[a-z0-9]/i.test(S.salon.name) ? S.salon.name.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) : '';
   open(`<h3>お店を登録する</h3>${why ? `<p class="hint">${esc(why)}</p>` : ''}

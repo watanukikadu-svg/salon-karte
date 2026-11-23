@@ -5,6 +5,7 @@
 //  - set_active   : スタッフの利用を止める／再開する（同上）
 //  - start_trial  : 登録なしのお試しを始める（匿名ログインした人が、自分のお店を自動で作る）
 //  - register     : お試し中のオーナーが、お店コード＋パスワードを登録して本登録にする
+//  - delete_account : アカウントを消す（オーナー＝お店ごと全部、スタッフ＝自分のログインだけ）
 // ログイン自体はアプリから「お店コード＋スタッフID＋パスワード」で行う。
 // 内部では loginEmail() で作ったメールアドレス形式のIDを使う（メールは送られない）。
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -62,6 +63,21 @@ const isTrial = (u: { is_anonymous?: boolean; email?: string }) => !!u.is_anonym
 const randCode = () => "t-" + Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join("");
 async function seedMenus(salonId: string) {
   await admin.from("menus").insert(DEFAULT_MENUS.map(([name, price, duration_min], i) => ({ salon_id: salonId, name, price, duration_min, sort: i })));
+}
+// お店の写真フォルダ（salon-photos/<お店のID>/...）を中身ごと消す
+async function removeSalonFiles(salonId: string) {
+  const bucket = admin.storage.from("salon-photos");
+  const files: string[] = [];
+  const walk = async (dir: string) => {
+    for (let off = 0; ; off += 1000) {
+      const { data } = await bucket.list(dir, { limit: 1000, offset: off });
+      if (!data?.length) break;
+      for (const f of data) { const full = dir + "/" + f.name; if (f.id) files.push(full); else await walk(full); }
+      if (data.length < 1000) break;
+    }
+  };
+  await walk(salonId);
+  for (let i = 0; i < files.length; i += 100) await bucket.remove(files.slice(i, i + 100));
 }
 const canManage = (me: any) => me && (me.role === "owner" || me.can_manage_staff);
 
@@ -158,6 +174,25 @@ Deno.serve(async (req) => {
         return fail(e2.message.includes("already") ? "このお店コードはすでに使われています" : "登録できませんでした");
       }
       return json({ ok: true, salon_code: code, login_id: me.login_id });
+    }
+
+    // ---------- アカウントを消す ----------
+    if (action === "delete_account") {
+      if (body.confirm !== "削除") return fail("確認のため「削除」と入力してください");
+      if (me.role === "owner") {
+        // お店ごと消す：写真 → お店（顧客・来店・予約などは一緒に消える） → スタッフ全員のログイン
+        const { data: members } = await admin.from("staff").select("user_id").eq("salon_id", me.salon_id);
+        await removeSalonFiles(me.salon_id);
+        const { error } = await admin.from("salons").delete().eq("id", me.salon_id);
+        if (error) return fail("削除できませんでした。時間をおいてもう一度お試しください", 500);
+        for (const m of members ?? []) if (m.user_id) await admin.auth.admin.deleteUser(m.user_id);
+        return json({ ok: true, deleted: "salon" });
+      }
+      // スタッフは自分のログインだけ消す（来店記録の「担当」の名前は残す）
+      await admin.from("staff").update({ active: false }).eq("id", me.id);
+      const { error } = await admin.auth.admin.deleteUser(user.id);
+      if (error) return fail("削除できませんでした。時間をおいてもう一度お試しください", 500);
+      return json({ ok: true, deleted: "account" });
     }
 
     if (!canManage(me)) return fail("スタッフを管理する権限がありません", 403);
