@@ -11,11 +11,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="美容室カルテ">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>サロンカルテ</title>
+<title>美容室カルテ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Outfit:wght@500;600&display=swap" rel="stylesheet">
 <style>
-/* サロンカルテ 本番版
+/* 美容室カルテ 本番版
    VOICE: calm, tidy, a tool a stylist trusts between cuts
    IDEA: the salon's appointment book and carte card, in a phone
    PICTURE: the working app itself — today's book with big hanging times
@@ -212,14 +212,14 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 <section class="login" id="login" hidden>
   <div class="lcard">
     <div id="start" hidden>
-      <h1>サロンカルテ</h1><p class="s">顧客カルテ・予約・売上をスマホひとつで。<br>登録なしで、今すぐ使えます。</p>
+      <h1>美容室カルテ</h1><p class="s">顧客カルテ・予約・売上をスマホひとつで。<br>登録なしで、今すぐ使えます。</p>
       <button class="btn pri wide" type="button" id="startBtn" style="margin-top:18px">はじめる</button>
       <p class="lmsg" id="smsg"></p>
       <button class="link" type="button" id="toLogin">登録済みの方はこちら（ログイン）</button>
       <p class="hint" style="margin-top:14px">「はじめる」を押すと、<a href="terms.html" target="_blank" rel="noopener">利用規約</a>と<a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意したものとします。</p>
     </div>
     <form id="loginForm" autocomplete="on">
-      <h1>サロンカルテ</h1><p class="s">お店コードとパスワードでログイン</p>
+      <h1>美容室カルテ</h1><p class="s">お店コードとパスワードでログイン</p>
       <label for="lcode">お店コード</label><input id="lcode" autocapitalize="off" autocomplete="organization" required>
       <label for="lid">スタッフID <small>（オーナーは空欄でOK）</small></label><input id="lid" autocapitalize="off" autocomplete="username" placeholder="スタッフの方だけ入力">
       <label for="lpw">パスワード</label><input id="lpw" type="password" autocomplete="current-password" required>
