@@ -187,10 +187,9 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
       <h1>新しいお店を作る</h1><p class="s">運営者用。合言葉（ADMIN_KEY）が必要です</p>
       <label for="ak">合言葉（ADMIN_KEY）</label><input id="ak" name="admin_key" type="password" required>
       <label for="an">お店の名前</label><input id="an" name="salon_name" required>
-      <label for="ac">お店コード（半角英小文字・数字・-）</label><input id="ac" name="salon_code" autocapitalize="off" required placeholder="例：nuki-salon">
-      <label for="aon">オーナーの名前</label><input id="aon" name="owner_name" required>
-      <label for="aoi">オーナーのスタッフID</label><input id="aoi" name="owner_login_id" autocapitalize="off" required placeholder="例：owner">
+      <label for="ac">お店コード（ログイン用・英小文字と数字）</label><input id="ac" name="salon_code" autocapitalize="off" required placeholder="例：nuki-salon">
       <label for="aop">オーナーのパスワード（8文字以上）</label><input id="aop" name="owner_password" type="password" minlength="8" required autocomplete="new-password">
+      <p class="s" style="margin-top:10px">オーナーのスタッフIDは「owner」になります。名前はログイン後に「管理」から変えられます。</p>
       <button class="btn pri wide" type="submit" style="margin-top:18px">お店を作る</button>
       <p class="lmsg" id="amsg"></p>
       <button class="link" type="button" id="backLogin">‹ ログインに戻る</button>
@@ -336,6 +335,12 @@ $('#loginForm').addEventListener('submit', async e => {
 });
 $('#toAdmin').addEventListener('click', () => { $('#loginForm').hidden = true; $('#admin').hidden = false });
 $('#backLogin').addEventListener('click', () => { $('#admin').hidden = true; $('#loginForm').hidden = false });
+// お店の名前が英数字なら、お店コードを自動で入れる（手で直したらそれ以降は触らない）
+$('#ac').addEventListener('input', () => { $('#ac').dataset.touched = '1' });
+$('#an').addEventListener('input', () => {
+  if ($('#ac').dataset.touched) return;
+  $('#ac').value = $('#an').value.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+});
 $('#admin').addEventListener('submit', async e => {
   e.preventDefault(); if (busy) return; busy = true;
   const f = Object.fromEntries(new FormData(e.target));
@@ -343,11 +348,16 @@ $('#admin').addEventListener('submit', async e => {
   try {
     const r = await fetch(SB_URL + '/functions/v1/salon-admin', {
       method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SB_KEY, 'x-admin-key': f.admin_key },
-      body: JSON.stringify({ action: 'create_salon', salon_code: f.salon_code.trim().toLowerCase(), salon_name: f.salon_name.trim(), owner_login_id: f.owner_login_id.trim().toLowerCase(), owner_name: f.owner_name.trim(), owner_password: f.owner_password }),
+      body: JSON.stringify({ action: 'create_salon', salon_code: f.salon_code.trim().toLowerCase(), salon_name: f.salon_name.trim(), owner_login_id: 'owner', owner_name: 'オーナー', owner_password: f.owner_password }),
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { $('#amsg').textContent = j.error || ('作れませんでした（' + r.status + '）'); }
-    else { $('#amsg').textContent = '作成しました！ログイン画面からオーナーでログインしてください'; $('#lcode').value = f.salon_code.trim().toLowerCase(); $('#lid').value = f.owner_login_id.trim().toLowerCase(); e.target.reset(); }
+    else {
+      $('#lcode').value = f.salon_code.trim().toLowerCase(); $('#lid').value = 'owner'; $('#lpw').value = '';
+      e.target.reset(); delete $('#ac').dataset.touched; $('#amsg').textContent = '';
+      $('#admin').hidden = true; $('#loginForm').hidden = false;
+      $('#lmsg').textContent = 'お店を作りました！パスワードを入れてログインしてください'; $('#lpw').focus();
+    }
   } catch (err) { $('#amsg').textContent = '通信できませんでした'; }
   busy = false;
 });
