@@ -482,6 +482,7 @@ function bookView() {
     return `<li><div class="t num">${hm(b.start_time)}<small>〜${pad(end.getHours())}:${pad(end.getMinutes())}</small></div>
     <div><div class="who">${avatar(c, 'av sm')}<span>${esc(c.name)} 様</span> ${c.allergy ? '<span class="tag warn">アレルギー</span>' : ''}</div>
     <div class="menu">${esc((b.menu_names || []).join('・'))}・<span class="num">${yen(b.price)}</span></div>
+    ${(b.items || []).length ? `<div class="menu">店販：${b.items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(b.items.reduce((t, x) => t + x.price * x.qty, 0))}</span>）</div>` : ''}
     ${b.stylist_id ? `<div class="menu">担当：${esc(staffName(b.stylist_id))}${b.nominated ? ' <span class="tag">指名</span>' : ''}</div>` : ''}
     </div><div class="row bkrow">${b.status === 'done' ? '<span class="tag done">来店済み・カルテ記録済み</span>' : `<button class="btn sm" data-eb="${b.id}">変更</button>`}
     <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}">取消</button>` : ''}</div></li>`;
@@ -681,10 +682,14 @@ function bookForm(cid, b) {
   <div class="two"><div><label for="b2">日付</label><input id="b2" name="date" type="date" value="${b.booked_on || day}" required></div><div><label for="b3">時間</label><input id="b3" name="time" type="time" value="${hm(b.start_time) || '10:00'}" step="300" required></div></div>
   <label>メニュー</label><div id="bmrows">${((b.menu_names || []).length ? b.menu_names : [undefined]).map(bmrow).join('')}</div>
   <button class="btn sm" type="button" id="addBm" style="margin-top:8px">＋ メニューを追加</button><p class="hint" id="bmsum"></p>
+  ${S.products.length ? `<label>店販（買う予定の商品）</label><div id="bprows">${(b.items || []).map(x => prow(x.product_id, x.qty)).join('')}</div>
+  <button class="btn sm" type="button" id="addBp" style="margin-top:8px">＋ 店販を追加</button><p class="hint" id="bpsum"></p>` : ''}
   <div class="two"><div><label for="stylist">担当スタイリスト</label>${stylistSel('stylist', b.stylist_id || (S.me.is_stylist ? S.me.id : ''))}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${b.nominated ? 'checked' : ''}> 指名あり</label></div></div>`, async fd => {
     if (!fd.get('cid')) { $('#b1q')?.focus(); throw userErr('お客様を選んでください') }
     const ms = fd.getAll('menu').filter(Boolean).map(priceOf);
-    const o = { customer_id: fd.get('cid'), booked_on: fd.get('date'), start_time: fd.get('time'), menu_names: ms.map(m => m.name), price: ms.reduce((t, m) => t + (+m.price || 0), 0), duration_min: ms.reduce((t, m) => t + (+m.duration_min || 0), 0) || 60, stylist_id: fd.get('stylist') || null, nominated: !!fd.get('nominated') };
+    const its = {}; document.querySelectorAll('#bprows .prw').forEach(rw => { const id = rw.querySelector('select').value, n = +rw.querySelector('input').value || 0; if (id && n > 0) its[id] = (its[id] || 0) + n });
+    const items = Object.entries(its).map(([pid, n]) => { const p = S.products.find(x => x.id === pid); return { product_id: pid, name: p.name, price: +p.price, qty: n } });
+    const o = { items, customer_id: fd.get('cid'), booked_on: fd.get('date'), start_time: fd.get('time'), menu_names: ms.map(m => m.name), price: ms.reduce((t, m) => t + (+m.price || 0), 0), duration_min: ms.reduce((t, m) => t + (+m.duration_min || 0), 0) || 60, stylist_id: fd.get('stylist') || null, nominated: !!fd.get('nominated') };
     if (S.bookings.some(x => x.id !== b.id && x.booked_on === o.booked_on && hm(x.start_time) === o.start_time && (!o.stylist_id || x.stylist_id === o.stylist_id))) toast('同じ時間に予約があります（保存はしました）');
     if (b.id) { const row = await q(sb.from('bookings').update(o).eq('id', b.id).select().single()); Object.assign(b, row) }
     else { const row = await q(sb.from('bookings').insert({ salon_id: S.salon.id, created_by: S.me.id, ...o }).select().single()); S.bookings.push(row) }
@@ -701,6 +706,15 @@ function bookForm(cid, b) {
   box.addEventListener('click', e => { if (e.target.classList.contains('mx')) { e.target.parentElement.remove(); fix() } });
   $('#addBm').addEventListener('click', () => { box.insertAdjacentHTML('beforeend', bmrow()); fix(); const ss = box.querySelectorAll('select'); ss[ss.length - 1].focus() });
   fix();
+  // 店販
+  const pbox = $('#bprows');
+  if (pbox) {
+    const psum = () => { let t = 0; pbox.querySelectorAll('.prw').forEach(rw => { const pr = S.products.find(p => p.id === rw.querySelector('select').value); if (pr) t += pr.price * (+rw.querySelector('input').value || 0) }); $('#bpsum').textContent = t ? '店販 ' + yen(t) : '' };
+    pbox.addEventListener('input', psum); pbox.addEventListener('change', psum);
+    pbox.addEventListener('click', e => { if (e.target.classList.contains('px')) { e.target.parentElement.remove(); psum() } });
+    $('#addBp').addEventListener('click', () => { pbox.insertAdjacentHTML('beforeend', prow('', 1)); psum() });
+    psum();
+  }
 }
 const bmrow = n => `<div class="mrow"><div class="msel"><select name="menu" aria-label="メニュー">${menuOpts(n)}</select><span class="mp num"></span></div><button type="button" class="mx" aria-label="このメニューを外す">×</button></div>`;
 
@@ -779,7 +793,7 @@ function visitForm(cid, b, ev) {
   <button class="btn sm" type="button" id="addMr" style="margin-top:8px">＋ メニューを追加</button>
   <label for="v3">金額（円）</label><input id="v3" name="price" type="number" inputmode="numeric" min="0" step="10" value="${ev ? ev.price : b ? b.price : opts[0].price}">
   <p class="hint" id="vsum"></p>
-  ${S.products.length ? `<label>店販</label><div id="prows">${(ev?.visit_items || []).map(x => prow(x.product_id, x.qty)).join('')}</div>
+  ${S.products.length ? `<label>店販</label><div id="prows">${(ev ? ev.visit_items || [] : b?.items || []).filter(x => !x.product_id || S.products.some(p => p.id === x.product_id)).map(x => prow(x.product_id, x.qty)).join('')}</div>
   <button class="btn sm" type="button" id="addPr" style="margin-top:8px">＋ 店販を追加</button><p class="hint" id="psum"></p>` : ''}
   <label for="v4">使った薬剤</label><textarea id="v4" name="chem" rows="5" class="tall" placeholder="例：&#10;根元 6Lv ナチュラル＋6% 1:1&#10;毛先 8Lv アッシュ＋3% 1:1.5&#10;放置 20分">${esc(ev?.chem)}</textarea>
   <label for="v5">メモ</label><textarea id="v5" name="memo" rows="5" class="tall" placeholder="次回の希望など">${esc(ev?.memo)}</textarea>
