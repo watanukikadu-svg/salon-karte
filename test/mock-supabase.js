@@ -28,7 +28,7 @@
       if (this.op === 'insert') {
         const rows = (Array.isArray(this.payload) ? this.payload : [this.payload]).map(r => ({ id: uid(), created_at: new Date().toISOString(), ...r }));
         rows.forEach(r => { T.push(r); if (this.t === 'visit_items' && r.product_id) { const p = db.products.find(x => x.id === r.product_id); p.stock -= r.qty } });
-        if (this.t === 'visit_photos') { const n = db.visit_photos.filter(p => p.visit_id === rows[0].visit_id).length; if (n > 10) return { data: null, error: { message: 'photo limit 10' } } }
+        if (this.t === 'visit_photos') { const n = db.visit_photos.filter(p => p.visit_id === rows[0].visit_id).length; if (n > 9) return { data: null, error: { message: 'photo limit 9' } } }
         out = rows;
       } else if (this.op === 'update') { out = T.filter(match); out.forEach(r => Object.assign(r, this.payload)) }
       else if (this.op === 'delete') {
