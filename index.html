@@ -616,18 +616,29 @@ function bookForm(cid, b) {
   open(`<h3>${b.id ? '予約を変更' : '予約を追加'}</h3>
   <label for="b1q">お客様 *</label><input type="hidden" id="b1" name="cid" value="${esc(b.customer_id || cid || '')}"><div id="b1pick"></div>
   <div class="two"><div><label for="b2">日付</label><input id="b2" name="date" type="date" value="${b.booked_on || day}" required></div><div><label for="b3">時間</label><input id="b3" name="time" type="time" value="${hm(b.start_time) || '10:00'}" step="300" required></div></div>
-  <label for="b4">メニュー</label><select id="b4" name="menu">${menuOpts((b.menu_names || [])[0])}</select>
+  <label>メニュー</label><div id="bmrows">${((b.menu_names || []).length ? b.menu_names : [undefined]).map(bmrow).join('')}</div>
+  <button class="btn sm" type="button" id="addBm" style="margin-top:8px">＋ メニューを追加</button><p class="hint" id="bmsum"></p>
   <div class="two"><div><label for="stylist">担当スタイリスト</label>${stylistSel('stylist', b.stylist_id || (S.me.is_stylist ? S.me.id : ''))}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${b.nominated ? 'checked' : ''}> 指名あり</label></div></div>`, async fd => {
     if (!fd.get('cid')) { $('#b1q')?.focus(); throw userErr('お客様を選んでください') }
-    const m = priceOf(fd.get('menu'));
-    const o = { customer_id: fd.get('cid'), booked_on: fd.get('date'), start_time: fd.get('time'), menu_names: [m.name], price: m.price, duration_min: m.duration_min, stylist_id: fd.get('stylist') || null, nominated: !!fd.get('nominated') };
+    const ms = fd.getAll('menu').filter(Boolean).map(priceOf);
+    const o = { customer_id: fd.get('cid'), booked_on: fd.get('date'), start_time: fd.get('time'), menu_names: ms.map(m => m.name), price: ms.reduce((t, m) => t + (+m.price || 0), 0), duration_min: ms.reduce((t, m) => t + (+m.duration_min || 0), 0) || 60, stylist_id: fd.get('stylist') || null, nominated: !!fd.get('nominated') };
     if (S.bookings.some(x => x.id !== b.id && x.booked_on === o.booked_on && hm(x.start_time) === o.start_time && (!o.stylist_id || x.stylist_id === o.stylist_id))) toast('同じ時間に予約があります（保存はしました）');
     if (b.id) { const row = await q(sb.from('bookings').update(o).eq('id', b.id).select().single()); Object.assign(b, row) }
     else { const row = await q(sb.from('bookings').insert({ salon_id: S.salon.id, created_by: S.me.id, ...o }).select().single()); S.bookings.push(row) }
     day = o.booked_on; calM = day.slice(0, 7); tab = 'book'; detail = null; toast(b.id ? '予約を変更しました' : '予約を入れました');
   });
   custPicker('b1', b.id);
+  // メニューを複数入れる：合計の金額と時間を出す
+  const box = $('#bmrows');
+  const fix = () => { const xs = box.querySelectorAll('.mx'); xs.forEach(x => x.hidden = xs.length < 2);
+    const ms = [...box.querySelectorAll('select')].map(x => priceOf(x.value)); const min = ms.reduce((t, m) => t + (+m.duration_min || 0), 0);
+    $('#bmsum').textContent = ms.length > 1 ? `合計 ${yen(ms.reduce((t, m) => t + (+m.price || 0), 0))}・${Math.floor(min / 60) ? Math.floor(min / 60) + '時間' : ''}${min % 60 ? min % 60 + '分' : ''}` : '' };
+  box.addEventListener('change', fix);
+  box.addEventListener('click', e => { if (e.target.classList.contains('mx')) { e.target.parentElement.remove(); fix() } });
+  $('#addBm').addEventListener('click', () => { box.insertAdjacentHTML('beforeend', bmrow()); fix(); const ss = box.querySelectorAll('select'); ss[ss.length - 1].focus() });
+  fix();
 }
+const bmrow = n => `<div class="mrow"><select name="menu" aria-label="メニュー">${menuOpts(n)}</select><button type="button" class="mx" aria-label="このメニューを外す">×</button></div>`;
 
 /* お客様を探して選ぶ（名前・ふりがな・電話の一部で絞り込み。空のときは最近来店した順） */
 const hira = t => String(t || '').replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
