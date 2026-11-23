@@ -35,7 +35,7 @@ with sync_playwright() as p:
     pg.click('[data-ev]');pg.click('.pk button >> nth=0');pg.fill('#prows input','1');pg.click('#form button[type=submit]');pg.wait_for_timeout(1000)
     print('after edit stock',pg.evaluate('__db.products[0].stock'),'photos',pg.evaluate('__db.visit_photos.length'),'removed',pg.evaluate('window.__removed'))
     # 予約→来店完了
-    pg.click('nav.tabs button[data-tab=book]');pg.click('#addB');pg.click('#form button[type=submit]');pg.wait_for_timeout(500)
+    pg.click('nav.tabs button[data-tab=book]');pg.click('#addB');pg.click('#b1res .pk-row >> nth=0');pg.click('#form button[type=submit]');pg.wait_for_timeout(500)
     pg.screenshot(path='/tmp/p2.png')
     pg.click('[data-done]');pg.click('#form button[type=submit]');pg.wait_for_timeout(800)
     print('booking status',pg.evaluate('__db.bookings[0].status'),'visits',pg.evaluate('__db.visits.length'))

@@ -175,6 +175,10 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .carte.trial{background:var(--accSoft);margin-bottom:12px}.carte.trial p{margin:6px 0 12px;font-size:14px}
 .trialbar{display:block;width:100%;text-align:left;background:var(--accSoft);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;margin:0 0 12px;font:inherit;font-size:13px;cursor:pointer}
 .link.delink{display:block;margin:22px auto 4px;color:var(--acc)}
+.pk-list{margin-top:6px}
+.pk-row,.pk-sel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 2px;font:inherit;color:inherit;cursor:pointer}
+.pk-sel{border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:default}
+.pk-row .nm,.pk-sel .nm{font-weight:700}.pk-row .kn,.pk-sel .kn{font-size:13px;color:var(--sub)}.pk-row .last{font-size:12px;color:var(--sub)}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -606,10 +610,11 @@ function bookForm(cid, b) {
   b = b || {};
   if (!S.customers.length) return toast('先にお客様を登録してください');
   open(`<h3>${b.id ? '予約を変更' : '予約を追加'}</h3>
-  <label for="b1">お客様 *</label><select id="b1" name="cid" required>${S.customers.slice().sort((x, y) => x.kana.localeCompare(y.kana, 'ja')).map(c => `<option value="${c.id}" ${c.id === (b.customer_id || cid) ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+  <label for="b1q">お客様 *</label><input type="hidden" id="b1" name="cid" value="${esc(b.customer_id || cid || '')}"><div id="b1pick"></div>
   <div class="two"><div><label for="b2">日付</label><input id="b2" name="date" type="date" value="${b.booked_on || day}" required></div><div><label for="b3">時間</label><input id="b3" name="time" type="time" value="${hm(b.start_time) || '10:00'}" step="300" required></div></div>
   <label for="b4">メニュー</label><select id="b4" name="menu">${menuOpts((b.menu_names || [])[0])}</select>
   <div class="two"><div><label for="stylist">担当スタイリスト</label>${stylistSel('stylist', b.stylist_id || (S.me.is_stylist ? S.me.id : ''))}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${b.nominated ? 'checked' : ''}> 指名あり</label></div></div>`, async fd => {
+    if (!fd.get('cid')) { $('#b1q')?.focus(); throw userErr('お客様を選んでください') }
     const m = priceOf(fd.get('menu'));
     const o = { customer_id: fd.get('cid'), booked_on: fd.get('date'), start_time: fd.get('time'), menu_names: [m.name], price: m.price, duration_min: m.duration_min, stylist_id: fd.get('stylist') || null, nominated: !!fd.get('nominated') };
     if (S.bookings.some(x => x.id !== b.id && x.booked_on === o.booked_on && hm(x.start_time) === o.start_time && (!o.stylist_id || x.stylist_id === o.stylist_id))) toast('同じ時間に予約があります（保存はしました）');
@@ -617,6 +622,35 @@ function bookForm(cid, b) {
     else { const row = await q(sb.from('bookings').insert({ salon_id: S.salon.id, created_by: S.me.id, ...o }).select().single()); S.bookings.push(row) }
     day = o.booked_on; calM = day.slice(0, 7); tab = 'book'; detail = null; toast(b.id ? '予約を変更しました' : '予約を入れました');
   });
+  custPicker('b1');
+}
+
+/* お客様を探して選ぶ（名前・ふりがな・電話の一部で絞り込み。空のときは最近来店した順） */
+const hira = t => String(t || '').replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+const digits = t => String(t || '').replace(/\D/g, '');
+function custPicker(id) {
+  const box = $('#' + id + 'pick'), hidden = $('#' + id);
+  const row = c => { const l = lastVisit(c.id); return `<button type="button" class="pk-row" data-pick="${c.id}">${avatar(c)}<span><span class="nm">${esc(c.name)}</span><br><span class="kn">${esc(c.kana)}${c.tel ? '・' + esc(c.tel) : ''}</span></span><span class="last">${l ? '前回 ' + jdate(l.visited_on) : '来店なし'}</span></button>` };
+  const results = q => {
+    q = q.trim();
+    if (!q) {
+      const recent = S.customers.filter(c => lastVisit(c.id)).sort((a, b) => vkey(lastVisit(b.id)).localeCompare(vkey(lastVisit(a.id)))).slice(0, 6);
+      return (recent.length ? '<p class="hint">最近来店したお客様</p>' + recent.map(row).join('') : '') + '<p class="hint">名前・ふりがな・電話番号の一部で探せます</p>';
+    }
+    const hq = hira(q).replace(/\s/g, ''), dq = digits(q);
+    const hit = S.customers.filter(c => hira(c.name + c.kana).replace(/\s/g, '').includes(hq) || (dq.length >= 3 && digits(c.tel).includes(dq)))
+      .sort((a, b) => a.kana.localeCompare(b.kana, 'ja'));
+    if (!hit.length) return '<p class="hint">見つかりませんでした</p>';
+    return hit.slice(0, 8).map(row).join('') + (hit.length > 8 ? `<p class="hint">ほかに${hit.length - 8}人います。もう少し入力して絞り込んでください</p>` : '');
+  };
+  const draw = () => {
+    const c = hidden.value && S.customers.find(x => x.id === hidden.value);
+    if (c) { box.innerHTML = `<div class="pk-sel">${avatar(c)}<span><span class="nm">${esc(c.name)} 様</span><br><span class="kn">${esc(c.kana)}</span></span><button type="button" class="btn sm" data-repick="1">変更</button></div>`; return }
+    box.innerHTML = `<input id="${id}q" type="search" autocomplete="off" placeholder="名前・ふりがな・電話で検索"><div class="pk-list" id="${id}res">${results('')}</div>`;
+    const qi = $('#' + id + 'q'); qi.oninput = () => { $('#' + id + 'res').innerHTML = results(qi.value) };
+  };
+  box.onclick = e => { const p = e.target.closest('[data-pick]'); if (p) { hidden.value = p.dataset.pick; draw() } else if (e.target.closest('[data-repick]')) { hidden.value = ''; draw(); $('#' + id + 'q').focus() } };
+  draw();
 }
 
 const prow = (pid, q0) => `<div class="prw"><select name="pid" aria-label="店販商品">${pid ? '' : '<option value="" selected disabled>商品を選ぶ</option>'}${S.products.filter(p => p.active || p.id === pid).map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${esc(p.name)}（${yen(p.price)}・在庫${p.stock}）</option>`).join('')}</select><input name="pq" type="number" inputmode="numeric" min="1" value="${q0 || 1}" aria-label="数"><button type="button" class="mx px" aria-label="この商品を外す">×</button></div>`;
