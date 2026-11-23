@@ -111,7 +111,9 @@ h2{font-size:20px;margin:18px 0 10px;line-height:1.2}
 .prow{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
 .prow small{color:var(--sub);font-size:13px}.prow input{text-align:center}
 .book{list-style:none;margin:14px 0 0;padding:0}
-.book li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.book li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:14px;margin-top:12px;border:1px solid var(--line);border-radius:16px;background:var(--bg);box-shadow:0 1px 3px rgb(0 0 0/.05)}
+.book li:has(.tag.done){background:var(--card)}
+.book .bkrow{grid-column:1/-1;margin:0}
 .book .t{font:600 22px/1.1 Outfit,sans-serif}
 .book .t small{display:block;font-size:13px;color:var(--sub);font-weight:500;margin-top:4px}
 .book .who{font-weight:700;font-size:17px}
@@ -454,8 +456,8 @@ function bookView() {
     <div><div class="who">${esc(c.name)} 様 ${c.allergy ? '<span class="tag warn">アレルギー</span>' : ''}</div>
     <div class="menu">${esc((b.menu_names || []).join('・'))}・<span class="num">${yen(b.price)}</span></div>
     ${b.stylist_id ? `<div class="menu">担当：${esc(staffName(b.stylist_id))}${b.nominated ? ' <span class="tag">指名</span>' : ''}</div>` : ''}
-    <div class="row">${b.status === 'done' ? '<span class="tag done">来店済み・カルテ記録済み</span>' : `<button class="btn sm pri" data-done="${b.id}">来店完了</button><button class="btn sm" data-eb="${b.id}">変更</button>`}
-    <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}">取消</button>` : ''}</div></div></li>`;
+    </div><div class="row bkrow">${b.status === 'done' ? '<span class="tag done">来店済み・カルテ記録済み</span>' : `<button class="btn sm pri" data-done="${b.id}">来店完了</button><button class="btn sm" data-eb="${b.id}">変更</button>`}
+    <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}">取消</button>` : ''}</div></li>`;
   }).join('');
   return `<div class="cal"><div class="calh"><button data-cal="-1" aria-label="前の月">‹</button><b>${cy}年${cm}月</b><button data-cal="1" aria-label="次の月">›</button></div>
   <div class="calg">${g}</div>${day !== T || calM !== T.slice(0, 7) ? '<button class="btn sm today" data-day="' + T + '">今日に戻る</button>' : ''}</div>
@@ -723,10 +725,17 @@ function visitForm(cid, b, ev) {
   $('#v3').addEventListener('input', () => { touched = true; upd() });
   upd();
   const room = () => MAXP - keep.length;
+  // 選びすぎたときの説明（1回の来店につき MAXP 枚まで）
+  const photoMsg = (n, had) => {
+    const r = MAXP - had;
+    if (n <= r) return '';
+    if (r <= 0) return `この来店にはもう${MAXP}枚あるので、追加できません。先に写真を外してください`;
+    return (had ? `すでに${had}枚あるので、追加できるのはあと${r}枚です。` : `1回の来店で保存できるのは${MAXP}枚までです。`) + `選んだ${n}枚のうち、最初の${r}枚だけ保存します（${n - r}枚は保存されません）`;
+  };
   const drawK = () => { if (!ev) return; $('#pk').innerHTML = keep.map((p, i) => `<div class="pk"><img src="${img(p.path)}" alt=""><button type="button" data-k="${i}" aria-label="この写真を外す">×</button></div>`).join(''); $('#v6').hidden = room() <= 0; $('#pvw').textContent = room() <= 0 ? '写真は上限の' + MAXP + '枚です' : '' };
   if (ev) addDelete('この来店履歴を削除する', () => delVisit(ev.id));
-  if (ev) { drawK(); $('#pk').addEventListener('click', e => { const k = e.target.dataset.k; if (k !== undefined) { keep.splice(+k, 1); drawK() } }) }
-  $('#v6').addEventListener('change', e => { const fs = [...e.target.files]; $('#pv').innerHTML = fs.slice(0, room()).map(f => `<img src="${URL.createObjectURL(f)}" alt="">`).join(''); $('#pvw').textContent = fs.length > room() ? fs.length + '枚選ばれています。あと' + room() + '枚まで保存します' : '' });
+  if (ev) { drawK(); $('#pk').addEventListener('click', e => { const k = e.target.dataset.k; if (k !== undefined) { keep.splice(+k, 1); drawK(); $('#v6').dispatchEvent(new Event('change')) } }) }
+  $('#v6').addEventListener('change', e => { const fs = [...e.target.files]; $('#pv').innerHTML = fs.slice(0, room()).map(f => `<img src="${URL.createObjectURL(f)}" alt="">`).join(''); $('#pvw').textContent = photoMsg(fs.length, keep.length) });
 }
 
 function menuForm(m) {
