@@ -198,6 +198,8 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .tlb small{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis}
 .tlb.c0{background:#fff08a}.tlb.c1{background:#cfe3f7}.tlb.c2{background:#efb1e3}.tlb.c3{background:#bfe8b0}.tlb.c4{background:#ffd3a8}.tlb.c5{background:#d9cff5}
 .tlb.done{opacity:.45}.tlb.on{outline:3px solid var(--acc);outline-offset:1px;z-index:2}
+.swb{position:fixed;left:0;top:50%;z-index:50;width:40px;height:40px;margin-top:-20px;border-radius:50%;background:var(--deep);color:#fff;display:grid;place-items:center;font-size:24px;line-height:1;opacity:0;transform:translateX(-40px);pointer-events:none;transition:opacity .15s,background .15s}
+.swb.on{opacity:.85;transition:opacity .15s}.swb.go{background:var(--acc);opacity:1}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -250,6 +252,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 <div class="sheet" id="sheet"><form id="form" autocomplete="off"></form></div>
 <div class="lb" id="lb" role="dialog" aria-label="写真"><img id="lbImg" alt="施術写真"><span class="cnt num" id="lbCnt"></span>
 <div class="row"><button class="btn" type="button" data-lb="prev">‹ 前</button><button class="btn" type="button" data-lb="next">次 ›</button><button class="btn" type="button" data-lb="del">削除</button><button class="btn" type="button" data-lb="close">閉じる</button></div></div>
+<div class="swb" id="swb" aria-hidden="true">‹</div>
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="undo" type="button">元に戻す</button></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
 <script>
@@ -937,6 +940,30 @@ function delCust() { const c = cust(detail); confirmBox(`${c.name} 様のカル�
 // 入力シートの一番下に、目立たない削除ボタンを足す
 function addDelete(label, fn) { $('#form').insertAdjacentHTML('beforeend', `<button type="button" class="link danger delink" id="delIn">${label}</button>`); $('#delIn').onclick = fn }
 function confirmBox(msg, ok) { open(`<h3>確認</h3><p>${esc(msg)}</p>`, async () => { await ok(); }, '削除する'); const b = $('#form [type=submit]'); b.classList.add('dangerbtn') }
+
+/* ===== 戻る（左端から右へスワイプ・ブラウザの戻る） ===== */
+// 写真の拡大 → 入力シート → カルテ詳細 の順に、いちばん上にあるものを閉じる
+function goBack() {
+  if ($('#lb').classList.contains('open')) { $('#lb').classList.remove('open'); return true }
+  if ($('#sheet').classList.contains('open')) { close(); return true }
+  if (S.me && detail) { detail = null; render(); scrollTo(0, 0); return true }
+  return false;
+}
+// ブラウザの「戻る」（Safariのスワイプ・Androidの戻るボタン）でアプリから出てしまわないよう、
+// 1つ分の履歴を常に積んでおき、戻られたら画面の中で1つ戻ってから積み直す
+try { history.replaceState({ root: 1 }, ''); history.pushState({ guard: 1 }, '') } catch (e) {}
+addEventListener('popstate', () => { goBack(); try { history.pushState({ guard: 1 }, '') } catch (e) {} });
+// ホーム画面から開いたiPhoneなど、ブラウザのスワイプがないときは自分でスワイプを受け取る
+if (navigator.standalone === true || window.__swipe || window.Capacitor?.getPlatform?.() === 'ios') {
+  let sx = null, sy = 0, dx = 0; const sw = $('#swb');
+  addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX <= 24 && e.touches.length === 1 ? t.clientX : null; sy = t.clientY; dx = 0 }, { passive: true });
+  addEventListener('touchmove', e => {
+    if (sx === null) return; const t = e.touches[0]; dx = t.clientX - sx;
+    if (Math.abs(t.clientY - sy) > 60 && dx < 30) { sx = null; sw.classList.remove('on'); return }
+    sw.classList.add('on'); sw.style.transform = `translateX(${Math.min(Math.max(dx, 0), 90) - 40}px)`; sw.classList.toggle('go', dx > 70);
+  }, { passive: true });
+  addEventListener('touchend', () => { if (sx !== null && dx > 70) goBack(); sx = null; sw.classList.remove('on', 'go'); sw.style.transform = '' });
+}
 
 /* ===== 起動 ===== */
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') showLogin() });
