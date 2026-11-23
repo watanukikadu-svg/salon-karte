@@ -749,7 +749,7 @@ function custPicker(id, except) {
   const draw = () => {
     const c = hidden.value && S.customers.find(x => x.id === hidden.value);
     if (c) { box.innerHTML = `<div class="pk-sel">${avatar(c)}<span><span class="nm">${esc(c.name)} 様</span><br><span class="kn">${esc(c.kana)}</span>${bookBadge(nextBooking(c.id, except))}</span><button type="button" class="btn sm" data-repick="1">変更</button></div>`; return }
-    box.innerHTML = `<input id="${id}q" type="search" autocomplete="off" placeholder="名前・ふりがな・電話で検索"><p class="hint">名前・ふりがな・電話番号の一部で探せます</p><div class="pk-list" id="${id}res">${results('')}</div>`;
+    box.innerHTML = `<input id="${id}q" type="search" autocomplete="off" placeholder="名前・ふりがな・電話で検索"><div class="pk-list" id="${id}res">${results('')}</div>`;
     const qi = $('#' + id + 'q'); qi.oninput = () => { $('#' + id + 'res').innerHTML = results(qi.value) };
   };
   box.onclick = e => { const p = e.target.closest('[data-pick]'); if (p) { hidden.value = p.dataset.pick; draw() } else if (e.target.closest('[data-repick]')) { hidden.value = ''; draw(); $('#' + id + 'q').focus() } };
