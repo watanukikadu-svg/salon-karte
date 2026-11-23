@@ -37,7 +37,7 @@ with sync_playwright() as p:
     # 予約→来店完了
     pg.click('nav.tabs button[data-tab=book]');pg.click('#addB');pg.click('#b1res .pk-row >> nth=0');pg.click('#form button[type=submit]');pg.wait_for_timeout(500)
     pg.screenshot(path='/tmp/p2.png')
-    pg.click('[data-done]');pg.click('#form button[type=submit]');pg.wait_for_timeout(800)
+    pg.click('[data-open]');pg.click('#addV');pg.click('#form button[type=submit]');pg.wait_for_timeout(800)
     print('booking status',pg.evaluate('__db.bookings[0].status'),'visits',pg.evaluate('__db.visits.length'))
     # 売上
     pg.click('nav.tabs button[data-tab=sales]');pg.wait_for_timeout(200);print('sales',pg.inner_text('.big .v'));pg.screenshot(path='/tmp/p3.png',full_page=True)

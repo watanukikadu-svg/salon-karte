@@ -483,13 +483,13 @@ function bookView() {
     <div><div class="who">${avatar(c, 'av sm')}<span>${esc(c.name)} 様</span> ${c.allergy ? '<span class="tag warn">アレルギー</span>' : ''}</div>
     <div class="menu">${esc((b.menu_names || []).join('・'))}・<span class="num">${yen(b.price)}</span></div>
     ${b.stylist_id ? `<div class="menu">担当：${esc(staffName(b.stylist_id))}${b.nominated ? ' <span class="tag">指名</span>' : ''}</div>` : ''}
-    </div><div class="row bkrow">${b.status === 'done' ? '<span class="tag done">来店済み・カルテ記録済み</span>' : `<button class="btn sm pri" data-done="${b.id}">来店完了</button><button class="btn sm" data-eb="${b.id}">変更</button>`}
+    </div><div class="row bkrow">${b.status === 'done' ? '<span class="tag done">来店済み・カルテ記録済み</span>' : `<button class="btn sm" data-eb="${b.id}">変更</button>`}
     <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}">取消</button>` : ''}</div></li>`;
   };
   const items = list.map(item).join('');
   const sel = bview === 'tl' && list.find(b => b.id === tlSel);
   const body = !list.length ? '<div class="empty">この日の予約はまだありません</div>'
-    : bview === 'tl' ? timeline(list) + (sel ? `<ul class="book">${item(sel)}</ul>` : '<p class="hint">予約をタップすると、来店完了・変更などができます</p>')
+    : bview === 'tl' ? timeline(list) + (sel ? `<ul class="book">${item(sel)}</ul>` : '<p class="hint">予約をタップすると、変更・カルテ・取消ができます</p>')
     : `<ul class="book" style="margin-top:0">${items}</ul>`;
   return `<div class="cal"><div class="calh"><button data-cal="-1" aria-label="前の月">‹</button><b>${cy}年${cm}月</b><button data-cal="1" aria-label="次の月">›</button></div>
   <div class="calg">${g}</div>${day !== T || calM !== T.slice(0, 7) ? '<button class="btn sm today" data-day="' + T + '">今日に戻る</button>' : ''}</div>
