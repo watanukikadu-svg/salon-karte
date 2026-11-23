@@ -989,6 +989,9 @@ if (navigator.standalone === true || window.__swipe || window.Capacitor?.getPlat
   addEventListener('touchend', () => { if (sx !== null && dx > 70) goBack(); sx = null; sw.classList.remove('on', 'go'); sw.style.transform = '' });
 }
 
+// アプリ（iPhone・Android）では「別の画面で開く」リンクを、アプリの中でそのまま開く
+if (window.Capacitor?.isNativePlatform?.()) document.addEventListener('click', e => { const a = e.target.closest('a[target="_blank"]'); if (a) { e.preventDefault(); location.href = a.getAttribute('href') } });
+
 /* ===== 起動 ===== */
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') showLogin() });
 sb.auth.getSession().then(({ data }) => data.session ? loadAll() : showLogin());

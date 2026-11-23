@@ -1,0 +1,17 @@
+{
+  "appId": "com.watanukikadu.salonkarte",
+  "appName": "サロンカルテ",
+  "webDir": "www",
+  "backgroundColor": "#16343a",
+  "ios": {
+    "contentInset": "never"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK"
+    }
+  }
+}

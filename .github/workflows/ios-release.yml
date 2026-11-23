@@ -1,0 +1,90 @@
+# iPhone 版を作って App Store Connect（TestFlight）に送る。
+# 動かし方：GitHub の「Actions」→「iPhone 版を App Store に送る」→「Run workflow」
+#          または release-ios ブランチに送る（バージョンは package.json の version）
+# 結果のログは ci-logs ブランチに保存する（Claude が読めるように）。
+name: iPhone 版を App Store に送る
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "バージョン（例: 1.0.0）"
+        required: false
+  push:
+    branches:
+      - release-ios
+
+permissions:
+  contents: write # ログを ci-logs ブランチに保存するため
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    env:
+      INPUT_VERSION: ${{ inputs.version }}
+      BUILD_NUMBER: ${{ github.run_number }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      FASTLANE_SKIP_UPDATE_CHECK: "1"
+      FASTLANE_HIDE_CHANGELOG: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 必要な設定がそろっているか確認
+        run: |
+          missing=""
+          for v in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
+            [ -z "${!v}" ] && missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then echo "::error::GitHub の Secrets に次の設定がありません:$missing"; exit 1; fi
+
+      - name: いちばん新しい Xcode を使う
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version | tee -a "$RUNNER_TEMP/ci.log"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: アプリの画面を作る
+        run: |
+          V="${INPUT_VERSION:-$(node -p "require('./package.json').version")}"
+          echo "VERSION=$V" >> "$GITHUB_ENV"
+          echo "バージョン: $V／ビルド番号: $BUILD_NUMBER" | tee -a "$RUNNER_TEMP/ci.log"
+          npm ci
+          npm run build
+          npx cap sync ios
+
+      - name: iPhone 版を作って TestFlight に送る
+        run: |
+          set -o pipefail
+          command -v fastlane || sudo gem install fastlane --no-document
+          fastlane ios release 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
+
+      - name: ログを ci-logs ブランチに保存する
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          cp "$RUNNER_TEMP/ci.log" "$RUNNER_TEMP/logs/ios-ci.log" 2>/dev/null || true
+          if ls build/logs/*.log >/dev/null 2>&1; then
+            tail -n 400 build/logs/*.log > "$RUNNER_TEMP/logs/xcodebuild-tail.log"
+            # 署名と許可（entitlements）に関わる行は、全体から抜き出して残す
+            grep -E -A8 "Entitlements:|application-groups|ProcessProductPackaging|CodeSign " build/logs/*.log | head -n 1500 > "$RUNNER_TEMP/logs/signing.log" || true
+          fi
+          if [ -f build/App.ipa ]; then
+            mkdir -p /tmp/ipa && cd /tmp/ipa && unzip -q -o "$GITHUB_WORKSPACE/build/App.ipa"
+            { echo "== App =="; codesign -d --entitlements :- Payload/App.app 2>&1
+              } > "$RUNNER_TEMP/logs/ipa-entitlements.log" || true
+            cd "$GITHUB_WORKSPACE"
+          fi
+          echo "run ${{ github.run_number }} / ${{ job.status }} / $(date -u)" > "$RUNNER_TEMP/logs/STATUS"
+          cd "$RUNNER_TEMP/logs"
+          git init -q && git checkout -q -b ci-logs
+          git add -A && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "iOS build ${{ github.run_number }} log"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-logs

@@ -1,0 +1,93 @@
+# iPhone 版を作って TestFlight（App Store Connect）に送る。GitHub Actions から動かす。
+#
+# 署名のしかた（単語帳アプリと同じ）：
+#   ビルドのたびに配布用の証明書とプロファイルを作って署名し、送り終わったら証明書は取り消す
+#   （App Store に送ったアプリには影響しない）。証明書の秘密の鍵をどこにも保存しなくてよい。
+default_platform(:ios)
+
+PROJECT = "ios/App/App.xcodeproj"
+TEAM = ENV.fetch("APPLE_TEAM_ID")
+APP_ID = "com.watanukikadu.salonkarte"
+APP_NAME = "サロンカルテ"
+
+def connect_api!
+  Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+    key_id: ENV.fetch("ASC_KEY_ID"), issuer_id: ENV.fetch("ASC_ISSUER_ID"), key: ENV.fetch("ASC_KEY_P8"),
+  )
+end
+
+def distribution_certs
+  Spaceship::ConnectAPI::Certificate.all.select { |c| %w[DISTRIBUTION IOS_DISTRIBUTION].include?(c.certificate_type) }
+end
+
+platform :ios do
+  lane :release do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_KEY_P8"),
+    )
+    setup_ci # 一時的なキーチェーンを作る（パスワードは空）
+    keychain = File.expand_path("~/Library/Keychains/fastlane_tmp_keychain-db")
+
+    connect_api!
+    # アプリのID（Bundle ID）がまだ Apple に登録されていなければ登録する
+    unless Spaceship::ConnectAPI::BundleId.find(APP_ID)
+      Spaceship::ConnectAPI::BundleId.create(name: "Salon Karte", identifier: APP_ID, platform: "IOS")
+      UI.message("アプリのID #{APP_ID} を登録しました")
+    end
+    # App Store Connect にアプリが作られていないと送れないので、先に分かりやすく止める
+    unless Spaceship::ConnectAPI::App.find(APP_ID)
+      UI.user_error!("App Store Connect に、Bundle ID「#{APP_ID}」のアプリ（#{APP_NAME}）を先に作ってください")
+    end
+
+    before_ids = distribution_certs.map(&:id)
+    UI.message("今ある配布用証明書：#{before_ids.join(', ')}")
+
+    begin
+      get_certificates(api_key: api_key, team_id: TEAM, keychain_path: keychain, keychain_password: "")
+      get_provisioning_profile(api_key: api_key, app_identifier: APP_ID, team_id: TEAM, force: true)
+      profile = lane_context[SharedValues::SIGH_NAME]
+      update_code_signing_settings(
+        path: PROJECT,
+        targets: ["App"],
+        use_automatic_signing: false,
+        team_id: TEAM,
+        code_sign_identity: "Apple Distribution",
+        profile_name: profile,
+        bundle_identifier: APP_ID,
+      )
+
+      build_app(
+        project: PROJECT,
+        scheme: "App",
+        configuration: "Release",
+        destination: "generic/platform=iOS",
+        export_method: "app-store",
+        export_options: { provisioningProfiles: { APP_ID => profile }, signingStyle: "manual" },
+        xcargs: "MARKETING_VERSION=#{ENV.fetch('VERSION')} CURRENT_PROJECT_VERSION=#{ENV.fetch('BUILD_NUMBER')} DEVELOPMENT_TEAM=#{TEAM}",
+        output_directory: "build",
+        output_name: "App.ipa",
+        buildlog_path: "build/logs",
+      )
+
+      upload_to_testflight(
+        api_key: api_key,
+        ipa: "build/App.ipa",
+        skip_waiting_for_build_processing: true,
+      )
+    ensure
+      # このビルドで作った証明書を取り消す。途中で失敗しても必ず行う
+      begin
+        connect_api!
+        distribution_certs.each do |c|
+          next if before_ids.include?(c.id)
+          c.delete!
+          UI.message("証明書を取り消しました（#{c.id}）")
+        end
+      rescue => e
+        UI.important("証明書の取り消しに失敗しました：#{e.message}")
+      end
+    end
+  end
+end
