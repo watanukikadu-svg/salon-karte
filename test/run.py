@@ -16,7 +16,8 @@ def setup(p, signed_out=False):
 with sync_playwright() as p:
     # ログイン画面
     b,pg,errs,calls=setup(p,True)
-    print('login visible',pg.locator('#login').is_visible())
+    print('start visible',pg.locator('#start').is_visible())
+    pg.click('#toLogin')
     pg.fill('#lcode','Test');pg.fill('#lid','Owner');pg.fill('#lpw','wrong');pg.click('#loginForm button[type=submit]');pg.wait_for_timeout(300)
     print('bad pw msg:',pg.inner_text('#lmsg'))
     pg.fill('#lpw','password1');pg.click('#loginForm button[type=submit]');pg.wait_for_timeout(500)

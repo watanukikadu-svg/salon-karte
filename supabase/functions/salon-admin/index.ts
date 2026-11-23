@@ -3,6 +3,8 @@
 //  - create_staff : スタッフを追加する（オーナー、または「スタッフ管理」権限のある人）
 //  - set_password : スタッフのパスワードを再設定する（同上）
 //  - set_active   : スタッフの利用を止める／再開する（同上）
+//  - start_trial  : 登録なしのお試しを始める（匿名ログインした人が、自分のお店を自動で作る）
+//  - register     : お試し中のオーナーが、お店コード＋パスワードを登録して本登録にする
 // ログイン自体はアプリから「お店コード＋スタッフID＋パスワード」で行う。
 // 内部では loginEmail() で作ったメールアドレス形式のIDを使う（メールは送られない）。
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -44,13 +46,22 @@ function safeEqual(a: string, b: string) {
   return r === 0;
 }
 
-async function caller(req: Request) {
+async function authUser(req: Request) {
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!token) return null;
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data.user) return null;
-  const { data: me } = await admin.from("staff").select("*").eq("user_id", data.user.id).eq("active", true).maybeSingle();
+  return data.user;
+}
+async function staffOf(uid: string) {
+  const { data: me } = await admin.from("staff").select("*").eq("user_id", uid).eq("active", true).maybeSingle();
   return me;
+}
+// お試し中＝匿名ログインのまま（メール形式のIDがまだ付いていない）
+const isTrial = (u: { is_anonymous?: boolean; email?: string }) => !!u.is_anonymous && !u.email;
+const randCode = () => "t-" + Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join("");
+async function seedMenus(salonId: string) {
+  await admin.from("menus").insert(DEFAULT_MENUS.map(([name, price, duration_min], i) => ({ salon_id: salonId, name, price, duration_min, sort: i })));
 }
 const canManage = (me: any) => me && (me.role === "owner" || me.can_manage_staff);
 
@@ -77,7 +88,7 @@ Deno.serve(async (req) => {
       if (!key || !safeEqual(req.headers.get("x-admin-key") ?? "", key)) return fail("権限がありません", 403);
       const code = String(body.salon_code ?? "").toLowerCase();
       const login = String(body.owner_login_id ?? "").toLowerCase();
-      if (!CODE_RE.test(code)) return fail("お店コードは半角英小文字・数字・ハイフンで3〜30文字");
+      if (!CODE_RE.test(code) || code.startsWith("t-")) return fail("お店コードは半角英小文字・数字・ハイフンで3〜30文字");
       if (!LOGIN_RE.test(login)) return fail("スタッフIDは半角英小文字・数字・._- で2〜30文字");
       if (!body.salon_name || !body.owner_name) return fail("お店の名前とオーナーの名前を入れてください");
       if (!okPassword(body.owner_password)) return fail("パスワードは8文字以上");
@@ -91,9 +102,7 @@ Deno.serve(async (req) => {
           can_view_sales: true, can_edit_master: true, can_delete_customers: true, can_manage_staff: true,
         });
         if (e2) { await admin.auth.admin.deleteUser(uid); throw new Error("オーナーを登録できませんでした"); }
-        if (body.seed_menus !== false) {
-          await admin.from("menus").insert(DEFAULT_MENUS.map(([name, price, duration_min], i) => ({ salon_id: salon.id, name, price, duration_min, sort: i })));
-        }
+        if (body.seed_menus !== false) await seedMenus(salon.id);
       } catch (e) {
         await admin.from("salons").delete().eq("id", salon.id);
         return fail((e as Error).message);
@@ -101,13 +110,61 @@ Deno.serve(async (req) => {
       return json({ ok: true, salon_id: salon.id, salon_code: code });
     }
 
+    const user = await authUser(req);
+    if (!user) return fail("ログインしてください", 401);
+
+    // ---------- 登録なしのお試しを始める ----------
+    if (action === "start_trial") {
+      if (!isTrial(user)) return fail("お試しは登録前の人だけが使えます", 403);
+      const already = await staffOf(user.id);
+      if (already) return json({ ok: true, salon_id: already.salon_id });
+      const name = String(body.salon_name ?? "").trim().slice(0, 60) || "マイサロン";
+      let salon: any = null;
+      for (let i = 0; i < 3 && !salon; i++) {
+        const { data, error } = await admin.from("salons").insert({ code: randCode(), name }).select().single();
+        if (!error) salon = data; else if (error.code !== "23505") break;
+      }
+      if (!salon) return fail("お店を作れませんでした", 500);
+      const { error: e2 } = await admin.from("staff").insert({
+        salon_id: salon.id, user_id: user.id, login_id: "owner", display_name: "オーナー", role: "owner",
+        can_view_sales: true, can_edit_master: true, can_delete_customers: true, can_manage_staff: true,
+      });
+      if (e2) { await admin.from("salons").delete().eq("id", salon.id); return fail("お店を作れませんでした", 500); }
+      await seedMenus(salon.id);
+      return json({ ok: true, salon_id: salon.id });
+    }
+
     // ---------- ここから先はログイン中のオーナー／スタッフ管理者 ----------
-    const me = await caller(req);
+    const me = await staffOf(user.id);
     if (!me) return fail("ログインしてください", 401);
+
+    // ---------- お試しから本登録へ（お店コード＋パスワードを決める） ----------
+    if (action === "register") {
+      if (me.role !== "owner") return fail("登録はオーナーだけができます", 403);
+      if (!isTrial(user)) return fail("このお店はもう登録済みです");
+      const code = String(body.salon_code ?? "").trim().toLowerCase();
+      const name = String(body.salon_name ?? "").trim().slice(0, 60);
+      if (!CODE_RE.test(code) || code.startsWith("t-")) return fail("お店コードは半角英小文字・数字・ハイフンで3〜30文字");
+      if (!okPassword(body.password)) return fail("パスワードは8文字以上");
+      const { data: old } = await admin.from("salons").select("code, name").eq("id", me.salon_id).single();
+      const { error: e1 } = await admin.from("salons").update({ code, ...(name ? { name } : {}) }).eq("id", me.salon_id);
+      if (e1) return fail(e1.code === "23505" ? "このお店コードはすでに使われています" : "登録できませんでした");
+      const { error: e2 } = await admin.auth.admin.updateUserById(user.id, {
+        email: loginEmail(code, me.login_id), password: body.password, email_confirm: true,
+        app_metadata: { salon_code: code, login_id: me.login_id },
+      });
+      if (e2) {
+        await admin.from("salons").update({ code: old!.code, name: old!.name }).eq("id", me.salon_id);
+        return fail(e2.message.includes("already") ? "このお店コードはすでに使われています" : "登録できませんでした");
+      }
+      return json({ ok: true, salon_code: code, login_id: me.login_id });
+    }
+
     if (!canManage(me)) return fail("スタッフを管理する権限がありません", 403);
     const { data: salon } = await admin.from("salons").select("id, code").eq("id", me.salon_id).single();
 
     if (action === "create_staff") {
+      if (isTrial(user)) return fail("スタッフを追加するには、先にお店の登録をしてください", 403);
       const login = String(body.login_id ?? "").toLowerCase();
       if (!LOGIN_RE.test(login)) return fail("スタッフIDは半角英小文字・数字・._- で2〜30文字");
       if (!body.display_name) return fail("名前を入れてください");

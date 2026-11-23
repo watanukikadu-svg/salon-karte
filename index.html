@@ -164,6 +164,8 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .lcard{width:100%;max-width:420px;background:var(--bg);border-radius:22px;padding:24px 20px}
 .lcard h1{margin:0 0 4px;font-size:24px}.lcard p.s{margin:0 0 8px;color:var(--sub);font-size:14px}
 .lmsg{min-height:1.5em;color:var(--acc);font-weight:700;font-size:14px;margin:10px 0 0}
+.carte.trial{background:var(--accSoft);margin-bottom:12px}.carte.trial p{margin:6px 0 12px;font-size:14px}
+.trialbar{display:block;width:100%;text-align:left;background:var(--accSoft);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;margin:0 0 12px;font:inherit;font-size:13px;cursor:pointer}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -174,6 +176,12 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 <body>
 <section class="login" id="login" hidden>
   <div class="lcard">
+    <div id="start" hidden>
+      <h1>サロンカルテ</h1><p class="s">顧客カルテ・予約・売上をスマホひとつで。<br>登録なしで、今すぐ使えます。</p>
+      <button class="btn pri wide" type="button" id="startBtn" style="margin-top:18px">はじめる</button>
+      <p class="lmsg" id="smsg"></p>
+      <button class="link" type="button" id="toLogin">登録済みの方はこちら（ログイン）</button>
+    </div>
     <form id="loginForm" autocomplete="on">
       <h1>サロンカルテ</h1><p class="s">お店コード・スタッフID・パスワードでログイン</p>
       <label for="lcode">お店コード</label><input id="lcode" autocapitalize="off" autocomplete="organization" required>
@@ -181,6 +189,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
       <label for="lpw">パスワード</label><input id="lpw" type="password" autocomplete="current-password" required>
       <button class="btn pri wide" type="submit" style="margin-top:18px">ログイン</button>
       <p class="lmsg" id="lmsg"></p>
+      <button class="link" type="button" id="toStart">はじめての方はこちら（登録なしで使う）</button><br>
       <button class="link" type="button" id="toAdmin">運営者：新しいお店を作る</button>
     </form>
     <form id="admin" hidden autocomplete="off">
@@ -296,7 +305,9 @@ const avatar = (c, cls = 'av') => c.face_path ? `<span class="${cls}"><img src="
 async function loadAll() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return showLogin();
+  S.trial = !!user.is_anonymous && !user.email;
   const me = (await sb.from('staff').select('*').eq('user_id', user.id).eq('active', true).maybeSingle()).data;
+  if (!me && S.trial) { await sb.auth.signOut(); return showLogin() }
   if (!me) { await sb.auth.signOut(); return showLogin('このアカウントは使えません。オーナーに確認してください') }
   const [salon, staff, menus, products, customers, visits, bookings] = await Promise.all([
     sb.from('salons').select('*').eq('id', me.salon_id).single(),
@@ -320,7 +331,9 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 /* ===== ログイン ===== */
 function showLogin(msg) {
-  $('#app').hidden = true; $('#login').hidden = false; $('#admin').hidden = true; $('#loginForm').hidden = false;
+  const first = !lsGet('salon-code') && !msg;
+  $('#app').hidden = true; $('#login').hidden = false; $('#admin').hidden = true;
+  $('#start').hidden = !first; $('#loginForm').hidden = first;
   $('#lcode').value = lsGet('salon-code') || '';
   $('#lmsg').textContent = msg || '';
 }
@@ -334,6 +347,19 @@ $('#loginForm').addEventListener('submit', async e => {
   lsSet('salon-code', code); $('#lpw').value = ''; tab = 'cust'; detail = null; loadAll();
 });
 $('#toAdmin').addEventListener('click', () => { $('#loginForm').hidden = true; $('#admin').hidden = false });
+$('#toLogin').addEventListener('click', () => { $('#start').hidden = true; $('#loginForm').hidden = false });
+$('#toStart').addEventListener('click', () => { $('#loginForm').hidden = true; $('#start').hidden = false });
+// 登録なしで始める：匿名ログイン → 自分専用のお店を自動で作る
+$('#startBtn').addEventListener('click', async () => {
+  if (busy) return; busy = true; $('#startBtn').disabled = true; $('#smsg').textContent = '準備しています…';
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { const { error } = await sb.auth.signInAnonymously(); if (error) throw error }
+    await staffAdmin({ action: 'start_trial' });
+    $('#smsg').textContent = ''; tab = 'cust'; detail = null; busy = false; await loadAll();
+  } catch (err) { $('#smsg').textContent = '始められませんでした。電波を確認して、もう一度押してください' }
+  busy = false; $('#startBtn').disabled = false;
+});
 $('#backLogin').addEventListener('click', () => { $('#admin').hidden = true; $('#loginForm').hidden = false });
 // お店の名前が英数字なら、お店コードを自動で入れる（手で直したらそれ以降は触らない）
 $('#ac').addEventListener('input', () => { $('#ac').dataset.touched = '1' });
@@ -373,8 +399,21 @@ async function staffAdmin(body) {
 }
 
 /* ===== 画面 ===== */
+const TRIAL_MONTHS = 6;
+const trialEnd = () => { const d = new Date(S.salon.created_at); d.setMonth(d.getMonth() + TRIAL_MONTHS); return d };
+const trialLeft = () => Math.ceil((trialEnd() - Date.now()) / 864e5);
+const mdj = d => (d.getMonth() + 1) + '月' + d.getDate() + '日';
 function render() {
   if (!S.me) return;
+  const expired = S.trial && trialLeft() <= 0;
+  $('nav.tabs').hidden = expired;
+  if (expired) {
+    $('#ttl').textContent = 'お店の登録'; $('#sub').textContent = S.salon.name;
+    $('#view').innerHTML = `<div class="carte trial"><h2 style="margin-top:0">いつもご利用ありがとうございます</h2>
+      <p>登録なしで使える期間（${TRIAL_MONTHS}か月）が終わりました。<b>お店コードとパスワードを決めるだけ</b>で、これまでのお客様・来店記録・写真はそのまま使い続けられます。</p>
+      <button class="btn pri wide" id="regBtn">お店を登録して続ける</button></div>`;
+    return;
+  }
   document.querySelectorAll('nav.tabs button').forEach(b => { b.setAttribute('aria-selected', b.dataset.tab === tab); if (b.dataset.tab === 'sales') b.hidden = !can('view_sales') });
   $('nav.tabs').style.gridTemplateColumns = `repeat(${can('view_sales') ? 4 : 3},minmax(0,1fr))`;
   const v = $('#view');
@@ -383,6 +422,7 @@ function render() {
   else if (tab === 'sales') { $('#ttl').textContent = '売上'; v.innerHTML = salesView() }
   else { $('#ttl').textContent = '管理'; v.innerHTML = adminView() }
   $('#sub').textContent = S.salon.name + '・' + S.me.display_name;
+  if (S.trial && trialLeft() <= 30) v.insertAdjacentHTML('afterbegin', `<button class="trialbar" id="regBtn">登録なしで使えるのは${mdj(trialEnd())}まで（あと${trialLeft()}日）。<u>お店を登録する</u></button>`);
 }
 const stylists = () => S.staff.filter(s => s.active && s.is_stylist);
 const stylistSel = (name, sel) => `<select name="${name}" id="${name}"><option value="">（担当なし）</option>${stylists().map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${esc(s.display_name)}</option>`).join('')}${sel && !stylists().some(s => s.id === sel) ? `<option value="${sel}" selected>${esc(staffName(sel))}</option>` : ''}</select>`;
@@ -499,8 +539,11 @@ function adminView() {
   <h2 style="margin-top:28px">スタッフ</h2><ul class="adm">${sl}</ul>
   ${can('manage_staff') ? '<button class="btn pri wide" id="addS">＋ スタッフを追加</button>' : ''}
   <h2 style="margin-top:28px">アカウント</h2>
-  <div class="carte"><dl><dt>お店</dt><dd>${esc(S.salon.name)}</dd><dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd><dt>あなた</dt><dd>${esc(S.me.display_name)}（ID：${esc(S.me.login_id)}）</dd></dl>
-  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}<button class="btn sm" id="myPw">パスワードを変更</button><button class="btn sm" id="reload">最新に更新</button><button class="btn sm danger" id="logout">ログアウト</button></div></div>`;
+  ${S.trial ? `<div class="carte trial"><b>お試し中（登録なし）</b>
+    <p>${mdj(trialEnd())}まで登録なしで使えます。お店コードとパスワードを登録すると、<b>スタッフの追加</b>や<b>別のスマホ・パソコン</b>からも使えるようになります。データはそのまま引き継がれます。</p>
+    <button class="btn pri wide" id="regBtn">お店を登録する</button></div>` : ''}
+  <div class="carte"><dl><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd></dl>
+  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button>${S.trial ? '' : '<button class="btn sm danger" id="logout">ログアウト</button>'}</div></div>`;
 }
 
 /* ===== シート（入力画面） ===== */
@@ -735,7 +778,8 @@ $('#view').addEventListener('click', async e => {
     else if (d.es) staffForm(S.staff.find(x => x.id === d.es));
     else if (t.id === 'addM') menuForm();
     else if (t.id === 'addP') prodForm();
-    else if (t.id === 'addS') staffForm();
+    else if (t.id === 'addS') S.trial ? regForm('スタッフを追加するには、先にお店の登録が必要です（1分で終わります）') : staffForm();
+    else if (t.id === 'regBtn') regForm();
     else if (t.id === 'addB') bookForm();
     else if (t.id === 'addC') custForm();
     else if (t.id === 'back') { detail = null; render() }
@@ -749,6 +793,20 @@ $('#view').addEventListener('click', async e => {
     else if (t.id === 'logout') { await sb.auth.signOut(); Object.assign(S, { me: null }); showLogin() }
   } catch (err) { /* 失敗はトーストで表示済み */ }
 });
+function regForm(why) {
+  const auto = /[a-z0-9]/i.test(S.salon.name) ? S.salon.name.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) : '';
+  open(`<h3>お店を登録する</h3>${why ? `<p class="hint">${esc(why)}</p>` : ''}
+  <p class="hint">これまでのデータはそのまま使えます。次からは「お店コード・スタッフID（owner）・パスワード」でログインします。</p>
+  <label for="r1">お店の名前</label><input id="r1" name="name" required value="${esc(S.salon.name === 'マイサロン' ? '' : S.salon.name)}" placeholder="例：STAYGOLD">
+  <label for="r2">お店コード（ログイン用・英小文字と数字）</label><input id="r2" name="code" required autocapitalize="off" pattern="[a-z0-9\\-]{3,30}" value="${esc(auto)}" placeholder="例：staygold">
+  <label for="r3">パスワード（8文字以上）</label><input id="r3" name="pw" type="password" minlength="8" required autocomplete="new-password">`, async fd => {
+    const code = fd.get('code').trim().toLowerCase();
+    const r = await staffAdmin({ action: 'register', salon_name: fd.get('name').trim(), salon_code: code, password: fd.get('pw') }).catch(e => { throw userErr(e.message) });
+    await sb.auth.refreshSession(); lsSet('salon-code', r.salon_code); await loadAll();
+    toast(`登録しました！ログインは お店コード「${r.salon_code}」・ID「${r.login_id}」です`);
+  }, '登録する');
+  const n = $('#r1'), c = $('#r2'); n.oninput = () => { if (c.dataset.touched) return; c.value = n.value.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) }; c.oninput = () => { c.dataset.touched = '1' };
+}
 function confirmBox(msg, ok) { open(`<h3>確認</h3><p>${esc(msg)}</p>`, async () => { await ok(); }, '削除する'); const b = $('#form [type=submit]'); b.classList.add('dangerbtn') }
 
 /* ===== 起動 ===== */
