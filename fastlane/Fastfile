@@ -8,7 +8,7 @@ default_platform(:ios)
 PROJECT = "ios/App/App.xcodeproj"
 TEAM = ENV.fetch("APPLE_TEAM_ID")
 APP_ID = "com.watanukikadu.salonkarte"
-APP_NAME = "サロンカルテ"
+APP_NAME = "美容室カルテ"
 
 def connect_api!
   Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(

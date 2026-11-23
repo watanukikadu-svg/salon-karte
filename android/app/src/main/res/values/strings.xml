@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">サロンカルテ</string>
-    <string name="title_activity_main">サロンカルテ</string>
+    <string name="app_name">美容室カルテ</string>
+    <string name="title_activity_main">美容室カルテ</string>
     <string name="package_name">com.watanukikadu.salonkarte</string>
     <string name="custom_url_scheme">com.watanukikadu.salonkarte</string>
 </resources>
