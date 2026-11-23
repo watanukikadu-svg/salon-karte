@@ -200,6 +200,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .tlb.done{opacity:.45}.tlb.on{outline:3px solid var(--acc);outline-offset:1px;z-index:2}
 .swb{position:fixed;left:0;top:50%;z-index:50;width:40px;height:40px;margin-top:-20px;border-radius:50%;background:var(--deep);color:#fff;display:grid;place-items:center;font-size:24px;line-height:1;opacity:0;transform:translateX(-40px);pointer-events:none;transition:opacity .15s,background .15s}
 .swb.on{opacity:.85;transition:opacity .15s}.swb.go{background:var(--acc);opacity:1}
+.lcard a,.hint a{color:var(--acc)}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -215,6 +216,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
       <button class="btn pri wide" type="button" id="startBtn" style="margin-top:18px">はじめる</button>
       <p class="lmsg" id="smsg"></p>
       <button class="link" type="button" id="toLogin">登録済みの方はこちら（ログイン）</button>
+      <p class="hint" style="margin-top:14px">「はじめる」を押すと、<a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意したものとします。</p>
     </div>
     <form id="loginForm" autocomplete="on">
       <h1>サロンカルテ</h1><p class="s">お店コードとパスワードでログイン</p>
@@ -224,7 +226,8 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
       <button class="btn pri wide" type="submit" style="margin-top:18px">ログイン</button>
       <p class="lmsg" id="lmsg"></p>
       <button class="link" type="button" id="toStart">はじめての方はこちら（登録なしで使う）</button><br>
-      <button class="link" type="button" id="toAdmin">運営者：新しいお店を作る</button>
+      <button class="link" type="button" id="toAdmin">運営者：新しいお店を作る</button><br>
+      <a class="link" href="privacy.html" target="_blank" rel="noopener" style="display:inline-block;line-height:44px">プライバシーポリシー</a>
     </form>
     <form id="admin" hidden autocomplete="off">
       <h1>新しいお店を作る</h1><p class="s">運営者用。合言葉（ADMIN_KEY）が必要です</p>
@@ -615,6 +618,7 @@ function adminView() {
     <button class="btn pri wide" id="regBtn">お店を登録する</button></div>` : ''}
   <div class="carte"><dl><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd></dl>
   <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button>${S.trial ? '' : '<button class="btn sm danger" id="logout">ログアウト</button>'}</div></div>
+  <p style="text-align:center;margin:18px 0 0"><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
   <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを削除する' : '自分のアカウントを削除する'}</button>`;
 }
 
