@@ -2,7 +2,7 @@
   "appId": "com.watanukikadu.salonkarte",
   "appName": "美容室カルテ",
   "webDir": "www",
-  "backgroundColor": "#16343a",
+  "backgroundColor": "#011c37",
   "ios": {
     "contentInset": "never"
   },
