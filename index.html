@@ -619,7 +619,7 @@ function adminView() {
   <div class="carte"><dl><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd></dl>
   <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button>${S.trial ? '' : '<button class="btn sm danger" id="logout">ログアウト</button>'}</div></div>
   <p style="text-align:center;margin:18px 0 0"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
-  <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを削除する' : '自分のアカウントを削除する'}</button>`;
+  <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを消去する' : '自分のアカウントを消去する'}</button>`;
 }
 
 /* ===== シート（入力画面） ===== */
@@ -930,19 +930,19 @@ $('#view').addEventListener('click', async e => {
 // アカウント削除（ストアの決まりで、アプリの中から消せる必要がある）
 function delAccForm() {
   const owner = S.me.role === 'owner';
-  open(`<h3>${owner ? 'お店とアカウントを削除' : '自分のアカウントを削除'}</h3>
+  open(`<h3>${owner ? 'お店とアカウントを消去' : '自分のアカウントを消去'}</h3>
   ${owner ? `<p><b>「${esc(S.salon.name)}」のすべてのデータが消えます。元に戻せません。</b></p>
   <ul class="hint" style="padding-left:1.2em;margin:6px 0 10px"><li>お客様のカルテ・来店履歴・写真</li><li>予約・売上の記録</li><li>メニュー・店販商品</li><li>スタッフ全員のアカウント（だれもログインできなくなります）</li></ul>`
   : `<p>あなた（${esc(S.me.display_name)}）のログインが消え、このアプリに入れなくなります。お店のデータ（お客様・来店記録など）は消えずに残ります。</p>`}
-  <label for="dc">確認のため「削除」と入力してください</label><input id="dc" name="confirm" autocomplete="off" required placeholder="削除">`, async fd => {
-    if (fd.get('confirm').trim() !== '削除') throw userErr('「削除」と入力してください');
-    await staffAdmin({ action: 'delete_account', confirm: '削除' }).catch(e => { throw userErr(e.message) });
+  <label for="dc">確認のため「消去」と入力してください</label><input id="dc" name="confirm" autocomplete="off" required placeholder="消去">`, async fd => {
+    if (fd.get('confirm').trim() !== '消去') throw userErr('「消去」と入力してください');
+    await staffAdmin({ action: 'delete_account', confirm: '消去' }).catch(e => { throw userErr(e.message) });
     if (owner) lsSet('salon-code', '');
     close(); Object.assign(S, { me: null }); await sb.auth.signOut();
     showLogin(); $('#start').hidden = !owner; $('#loginForm').hidden = owner;
-    $(owner ? '#smsg' : '#lmsg').textContent = owner ? 'お店とアカウントを削除しました。ご利用ありがとうございました' : 'アカウントを削除しました';
+    $(owner ? '#smsg' : '#lmsg').textContent = owner ? 'お店とアカウントを消去しました。ご利用ありがとうございました' : 'アカウントを消去しました';
     return false;
-  }, '削除する');
+  }, '消去する');
   $('#form [type=submit]').classList.add('dangerbtn');
 }
 function regForm(why) {

@@ -5,7 +5,7 @@
 //  - set_active   : スタッフの利用を止める／再開する（同上）
 //  - start_trial  : 登録なしのお試しを始める（匿名ログインした人が、自分のお店を自動で作る）
 //  - register     : お試し中のオーナーが、お店コード＋パスワードを登録して本登録にする
-//  - delete_account : アカウントを消す（オーナー＝お店ごと全部、スタッフ＝自分のログインだけ）
+//  - delete_account : アカウントを消去する（オーナー＝お店ごと全部、スタッフ＝自分のログインだけ）
 // ログイン自体はアプリから「お店コード＋スタッフID＋パスワード」で行う。
 // 内部では loginEmail() で作ったメールアドレス形式のIDを使う（メールは送られない）。
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -37,7 +37,7 @@ const okPassword = (p: unknown) => typeof p === "string" && p.length >= 8 && p.l
 const PERMS = ["can_view_sales", "can_edit_master", "can_delete_customers", "can_manage_staff"] as const;
 const DEFAULT_MENUS = [
   ["カット", 4800, 60], ["カット＋カラー", 11000, 120], ["カラー", 7700, 90], ["パーマ", 12100, 120],
-  ["縮毛矯正", 18700, 180], ["トリートメント", 4400, 30], ["ヘッドスパ", 5500, 45],
+  ["縮毛矯正", 18700, 180],
 ];
 
 function safeEqual(a: string, b: string) {
@@ -178,20 +178,21 @@ Deno.serve(async (req) => {
 
     // ---------- アカウントを消す ----------
     if (action === "delete_account") {
-      if (body.confirm !== "削除") return fail("確認のため「削除」と入力してください");
+      // 確認の言葉は「消去」（前のアプリが送る「削除」も受け付ける）
+      if (!["消去", "削除"].includes(body.confirm)) return fail("確認のため「消去」と入力してください");
       if (me.role === "owner") {
         // お店ごと消す：写真 → お店（顧客・来店・予約などは一緒に消える） → スタッフ全員のログイン
         const { data: members } = await admin.from("staff").select("user_id").eq("salon_id", me.salon_id);
         await removeSalonFiles(me.salon_id);
         const { error } = await admin.from("salons").delete().eq("id", me.salon_id);
-        if (error) return fail("削除できませんでした。時間をおいてもう一度お試しください", 500);
+        if (error) return fail("消去できませんでした。時間をおいてもう一度お試しください", 500);
         for (const m of members ?? []) if (m.user_id) await admin.auth.admin.deleteUser(m.user_id);
         return json({ ok: true, deleted: "salon" });
       }
       // スタッフは自分のログインだけ消す（来店記録の「担当」の名前は残す）
       await admin.from("staff").update({ active: false }).eq("id", me.id);
       const { error } = await admin.auth.admin.deleteUser(user.id);
-      if (error) return fail("削除できませんでした。時間をおいてもう一度お試しください", 500);
+      if (error) return fail("消去できませんでした。時間をおいてもう一度お試しください", 500);
       return json({ ok: true, deleted: "account" });
     }
 
