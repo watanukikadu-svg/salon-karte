@@ -136,7 +136,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .carte{background:var(--card);border-radius:18px;padding:16px;margin-top:6px}
 .carte dl{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:6px 10px;margin:10px 0 0;font-size:15px}
 .carte dt{color:var(--sub)}.carte dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
-.visit{border-top:1px solid var(--line);padding:12px 0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px}
+.visit{border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px;background:var(--bg);box-shadow:0 1px 3px rgb(0 0 0/.05);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px}
+.visit .d{font-weight:600}.visit b{font-size:17px}
 .visit .d{font-size:13px;color:var(--sub)}.visit .p{font-weight:600;text-align:end}
 .visit .m{grid-column:1/-1;font-size:14px;color:var(--sub);white-space:pre-wrap}
 .visit img{grid-column:1/-1;width:120px;height:120px;object-fit:cover;border-radius:12px}
@@ -475,12 +476,14 @@ function custList() {
   const q0 = (window._q || '').trim(), sk = window._sort || 'kana', kr = sk === 'kana' ? (window._row || '') : '';
   const lv = c => lastVisit(c.id)?.visited_on || '';
   const cmp = { kana: (a, b) => a.kana.localeCompare(b.kana, 'ja'), last: (a, b) => lv(b).localeCompare(lv(a)) || a.kana.localeCompare(b.kana, 'ja'), bday: (a, b) => (nextBday(a.birthday)?.days ?? 999) - (nextBday(b.birthday)?.days ?? 999) || a.kana.localeCompare(b.kana, 'ja') }[sk];
-  const list = S.customers.filter(c => (!q0 || (c.name + c.kana + c.tel).includes(q0)) && (!kr || rowOf(c.kana) === kr)).sort(cmp);
+  // 最終来店日・誕生日順では、まだ来店のない人（誕生日順は誕生日のない人も）を出さない
+  const shown = c => sk === 'kana' || (lastVisit(c.id) && (sk !== 'bday' || c.birthday));
+  const list = S.customers.filter(c => (!q0 || (c.name + c.kana + c.tel).includes(q0)) && (!kr || rowOf(c.kana) === kr) && shown(c)).sort(cmp);
   const right = c => { if (sk === 'bday') { const n = nextBday(c.birthday); return n ? `誕生日 ${n.m}/${n.d}<br><b class="${n.days <= 30 ? 'soon' : ''}">${n.days === 0 ? '今日！' : 'あと' + n.days + '日'}</b>` : '誕生日 未登録' } const l = lastVisit(c.id); return l ? '前回 ' + jdate(l.visited_on) : '来店なし' };
   let prev = '';
   return `<ul class="list">${list.map(c => { const g = sk === 'kana' ? rowOf(c.kana) : '', head = g && g !== prev ? `<li class="gh">${g === '他' ? 'その他' : g + '行'}</li>` : ''; prev = g || prev;
     return head + `<li><button data-open="${c.id}">${avatar(c)}<span><span class="nm">${esc(c.name)}</span><br><span class="kn">${esc(c.kana)}</span></span><span class="last">${right(c)}</span></button></li>` }).join('')}</ul>
-  ${list.length ? '' : `<div class="empty">${S.customers.length ? (kr ? kr + '行のお客様はいません' : '見つかりませんでした') : 'まだお客様がいません。「＋ 新しいお客様」から登録しましょう'}</div>`}`;
+  ${list.length ? '' : `<div class="empty">${S.customers.length ? (kr ? kr + '行のお客様はいません' : q0 ? '見つかりませんでした' : sk === 'last' ? 'まだ来店記録のあるお客様がいません' : sk === 'bday' ? '来店記録と誕生日のあるお客様がいません' : '見つかりませんでした') : 'まだお客様がいません。「＋ 新しいお客様」から登録しましょう'}</div>`}`;
 }
 
 function detailView() {
