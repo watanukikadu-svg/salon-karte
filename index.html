@@ -184,7 +184,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .bkb{display:flex;align-items:center;gap:4px;width:max-content;margin-top:4px;padding:2px 8px;border-radius:999px;background:var(--accSoft);color:var(--acc);font-size:12px;font-weight:700}.bkb svg{width:14px;height:14px}
 .pk-row,.pk-sel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 2px;font:inherit;color:inherit;cursor:pointer}
 .pk-sel{border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:default}
-.pk-row .nm,.pk-sel .nm{font-weight:700}.pk-row .kn,.pk-sel .kn{font-size:13px;color:var(--sub)}.pk-row .last{font-size:12px;color:var(--sub)}
+.pk-row .nm,.pk-sel .nm{font-weight:700}.pk-row .kn,.pk-sel .kn{font-size:13px;color:var(--sub)}.pk-row .last b.soon{color:var(--acc)}.pk-row .last{text-align:right;font-size:12px;color:var(--sub)}
 .bhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.bhead h2{margin-right:auto}.seg{margin:0}
 .tlw{overflow-x:auto;margin:8px 0 12px;border:1px solid var(--line);border-radius:14px;-webkit-overflow-scrolling:touch}
 .tl{position:relative;font-size:12px}
@@ -710,20 +710,40 @@ const digits = t => String(t || '').replace(/\D/g, '');
 const nextBooking = (cid, except) => S.bookings.filter(x => x.customer_id === cid && x.id !== except && x.status !== 'done' && x.booked_on >= T).sort((a, b) => (a.booked_on + a.start_time).localeCompare(b.booked_on + b.start_time))[0];
 const CAL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
 const bookBadge = nb => nb ? `<span class="bkb">${CAL_ICON}予約あり ${jdate(nb.booked_on)} <span class="num">${hm(nb.start_time)}</span></span>` : '';
+// 来店周期から「そろそろ来店しそうなお客様」を予想する
+//  周期＝そのお客様の来店の間隔の真ん中の値（1回しか来ていない人はお店全体の真ん中の値。7日未満の間隔は数えない）
+//  目安の日＝前回の来店日＋周期。目安まで14日以内〜周期1回分すぎまでの人を、目安に近い順に6人。予約がある人は出さない
+const dayNo = d => Math.round(new Date(d + 'T00:00') / 864e5);
+const median = a => { const x = a.slice().sort((p, q) => p - q); return x.length ? x[Math.floor(x.length / 2)] : null };
+function duePredictions(except) {
+  const tN = dayNo(T), all = [];
+  const per = S.customers.map(c => {
+    const ds = [...new Set(S.visits.filter(v => v.customer_id === c.id).map(v => v.visited_on))].sort();
+    const gaps = ds.slice(1).map((d, i) => dayNo(d) - dayNo(ds[i])).filter(g => g >= 7); all.push(...gaps);
+    return { c, ds, gaps };
+  });
+  const shop = median(all) || 45;
+  return per.filter(p => p.ds.length && !nextBooking(p.c.id, except)).map(p => {
+    const cyc = p.gaps.length ? median(p.gaps) : shop;
+    return { c: p.c, cyc, guess: !p.gaps.length, diff: dayNo(p.ds[p.ds.length - 1]) + cyc - tN };
+  }).filter(x => x.diff <= 14 && x.diff >= -x.cyc).sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff) || a.diff - b.diff).slice(0, 6);
+}
 function custPicker(id, except) {
   const box = $('#' + id + 'pick'), hidden = $('#' + id);
-  const row = c => { const l = lastVisit(c.id); return `<button type="button" class="pk-row" data-pick="${c.id}">${avatar(c)}<span><span class="nm">${esc(c.name)}</span><br><span class="kn">${esc(c.kana)}${c.tel ? '・' + esc(c.tel) : ''}</span>${bookBadge(nextBooking(c.id, except))}</span><span class="last">${l ? '前回 ' + jdate(l.visited_on) : '来店なし'}</span></button>` };
+  const row = (c, pr) => { const l = lastVisit(c.id); return `<button type="button" class="pk-row" data-pick="${c.id}">${avatar(c)}<span><span class="nm">${esc(c.name)}</span><br><span class="kn">${esc(c.kana)}${c.tel ? '・' + esc(c.tel) : ''}</span>${bookBadge(nextBooking(c.id, except))}</span><span class="last">${pr ? `<b class="${pr.diff <= 0 ? 'soon' : ''}">${pr.diff > 0 ? 'あと' + pr.diff + '日' : pr.diff === 0 ? '今日が目安' : pr.diff * -1 + '日すぎ'}</b><br>${pr.guess ? 'お店の平均' : '約'}${pr.cyc}日ごと` : l ? '前回 ' + jdate(l.visited_on) : '来店なし'}</span></button>` };
   const results = q => {
     q = q.trim();
     if (!q) {
+      const pred = duePredictions(except);
+      if (pred.length) return '<p class="hint">来店周期から、そろそろ来店しそうなお客様</p>' + pred.map(x => row(x.c, x)).join('') + '<p class="hint">名前・ふりがな・電話番号の一部で探せます</p>';
       const recent = S.customers.filter(c => lastVisit(c.id)).sort((a, b) => vkey(lastVisit(b.id)).localeCompare(vkey(lastVisit(a.id)))).slice(0, 6);
-      return (recent.length ? '<p class="hint">最近来店したお客様</p>' + recent.map(row).join('') : '') + '<p class="hint">名前・ふりがな・電話番号の一部で探せます</p>';
+      return (recent.length ? '<p class="hint">最近来店したお客様</p>' + recent.map(c => row(c)).join('') : '') + '<p class="hint">名前・ふりがな・電話番号の一部で探せます</p>';
     }
     const hq = hira(q).replace(/\s/g, ''), dq = digits(q);
     const hit = S.customers.filter(c => hira(c.name + c.kana).replace(/\s/g, '').includes(hq) || (dq.length >= 3 && digits(c.tel).includes(dq)))
       .sort((a, b) => a.kana.localeCompare(b.kana, 'ja'));
     if (!hit.length) return '<p class="hint">見つかりませんでした</p>';
-    return hit.slice(0, 8).map(row).join('') + (hit.length > 8 ? `<p class="hint">ほかに${hit.length - 8}人います。もう少し入力して絞り込んでください</p>` : '');
+    return hit.slice(0, 8).map(c => row(c)).join('') + (hit.length > 8 ? `<p class="hint">ほかに${hit.length - 8}人います。もう少し入力して絞り込んでください</p>` : '');
   };
   const draw = () => {
     const c = hidden.value && S.customers.find(x => x.id === hidden.value);
