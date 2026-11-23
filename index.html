@@ -179,6 +179,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .trialbar{display:block;width:100%;text-align:left;background:var(--accSoft);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;margin:0 0 12px;font:inherit;font-size:13px;cursor:pointer}
 .link.delink{display:block;margin:22px auto 4px;color:var(--acc)}
 .pk-list{margin-top:6px}
+.msel{position:relative}.msel select{width:100%;padding-right:96px}.msel .mp{position:absolute;right:36px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:15px;pointer-events:none}
 .bkb{display:flex;align-items:center;gap:4px;width:max-content;margin-top:4px;padding:2px 8px;border-radius:999px;background:var(--accSoft);color:var(--acc);font-size:12px;font-weight:700}.bkb svg{width:14px;height:14px}
 .pk-row,.pk-sel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 2px;font:inherit;color:inherit;cursor:pointer}
 .pk-sel{border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:default}
@@ -678,6 +679,7 @@ function bookForm(cid, b) {
   // メニューを複数入れる：合計の金額と時間を出す
   const box = $('#bmrows');
   const fix = () => { const xs = box.querySelectorAll('.mx'); xs.forEach(x => x.hidden = xs.length < 2);
+    box.querySelectorAll('.msel').forEach(w => { w.querySelector('.mp').textContent = yen(priceOf(w.querySelector('select').value).price) });
     const ms = [...box.querySelectorAll('select')].map(x => priceOf(x.value)); const min = ms.reduce((t, m) => t + (+m.duration_min || 0), 0);
     $('#bmsum').textContent = ms.length > 1 ? `合計 ${yen(ms.reduce((t, m) => t + (+m.price || 0), 0))}・${Math.floor(min / 60) ? Math.floor(min / 60) + '時間' : ''}${min % 60 ? min % 60 + '分' : ''}` : '' };
   box.addEventListener('change', fix);
@@ -685,7 +687,7 @@ function bookForm(cid, b) {
   $('#addBm').addEventListener('click', () => { box.insertAdjacentHTML('beforeend', bmrow()); fix(); const ss = box.querySelectorAll('select'); ss[ss.length - 1].focus() });
   fix();
 }
-const bmrow = n => `<div class="mrow"><select name="menu" aria-label="メニュー">${menuOpts(n)}</select><button type="button" class="mx" aria-label="このメニューを外す">×</button></div>`;
+const bmrow = n => `<div class="mrow"><div class="msel"><select name="menu" aria-label="メニュー">${menuOpts(n)}</select><span class="mp num"></span></div><button type="button" class="mx" aria-label="このメニューを外す">×</button></div>`;
 
 /* お客様を探して選ぶ（名前・ふりがな・電話の一部で絞り込み。空のときは最近来店した順） */
 const hira = t => String(t || '').replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
