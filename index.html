@@ -490,7 +490,7 @@ function bookView() {
     <div class="menu">${esc((b.menu_names || []).join('・'))}・<span class="num">${yen(b.price)}</span></div>
     ${(b.items || []).length ? `<div class="menu">店販：${b.items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(b.items.reduce((t, x) => t + x.price * x.qty, 0))}</span>）</div>` : ''}
     ${b.stylist_id ? `<div class="menu">担当：${esc(staffName(b.stylist_id))}${b.nominated ? ' <span class="tag">指名</span>' : ''}</div>` : ''}
-    </div><div class="row bkrow">${b.status === 'done' ? '<span class="tag done">来店済み・カルテ記録済み</span>' : `<button class="btn sm" data-eb="${b.id}">変更</button>`}
+    </div><div class="row bkrow">${b.status === 'done' ? `<span class="tag done">${b.walk_in ? '予約なしで来店・カルテ記録済み' : '来店済み・カルテ記録済み'}</span>` : `<button class="btn sm" data-eb="${b.id}">変更</button>`}
     <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}">取消</button>` : ''}</div></li>`;
   };
   const items = list.map(item).join('');
@@ -844,6 +844,13 @@ function visitForm(cid, b, ev) {
     // 日付を変えて保存したときは、その日の予約につなげ直す
     const link = ev ? null : !auto ? b : (b && b.booked_on === o.visited_on ? b : openBooking(cid, o.visited_on));
     if (link) { const br = await q(sb.from('bookings').update({ status: 'done', visit_id: vid }).eq('id', link.id).select().single()); Object.assign(link, br) }
+    // 予約なしで来店した人も、記録した日時・メニュー・担当で予約の画面に残す（あとから振り返れるように）
+    const walk = { booked_on: o.visited_on, start_time: o.visited_at || nowT(), menu_names: sel.map(m => m.name), price: o.price,
+      duration_min: sel.reduce((t, m) => t + (+priceOf(m.name).duration_min || 0), 0) || 60, stylist_id: o.stylist_id, nominated: o.nominated,
+      items: (row.visit_items || []).map(x => ({ product_id: x.product_id, name: x.name, price: x.price, qty: x.qty })) };
+    const mine = ev ? S.bookings.find(x => x.visit_id === vid && x.walk_in) : null;
+    if (mine) Object.assign(mine, await q(sb.from('bookings').update(walk).eq('id', mine.id).select().single()));
+    else if (!ev && !link) S.bookings.push(await q(sb.from('bookings').insert({ salon_id: S.salon.id, customer_id: cid, created_by: S.me.id, status: 'done', visit_id: vid, walk_in: true, ...walk }).select().single()));
     toast(ev ? '来店履歴を更新しました' : 'カルテに記録しました' + (added.length ? '（写真' + added.length + '枚）' : ''));
   });
   let touched = !!ev;
@@ -1054,7 +1061,7 @@ function regForm(why) {
   }, '登録する');
   const n = $('#r1'), c = $('#r2'); n.oninput = () => { if (c.dataset.touched) return; c.value = n.value.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) }; c.oninput = () => { c.dataset.touched = '1' };
 }
-function delVisit(id) { confirmBox('この来店履歴を削除しますか？写真も消えます。', async () => { const v = S.visits.find(x => x.id === id); await q(sb.from('visits').delete().eq('id', v.id)); const ps = photos(v).map(p => p.path); if (ps.length) sb.storage.from(BUCKET).remove(ps); S.visits = S.visits.filter(x => x !== v); await loadAll(); toast('来店履歴を削除しました') }) }
+function delVisit(id) { confirmBox('この来店履歴を削除しますか？写真も消えます。', async () => { const v = S.visits.find(x => x.id === id); const lb = S.bookings.filter(x => x.visit_id === v.id); for (const x of lb) await q(x.walk_in ? sb.from('bookings').delete().eq('id', x.id) : sb.from('bookings').update({ status: 'booked', visit_id: null }).eq('id', x.id)); await q(sb.from('visits').delete().eq('id', v.id)); const ps = photos(v).map(p => p.path); if (ps.length) sb.storage.from(BUCKET).remove(ps); S.visits = S.visits.filter(x => x !== v); await loadAll(); toast('来店履歴を削除しました') }) }
 function delCust() { const c = cust(detail); confirmBox(`${c.name} 様のカルテと来店履歴・写真をすべて削除しますか？元に戻せません。`, async () => { const paths = [c.face_path, ...S.visits.filter(v => v.customer_id === c.id).flatMap(v => photos(v).map(p => p.path))].filter(Boolean); await q(sb.from('customers').delete().eq('id', c.id)); if (paths.length) sb.storage.from(BUCKET).remove(paths); detail = null; await loadAll(); toast('削除しました') }) }
 // 入力シートの一番下に、目立たない削除ボタンを足す
 function addDelete(label, fn) { $('#form').insertAdjacentHTML('beforeend', `<button type="button" class="link danger delink" id="delIn">${label}</button>`); $('#delIn').onclick = fn }
