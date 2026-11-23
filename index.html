@@ -790,7 +790,9 @@ const mrow = (opts, sel) => `<div class="mrow"><select name="m" aria-label="メ�
 const openBooking = (cid, date) => S.bookings.filter(x => x.customer_id === cid && x.booked_on === date && x.status !== 'done').sort((a, c) => a.start_time.localeCompare(c.start_time))[0];
 function visitForm(cid, b, ev) {
   // カルテから記録するときも、今日の予約があればつなげる（メニュー・金額・担当を入れておき、保存で予約を来店済みにする）
-  const auto = !ev && !b; if (auto) b = openBooking(cid, T);
+  // 「今日」は開いたときの日付で決める（アプリを開いたまま日付が変わっても、その日の予約を見つけられるように）
+  const td = ymd(new Date());
+  const auto = !ev && !b; if (auto) b = openBooking(cid, td);
   const pre = ev ? (ev.visit_menus || []).slice().sort((a, c) => a.sort - c.sort).map(l => l.menu_name) : b ? (b.menu_names || []) : [];
   const opts = S.menus.filter(m => m.active).map(m => ({ name: m.name, price: +m.price }));
   (ev?.visit_menus || []).forEach(l => { if (!opts.some(o => o.name === l.menu_name)) opts.push({ name: l.menu_name, price: +l.list_price }) });
@@ -800,7 +802,7 @@ function visitForm(cid, b, ev) {
   let keep = ev ? photos(ev).slice() : [];
   const myStylist = ev ? ev.stylist_id : b ? b.stylist_id : (S.me.is_stylist ? S.me.id : '');
   open(`<h3>${ev ? '来店履歴を編集' : '施術を記録'}</h3>${!ev && b ? `<p class="hint bklink">${CAL_ICON}${jdate(b.booked_on)} ${hm(b.start_time)} の予約とつなげて記録します。保存すると、予約は「来店済み」になります。</p>` : ''}
-  <div class="two"><div><label for="v1">日付</label><input id="v1" name="date" type="date" value="${ev ? ev.visited_on : b ? b.booked_on : T}"></div>
+  <div class="two"><div><label for="v1">日付</label><input id="v1" name="date" type="date" value="${ev ? ev.visited_on : b ? b.booked_on : td}"></div>
   <div><label for="v1t">時間</label><input id="v1t" name="time" type="time" step="300" value="${ev ? hm(ev.visited_at) : b ? hm(b.start_time) : nowT()}"></div></div>
   <div class="two"><div><label for="vst">担当スタイリスト</label>${stylistSel('vst', myStylist)}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${(ev ? ev.nominated : b?.nominated) ? 'checked' : ''}> 指名あり</label></div></div>
   <label>メニュー</label><div id="mrows">${startNames.map(n => mrow(opts, opts.findIndex(o => o.name === n))).join('')}</div>
