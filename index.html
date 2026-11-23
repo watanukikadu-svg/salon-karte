@@ -183,6 +183,20 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .pk-row,.pk-sel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 2px;font:inherit;color:inherit;cursor:pointer}
 .pk-sel{border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:default}
 .pk-row .nm,.pk-sel .nm{font-weight:700}.pk-row .kn,.pk-sel .kn{font-size:13px;color:var(--sub)}.pk-row .last{font-size:12px;color:var(--sub)}
+.bhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.bhead h2{margin-right:auto}.seg{margin:0}
+.tlw{overflow-x:auto;margin:8px 0 12px;border:1px solid var(--line);border-radius:14px;-webkit-overflow-scrolling:touch}
+.tl{position:relative;font-size:12px}
+.tlh,.tlr{display:flex;border-bottom:1px solid var(--line)}.tlr:last-child{border-bottom:0}
+.tln{position:sticky;left:0;z-index:3;flex:none;width:76px;padding:8px 6px;background:var(--card);font-weight:700;font-size:13px;border-right:1px solid var(--line);overflow-wrap:anywhere}
+.tlt{position:relative;flex:none}
+.tlh{height:30px}.tlh .tln{padding:0}
+.tlh span{position:absolute;top:7px;padding-left:4px;color:var(--sub);font-size:12px}
+.tlt i{position:absolute;top:0;bottom:0;border-left:1px solid var(--line)}.tlt i.half{border-left-style:dashed;opacity:.6}
+.tlt .now{position:absolute;top:0;bottom:0;border-left:2px solid var(--acc);z-index:2}
+.tlb{position:absolute;height:38px;border-radius:8px;border:0;padding:2px 6px;text-align:left;font:inherit;font-size:12px;font-weight:700;line-height:1.25;color:#122326;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:1}
+.tlb small{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.tlb.c0{background:#fff08a}.tlb.c1{background:#cfe3f7}.tlb.c2{background:#efb1e3}.tlb.c3{background:#bfe8b0}.tlb.c4{background:#ffd3a8}.tlb.c5{background:#d9cff5}
+.tlb.done{opacity:.45}.tlb.on{outline:3px solid var(--acc);outline-offset:1px;z-index:2}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -266,6 +280,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v) } catch (e) {} };
 /* ===== 状態 ===== */
 const S = { salon: null, me: null, staff: [], menus: [], products: [], customers: [], visits: [], bookings: [] };
 const urlCache = {};
+let bview = lsGet('bview') === 'tl' ? 'tl' : 'list', tlSel = null;
 let tab = 'cust', day = T, calM = T.slice(0, 7), detail = null, month = T.slice(0, 7), undoFn = null, tt = null, lastLoad = 0, busy = false;
 let smode = 'month', syear = today.getFullYear(), sfrom = ymd(addDays(today, -29)), sto = T;
 
@@ -452,7 +467,7 @@ function bookView() {
     g += `<button data-day="${s}" aria-pressed="${s === day}" aria-label="${cm}月${i}日 予約${n}件" class="${n ? 'has' : ''} ${s < T ? 'past' : ''} ${s === T ? 'td' : ''}">${i}<i></i></button>`;
   }
   const list = S.bookings.filter(b => b.booked_on === day).sort((a, b) => a.start_time.localeCompare(b.start_time));
-  const items = list.map(b => {
+  const item = b => {
     const c = cust(b.customer_id), end = new Date(b.booked_on + 'T' + hm(b.start_time)); end.setMinutes(end.getMinutes() + (+b.duration_min || 60));
     return `<li><div class="t num">${hm(b.start_time)}<small>〜${pad(end.getHours())}:${pad(end.getMinutes())}</small></div>
     <div><div class="who">${avatar(c, 'av sm')}<span>${esc(c.name)} 様</span> ${c.allergy ? '<span class="tag warn">アレルギー</span>' : ''}</div>
@@ -460,12 +475,44 @@ function bookView() {
     ${b.stylist_id ? `<div class="menu">担当：${esc(staffName(b.stylist_id))}${b.nominated ? ' <span class="tag">指名</span>' : ''}</div>` : ''}
     </div><div class="row bkrow">${b.status === 'done' ? '<span class="tag done">来店済み・カルテ記録済み</span>' : `<button class="btn sm pri" data-done="${b.id}">来店完了</button><button class="btn sm" data-eb="${b.id}">変更</button>`}
     <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}">取消</button>` : ''}</div></li>`;
-  }).join('');
+  };
+  const items = list.map(item).join('');
+  const sel = bview === 'tl' && list.find(b => b.id === tlSel);
+  const body = !list.length ? '<div class="empty">この日の予約はまだありません</div>'
+    : bview === 'tl' ? timeline(list) + (sel ? `<ul class="book">${item(sel)}</ul>` : '<p class="hint">予約をタップすると、来店完了・変更などができます</p>')
+    : `<ul class="book" style="margin-top:0">${items}</ul>`;
   return `<div class="cal"><div class="calh"><button data-cal="-1" aria-label="前の月">‹</button><b>${cy}年${cm}月</b><button data-cal="1" aria-label="次の月">›</button></div>
   <div class="calg">${g}</div>${day !== T || calM !== T.slice(0, 7) ? '<button class="btn sm today" data-day="' + T + '">今日に戻る</button>' : ''}</div>
-  <h2>${jdate(day)} の予約 <span class="tag">${list.length}件</span></h2>
-  ${list.length ? `<ul class="book" style="margin-top:0">${items}</ul>` : '<div class="empty">この日の予約はまだありません</div>'}
+  <div class="bhead"><h2>${jdate(day)} の予約 <span class="tag">${list.length}件</span></h2>
+  <div class="sorts seg" role="group" aria-label="表示の切り替え">${[['list', 'リスト'], ['tl', 'タイムライン']].map(([k, l]) => `<button data-bview="${k}" aria-pressed="${bview === k}">${l}</button>`).join('')}</div></div>
+  ${body}
   <div class="row" style="margin-top:16px"><button class="btn pri wide" id="addB">＋ 予約を追加</button></div>`;
+}
+
+/* タイムライン：横が時間（30分ごと）、縦がスタッフ。重なる予約は同じスタッフの中で段を分ける */
+const toMin = t => +hm(t).slice(0, 2) * 60 + +hm(t).slice(3, 5);
+const TL_COLORS = 6;
+function timeline(list) {
+  const SLOT = 30, W = 58, NAME = 76, LANE = 46;
+  let s0 = 9 * 60, e0 = 19 * 60;
+  list.forEach(b => { const st = toMin(b.start_time), en = st + (+b.duration_min || 60); s0 = Math.min(s0, Math.floor(st / 60) * 60); e0 = Math.max(e0, Math.ceil(en / 60) * 60) });
+  const x = m => (m - s0) / SLOT * W, width = x(e0);
+  const ids = [...stylists().map(s => s.id), ...new Set(list.map(b => b.stylist_id || '').filter(id => id && !stylists().some(s => s.id === id)))];
+  if (list.some(b => !b.stylist_id)) ids.push('');
+  let head = ''; for (let m = s0; m < e0; m += SLOT) head += `<span class="num" style="left:${x(m)}px;width:${W}px">${Math.floor(m / 60)}:${pad(m % 60)}</span>`;
+  let grid = ''; for (let m = s0; m <= e0; m += SLOT) grid += `<i style="left:${x(m)}px" class="${m % 60 ? 'half' : ''}"></i>`;
+  const now = day === T ? (() => { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= s0 && m <= e0 ? `<b class="now" style="left:${x(m)}px"></b>` : '' })() : '';
+  const rows = ids.map(id => {
+    const bs = list.filter(b => (b.stylist_id || '') === id).sort((a, b) => a.start_time.localeCompare(b.start_time)), ends = [];
+    const blocks = bs.map(b => {
+      const st = toMin(b.start_time), en = st + (+b.duration_min || 60); let ln = ends.findIndex(e => e <= st); if (ln < 0) ln = ends.length; ends[ln] = en;
+      const c = cust(b.customer_id), col = [...b.customer_id].reduce((h, ch) => h + ch.charCodeAt(0), 0) % TL_COLORS;
+      return `<button class="tlb c${col} ${b.status === 'done' ? 'done' : ''} ${b.id === tlSel ? 'on' : ''}" data-tlsel="${b.id}" style="left:${x(st) + 1}px;width:${Math.max(x(en) - x(st) - 2, 24)}px;top:${ln * LANE + 4}px" aria-label="${esc(c.name)}様 ${hm(b.start_time)}から ${esc((b.menu_names || []).join('・'))}">${esc(c.name)}様 <small>${esc((b.menu_names || []).join('・'))}</small></button>`;
+    }).join('');
+    const h = Math.max(1, ends.length) * LANE + 8;
+    return `<div class="tlr" style="height:${h}px"><div class="tln">${esc(id ? staffName(id) : '担当なし')}</div><div class="tlt" style="width:${width}px">${grid}${blocks}${now}</div></div>`;
+  }).join('');
+  return `<div class="tlw"><div class="tl" style="width:${NAME + width}px"><div class="tlh"><div class="tln"></div><div class="tlt" style="width:${width}px">${head}</div></div>${rows}</div></div>`;
 }
 
 const ROWS = [['あ','あいうえおぁぃぅぇぉ'],['か','かきくけこがぎぐげご'],['さ','さしすせそざじずぜぞ'],['た','たちつてとだぢづでどっ'],['な','なにぬねの'],['は','はひふへほばびぶべぼぱぴぷぺぽ'],['ま','まみむめも'],['や','やゆよゃゅょ'],['ら','らりるれろ'],['わ','わをんゎ']];
@@ -836,6 +883,8 @@ $('#view').addEventListener('click', async e => {
     else if (d.day) { day = d.day; calM = day.slice(0, 7); render() }
     else if (d.cal) { const [y, m] = calM.split('-').map(Number), n = new Date(y, m - 1 + (+d.cal), 1); calM = n.getFullYear() + '-' + pad(n.getMonth() + 1); render() }
     else if (d.smode) { smode = d.smode; render() }
+    else if (d.bview) { bview = d.bview; lsSet('bview', bview); render() }
+    else if (d.tlsel) { tlSel = tlSel === d.tlsel ? null : d.tlsel; const sx = $('.tlw')?.scrollLeft; render(); if ($('.tlw')) $('.tlw').scrollLeft = sx }
     else if (d.yr) { syear += +d.yr; render() }
     else if (d.pre) { sfrom = d.pre === 'fy' ? today.getFullYear() + '-01-01' : ymd(addDays(today, 1 - (+d.pre))); sto = T; render() }
     else if (d.mon) { const [y, m] = month.split('-').map(Number), n = new Date(y, m - 1 + (+d.mon), 1); month = n.getFullYear() + '-' + pad(n.getMonth() + 1); render() }
