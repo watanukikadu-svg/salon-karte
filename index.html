@@ -17,7 +17,7 @@
 :root{color-scheme:light dark;
 --bg:light-dark(#ffffff,#0e1a1d);--card:light-dark(#f3f6f6,#16272b);--ink:light-dark(#122326,#e8f0f0);
 --sub:light-dark(#5b6d70,#9db1b4);--line:light-dark(#dfe7e8,#26393d);--deep:light-dark(#16343a,#0a1517);
---deepInk:#f2f7f7;--acc:#e0566a;--accSoft:light-dark(#fde8eb,#3a1f25);--ok:light-dark(#2f7d63,#6fcaa8)}
+--deepInk:#f2f7f7;--sel:light-dark(#16343a,#2c5961);--acc:#e0566a;--accSoft:light-dark(#fde8eb,#3a1f25);--ok:light-dark(#2f7d63,#6fcaa8)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
@@ -36,7 +36,7 @@ h2{font-size:20px;margin:18px 0 10px;line-height:1.2}
 .days button{flex:none;width:56px;min-height:64px;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer;display:grid;place-items:center;padding:6px 0;line-height:1.2}
 .days button small{font-size:13px;color:var(--sub)}
 .days button b{font:600 20px Outfit,sans-serif}
-.days button[aria-pressed=true]{background:var(--deep);border-color:var(--deep);color:var(--deepInk)}
+.days button[aria-pressed=true]{background:var(--sel);border-color:var(--sel);color:var(--deepInk)}
 .days button[aria-pressed=true] small{color:var(--deepInk);opacity:.8}
 .days button.has::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--acc)}
 .cal{background:var(--card);border-radius:18px;padding:10px 10px 12px}
@@ -49,7 +49,7 @@ h2{font-size:20px;margin:18px 0 10px;line-height:1.2}
 .calg button{min-height:44px;border:0;border-radius:12px;background:transparent;color:var(--ink);font:500 16px Outfit,sans-serif;cursor:pointer;display:grid;place-items:center;align-content:center;gap:2px;padding:0}
 .calg button.past{color:var(--sub);opacity:.6}
 .calg button.td{box-shadow:inset 0 0 0 2px var(--acc)}
-.calg button[aria-pressed=true]{background:var(--deep);color:var(--deepInk)}
+.calg button[aria-pressed=true]{background:var(--sel);color:var(--deepInk)}
 .calg button i{width:5px;height:5px;border-radius:50%;background:transparent}
 .calg button.has i{background:var(--acc)}
 .today{margin-top:8px;width:100%}
@@ -67,7 +67,7 @@ h2{font-size:20px;margin:18px 0 10px;line-height:1.2}
 .lb .cnt{color:#fff;font-size:14px}
 .sorts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .sorts button{min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
-.sorts button[aria-pressed=true]{background:var(--deep);border-color:var(--deep);color:var(--deepInk);font-weight:700}
+.sorts button[aria-pressed=true]{background:var(--sel);border-color:var(--sel);color:var(--deepInk);font-weight:700}
 .list .last b{font-weight:700;color:var(--ink)}.list .last b.soon{color:var(--acc)}
 .kana{display:flex;gap:6px;overflow-x:auto;margin:10px -16px 0;padding:2px 16px 6px;scroll-snap-type:x proximity;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .kana::-webkit-scrollbar{display:none}
@@ -123,7 +123,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .search{width:100%;min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:16px;padding:0 14px}
 .list{list-style:none;padding:0;margin:10px 0 0}
 .list li button{width:100%;text-align:start;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 4px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;cursor:pointer}
-.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--deep);color:var(--deepInk);font-weight:700}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--sel);color:var(--deepInk);font-weight:700}
 .list .nm{font-weight:700}.list .kn{font-size:13px;color:var(--sub)}
 .list .last{font-size:13px;color:var(--sub);text-align:end}
 .carte{background:var(--card);border-radius:18px;padding:16px;margin-top:6px}
@@ -501,7 +501,7 @@ function salesRange() {
   const ms = []; for (let i = 5; i >= 0; i--) { const d = new Date(y, m - 1 - i, 1); ms.push([d.getFullYear(), d.getMonth() + 1]) }
   return { from: month + '-01', to: month + '-' + pad(new Date(y, m, 0).getDate()), label: y + '年' + m + '月', ms };
 }
-const bars = (obj, cls = '') => { const e = Object.entries(obj).sort((a, b) => b[1] - a[1]), mx = Math.max(1, ...e.map(x => x[1])); return e.map(([k, n]) => `<div class="bar"><span>${esc(k)}</span><i class="${cls}" style="width:${n / mx * 100}%"></i><span class="num">${yen(n)}</span></div>`).join('') };
+const bars = (obj, cls = '', keepOrder = false) => { const e = keepOrder ? Object.entries(obj) : Object.entries(obj).sort((a, b) => b[1] - a[1]), mx = Math.max(1, ...e.map(x => x[1])); return e.map(([k, n]) => `<div class="bar"><span>${esc(k)}</span><i class="${cls}" style="width:${n / mx * 100}%"></i><span class="num">${yen(n)}</span></div>`).join('') };
 function salesView() {
   const R = salesRange(), vs = S.visits.filter(v => v.visited_on >= R.from && v.visited_on <= R.to);
   const ndays = Math.round((new Date(R.to) - new Date(R.from)) / 864e5) + 1;
@@ -511,7 +511,7 @@ function salesView() {
   const bySt = {}; vs.forEach(v => { const k = v.stylist_id || ''; const o = bySt[k] = bySt[k] || { amt: 0, n: 0, nom: 0 }; o.amt += (+v.price || 0) + retail(v); o.n++; if (v.nominated) o.nom++ });
   const stMax = Math.max(1, ...Object.values(bySt).map(o => o.amt));
   const multiY = new Set(R.ms.map(x => x[0])).size > 1;
-  const months = {}; R.ms.forEach(([yy, mm]) => { const k = yy + '-' + pad(mm); months[(multiY ? String(yy).slice(2) + '/' : '') + mm + '月'] = S.visits.filter(v => v.visited_on.startsWith(k) && v.visited_on >= R.from && v.visited_on <= R.to).reduce((s, v) => s + (+v.price || 0) + retail(v), 0) });
+  const months = {}; R.ms.forEach(([yy, mm]) => { const k = yy + '-' + pad(mm); months[(multiY ? String(yy).slice(2) + '/' : '') + mm + '月'] = S.visits.filter(v => v.visited_on.startsWith(k) && (smode !== 'custom' || (v.visited_on >= R.from && v.visited_on <= R.to))).reduce((s, v) => s + (+v.price || 0) + retail(v), 0) });
   const nav = smode === 'month' ? `<div class="month"><button class="btn sm" data-mon="-1">‹ 前月</button><b>${R.label}</b><button class="btn sm" data-mon="1">翌月 ›</button></div>`
     : smode === 'year' ? `<div class="month"><button class="btn sm" data-yr="-1">‹ 前年</button><b>${R.label}</b><button class="btn sm" data-yr="1">翌年 ›</button></div>`
     : `<div class="two rng"><div><label for="sf">開始日</label><input id="sf" type="date" value="${sfrom}"></div><div><label for="st">終了日</label><input id="st" type="date" value="${sto}"></div></div>
@@ -523,7 +523,7 @@ function salesView() {
   <h2>スタッフ別</h2><div class="bars">${Object.entries(bySt).sort((a, b) => b[1].amt - a[1].amt).map(([k, o]) => `<div class="bar st"><span>${esc(k ? staffName(k) : '担当なし')}<small>${o.n}件・指名${o.nom}</small></span><i style="width:${o.amt / stMax * 100}%"></i><span class="num">${yen(o.amt)}</span></div>`).join('') || '<div class="empty">この期間の記録はありません</div>'}</div>
   <h2>メニュー別</h2><div class="bars">${bars(byMenu) || '<div class="empty">この期間の記録はありません</div>'}</div>
   <h2>店販 商品別</h2><div class="bars">${bars(byProd) || '<div class="empty">この期間の店販はありません</div>'}</div>
-  <h2>${smode === 'month' ? '過去6か月' : '月別の推移'}</h2><div class="bars">${bars(months, 'dim').replace(/<div class="bar">/g, '<div class="bar">')}</div>`;
+  <h2>${smode === 'month' ? '過去6か月' : '月別の推移'}</h2><div class="bars">${bars(months, 'dim', true)}</div>`;
 }
 
 function adminView() {
