@@ -178,7 +178,8 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .carte.trial{background:var(--accSoft);margin-bottom:12px}.carte.trial p{margin:6px 0 12px;font-size:14px}
 .trialbar{display:block;width:100%;text-align:left;background:var(--accSoft);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;margin:0 0 12px;font:inherit;font-size:13px;cursor:pointer}
 .link.delink{display:block;margin:22px auto 4px;color:var(--acc)}
-.pk-list{margin-top:6px}.pk-h{margin-top:14px!important;font-weight:700}
+.pk-list{margin-top:6px}
+.bklink{display:flex;gap:6px;align-items:flex-start;background:var(--accSoft);border-radius:10px;padding:8px 10px;margin:4px 0 8px!important;color:var(--ink)!important}.bklink svg{flex:none;width:16px;height:16px;margin-top:2px;color:var(--acc)}.pk-h{margin-top:14px!important;font-weight:700}
 .mv{display:flex;gap:6px}.mv .btn{min-width:44px}.mv .btn:disabled{opacity:.3;cursor:default}
 .msel{position:relative}.msel select{width:100%;padding-right:96px}.msel .mp{position:absolute;right:36px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:15px;pointer-events:none}
 .bkb{display:flex;align-items:center;gap:4px;width:max-content;margin-top:4px;padding:2px 8px;border-radius:999px;background:var(--accSoft);color:var(--acc);font-size:12px;font-weight:700}.bkb svg{width:14px;height:14px}
@@ -757,7 +758,11 @@ function custPicker(id, except) {
 
 const prow = (pid, q0) => `<div class="prw"><select name="pid" aria-label="店販商品">${pid ? '' : '<option value="" selected disabled>商品を選ぶ</option>'}${S.products.filter(p => p.active || p.id === pid).map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${esc(p.name)}（${yen(p.price)}・在庫${p.stock}）</option>`).join('')}</select><input name="pq" type="number" inputmode="numeric" min="1" value="${q0 || 1}" aria-label="数"><button type="button" class="mx px" aria-label="この商品を外す">×</button></div>`;
 const mrow = (opts, sel) => `<div class="mrow"><select name="m" aria-label="メニュー">${opts.map((m, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${esc(m.name)}（${yen(m.price)}）</option>`).join('')}</select><button type="button" class="mx" aria-label="このメニューを外す">×</button></div>`;
+// その日のまだ来店していない予約（いちばん早い時間のもの）
+const openBooking = (cid, date) => S.bookings.filter(x => x.customer_id === cid && x.booked_on === date && x.status !== 'done').sort((a, c) => a.start_time.localeCompare(c.start_time))[0];
 function visitForm(cid, b, ev) {
+  // カルテから記録するときも、今日の予約があればつなげる（メニュー・金額・担当を入れておき、保存で予約を来店済みにする）
+  const auto = !ev && !b; if (auto) b = openBooking(cid, T);
   const pre = ev ? (ev.visit_menus || []).slice().sort((a, c) => a.sort - c.sort).map(l => l.menu_name) : b ? (b.menu_names || []) : [];
   const opts = S.menus.filter(m => m.active).map(m => ({ name: m.name, price: +m.price }));
   (ev?.visit_menus || []).forEach(l => { if (!opts.some(o => o.name === l.menu_name)) opts.push({ name: l.menu_name, price: +l.list_price }) });
@@ -766,7 +771,7 @@ function visitForm(cid, b, ev) {
   const startNames = pre.length ? pre : [opts[0].name];
   let keep = ev ? photos(ev).slice() : [];
   const myStylist = ev ? ev.stylist_id : b ? b.stylist_id : (S.me.is_stylist ? S.me.id : '');
-  open(`<h3>${ev ? '来店履歴を編集' : '施術を記録'}</h3>
+  open(`<h3>${ev ? '来店履歴を編集' : '施術を記録'}</h3>${!ev && b ? `<p class="hint bklink">${CAL_ICON}${jdate(b.booked_on)} ${hm(b.start_time)} の予約とつなげて記録します。保存すると、予約は「来店済み」になります。</p>` : ''}
   <div class="two"><div><label for="v1">日付</label><input id="v1" name="date" type="date" value="${ev ? ev.visited_on : b ? b.booked_on : T}"></div>
   <div><label for="v1t">時間</label><input id="v1t" name="time" type="time" step="300" value="${ev ? hm(ev.visited_at) : b ? hm(b.start_time) : nowT()}"></div></div>
   <div class="two"><div><label for="vst">担当スタイリスト</label>${stylistSel('vst', myStylist)}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${(ev ? ev.nominated : b?.nominated) ? 'checked' : ''}> 指名あり</label></div></div>
@@ -806,7 +811,9 @@ function visitForm(cid, b, ev) {
     const pids = [...new Set([...Object.keys(items), ...(ev?.visit_items || []).map(x => x.product_id).filter(Boolean)])];
     if (pids.length) { const ps = await q(sb.from('products').select('id, stock').in('id', pids)); ps.forEach(p => { const x = S.products.find(y => y.id === p.id); if (x) x.stock = p.stock }) }
     if (ev) Object.assign(ev, row); else S.visits.push(row);
-    if (b) { const br = await q(sb.from('bookings').update({ status: 'done', visit_id: vid }).eq('id', b.id).select().single()); Object.assign(b, br) }
+    // 日付を変えて保存したときは、その日の予約につなげ直す
+    const link = ev ? null : !auto ? b : (b && b.booked_on === o.visited_on ? b : openBooking(cid, o.visited_on));
+    if (link) { const br = await q(sb.from('bookings').update({ status: 'done', visit_id: vid }).eq('id', link.id).select().single()); Object.assign(link, br) }
     toast(ev ? '来店履歴を更新しました' : 'カルテに記録しました' + (added.length ? '（写真' + added.length + '枚）' : ''));
   });
   let touched = !!ev;
