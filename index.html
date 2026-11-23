@@ -203,6 +203,12 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .swb{position:fixed;left:0;top:50%;z-index:50;width:40px;height:40px;margin-top:-20px;border-radius:50%;background:var(--deep);color:#fff;display:grid;place-items:center;font-size:24px;line-height:1;opacity:0;transform:translateX(-40px);pointer-events:none;transition:opacity .15s,background .15s}
 .swb.on{opacity:.85;transition:opacity .15s}.swb.go{background:var(--acc);opacity:1}
 .lcard a,.hint a{color:var(--acc)}
+.sec{border:1px solid var(--line);border-radius:18px;padding:6px 16px 14px;margin:0 0 16px;background:var(--bg);box-shadow:0 1px 3px rgb(0 0 0/.05)}
+.sech{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 -16px 4px;padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+.sech h2{margin:0;font-size:18px}.sech .row{margin:0;gap:6px}
+.sec .adm{margin:0}.sec .adm li:last-child{border-bottom:0}
+.btn.add{color:var(--acc);border-color:var(--acc);font-weight:700}
+.acc{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:6px 10px;margin:12px 0 4px;font-size:15px}.acc dt{color:var(--sub)}.acc dd{margin:0;overflow-wrap:anywhere}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -613,19 +619,22 @@ function adminView() {
   const pl = S.products.map(p => `<li><span><b>${esc(p.name)}</b><br><small class="${p.stock <= 2 ? 'low' : ''}">在庫 ${p.stock}${p.stock <= 2 ? '（残りわずか）' : ''}</small></span><span class="num">${yen(p.price)}</span>${em ? `<button class="btn sm" data-ep="${p.id}">編集</button>` : '<span></span>'}</li>`).join('');
   const PL = { view_sales: '売上', edit_master: 'メニュー・店販', delete_customers: '顧客削除', manage_staff: 'スタッフ管理' };
   const sl = S.staff.map(s => `<li><span><b>${esc(s.display_name)}</b>${s.role === 'owner' ? ' <span class="tag">オーナー</span>' : ''}${!s.active ? ' <span class="tag warn">停止中</span>' : ''}<br><small>ID：${esc(s.login_id)}${s.role !== 'owner' ? '・' + (Object.keys(PL).filter(k => s['can_' + k]).map(k => PL[k]).join('・') || '基本のみ') : ''}</small></span><span></span>${can('manage_staff') && (s.role !== 'owner' || S.me.role === 'owner') ? `<button class="btn sm" data-es="${s.id}">設定</button>` : '<span></span>'}</li>`).join('');
-  return `<div class="bhead"><h2>サロンメニュー</h2>${em && S.menus.length > 1 ? `<button class="btn sm${sorting ? ' pri' : ''}" id="menuSort">${sorting ? '完了' : '並び替え'}</button>` : ''}</div><ul class="adm">${ml || '<li class="empty">メニューがありません</li>'}</ul>
-  ${em && !sorting ? '<button class="btn pri wide" id="addM">＋ メニューを追加</button>' : ''}${sorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。予約や施術記録のメニューもこの順番で並びます。</p>' : ''}
-  <h2 style="margin-top:28px">店販商品</h2><ul class="adm">${pl || '<li class="empty">商品がありません</li>'}</ul>
-  ${em ? '<button class="btn pri wide" id="addP">＋ 店販商品を追加</button>' : '<p class="hint">メニュー・店販の編集はオーナーか権限のある人ができます</p>'}
-  <h2 style="margin-top:28px">スタッフ</h2><ul class="adm">${sl}</ul>
-  ${can('manage_staff') ? '<button class="btn pri wide" id="addS">＋ スタッフを追加</button>' : ''}
-  <h2 style="margin-top:28px">アカウント</h2>
+  const head = (title, n, btns) => `<div class="sech"><h2>${title}${n != null ? ` <span class="tag">${n}</span>` : ''}</h2><div class="row">${btns}</div></div>`;
+  return `<section class="sec">${head('サロンメニュー', S.menus.length, (em && S.menus.length > 1 ? `<button class="btn sm${sorting ? ' pri' : ''}" id="menuSort">${sorting ? '完了' : '並び替え'}</button>` : '') + (em && !sorting ? '<button class="btn sm add" id="addM">＋ 追加</button>' : ''))}
+  <ul class="adm">${ml || '<li class="empty">メニューがありません</li>'}</ul>
+  ${sorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。予約や施術記録のメニューもこの順番で並びます。</p>' : ''}</section>
+  <section class="sec">${head('店販商品', S.products.length, em ? '<button class="btn sm add" id="addP">＋ 追加</button>' : '')}
+  <ul class="adm">${pl || '<li class="empty">商品がありません</li>'}</ul>
+  ${em ? '' : '<p class="hint">メニュー・店販の編集はオーナーか権限のある人ができます</p>'}</section>
+  <section class="sec">${head('スタッフ', S.staff.length, can('manage_staff') ? '<button class="btn sm add" id="addS">＋ 追加</button>' : '')}
+  <ul class="adm">${sl}</ul></section>
+  <section class="sec">${head('アカウント', null, '')}
   ${S.trial ? `<div class="carte trial"><b>お試し中（登録なし）</b>
     <p>${mdj(trialEnd())}まで登録なしで使えます。お店コードとパスワードを登録すると、<b>スタッフの追加</b>や<b>別のスマホ・パソコン</b>からも使えるようになります。データはそのまま引き継がれます。</p>
     <button class="btn pri wide" id="regBtn">お店を登録する</button></div>` : ''}
-  <div class="carte"><dl><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd></dl>
+  <dl class="acc"><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd></dl>
   <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button></div>
-  <div class="row"><button class="btn sm" id="relogin">${S.trial ? 'ログイン（登録済みのお店）' : '別のお店・アカウントでログイン'}</button><button class="btn sm danger" id="logout">ログアウト</button></div></div>
+  <div class="row"><button class="btn sm" id="relogin">${S.trial ? 'ログイン（登録済みのお店）' : '別のお店・アカウントでログイン'}</button><button class="btn sm danger" id="logout">ログアウト</button></div></section>
   <p style="text-align:center;margin:18px 0 0"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
   <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを消去する' : '自分のアカウントを消去する'}</button>`;
 }
