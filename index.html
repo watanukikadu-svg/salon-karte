@@ -183,9 +183,9 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
       <button class="link" type="button" id="toLogin">登録済みの方はこちら（ログイン）</button>
     </div>
     <form id="loginForm" autocomplete="on">
-      <h1>サロンカルテ</h1><p class="s">お店コード・スタッフID・パスワードでログイン</p>
+      <h1>サロンカルテ</h1><p class="s">お店コードとパスワードでログイン</p>
       <label for="lcode">お店コード</label><input id="lcode" autocapitalize="off" autocomplete="organization" required>
-      <label for="lid">スタッフID</label><input id="lid" autocapitalize="off" autocomplete="username" required>
+      <label for="lid">スタッフID <small>（オーナーは空欄でOK）</small></label><input id="lid" autocapitalize="off" autocomplete="username" placeholder="スタッフの方だけ入力">
       <label for="lpw">パスワード</label><input id="lpw" type="password" autocomplete="current-password" required>
       <button class="btn pri wide" type="submit" style="margin-top:18px">ログイン</button>
       <p class="lmsg" id="lmsg"></p>
@@ -198,7 +198,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
       <label for="an">お店の名前</label><input id="an" name="salon_name" required>
       <label for="ac">お店コード（ログイン用・英小文字と数字）</label><input id="ac" name="salon_code" autocapitalize="off" required placeholder="例：nuki-salon">
       <label for="aop">オーナーのパスワード（8文字以上）</label><input id="aop" name="owner_password" type="password" minlength="8" required autocomplete="new-password">
-      <p class="s" style="margin-top:10px">オーナーのスタッフIDは「owner」になります。名前はログイン後に「管理」から変えられます。</p>
+      <p class="s" style="margin-top:10px">オーナーは「お店コード＋パスワード」だけでログインできます。名前はログイン後に「管理」から変えられます。</p>
       <button class="btn pri wide" type="submit" style="margin-top:18px">お店を作る</button>
       <p class="lmsg" id="amsg"></p>
       <button class="link" type="button" id="backLogin">‹ ログインに戻る</button>
@@ -339,11 +339,11 @@ function showLogin(msg) {
 }
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault(); if (busy) return; busy = true;
-  const code = $('#lcode').value.trim().toLowerCase(), id = $('#lid').value.trim().toLowerCase(), pw = $('#lpw').value;
+  const code = $('#lcode').value.trim().toLowerCase(), id = $('#lid').value.trim().toLowerCase() || 'owner', pw = $('#lpw').value;
   $('#lmsg').textContent = 'ログインしています…';
   const { error } = await sb.auth.signInWithPassword({ email: loginEmail(code, id), password: pw });
   busy = false;
-  if (error) { $('#lmsg').textContent = 'お店コード・スタッフID・パスワードのどれかが違います'; return }
+  if (error) { $('#lmsg').textContent = 'お店コードかパスワードが違います'; return }
   lsSet('salon-code', code); $('#lpw').value = ''; tab = 'cust'; detail = null; loadAll();
 });
 $('#toAdmin').addEventListener('click', () => { $('#loginForm').hidden = true; $('#admin').hidden = false });
@@ -379,7 +379,7 @@ $('#admin').addEventListener('submit', async e => {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { $('#amsg').textContent = j.error || ('作れませんでした（' + r.status + '）'); }
     else {
-      $('#lcode').value = f.salon_code.trim().toLowerCase(); $('#lid').value = 'owner'; $('#lpw').value = '';
+      $('#lcode').value = f.salon_code.trim().toLowerCase(); $('#lid').value = ''; $('#lpw').value = '';
       e.target.reset(); delete $('#ac').dataset.touched; $('#amsg').textContent = '';
       $('#admin').hidden = true; $('#loginForm').hidden = false;
       $('#lmsg').textContent = 'お店を作りました！パスワードを入れてログインしてください'; $('#lpw').focus();
@@ -796,14 +796,14 @@ $('#view').addEventListener('click', async e => {
 function regForm(why) {
   const auto = /[a-z0-9]/i.test(S.salon.name) ? S.salon.name.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) : '';
   open(`<h3>お店を登録する</h3>${why ? `<p class="hint">${esc(why)}</p>` : ''}
-  <p class="hint">これまでのデータはそのまま使えます。次からは「お店コード・スタッフID（owner）・パスワード」でログインします。</p>
+  <p class="hint">これまでのデータはそのまま使えます。次からは「お店コード」と「パスワード」でログインします。</p>
   <label for="r1">お店の名前</label><input id="r1" name="name" required value="${esc(S.salon.name === 'マイサロン' ? '' : S.salon.name)}" placeholder="例：STAYGOLD">
   <label for="r2">お店コード（ログイン用・英小文字と数字）</label><input id="r2" name="code" required autocapitalize="off" pattern="[a-z0-9\\-]{3,30}" value="${esc(auto)}" placeholder="例：staygold">
   <label for="r3">パスワード（8文字以上）</label><input id="r3" name="pw" type="password" minlength="8" required autocomplete="new-password">`, async fd => {
     const code = fd.get('code').trim().toLowerCase();
     const r = await staffAdmin({ action: 'register', salon_name: fd.get('name').trim(), salon_code: code, password: fd.get('pw') }).catch(e => { throw userErr(e.message) });
     await sb.auth.refreshSession(); lsSet('salon-code', r.salon_code); await loadAll();
-    toast(`登録しました！ログインは お店コード「${r.salon_code}」・ID「${r.login_id}」です`);
+    toast(`登録しました！次からは お店コード「${r.salon_code}」とパスワードでログインできます`);
   }, '登録する');
   const n = $('#r1'), c = $('#r2'); n.oninput = () => { if (c.dataset.touched) return; c.value = n.value.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) }; c.oninput = () => { c.dataset.touched = '1' };
 }
