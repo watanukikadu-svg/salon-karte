@@ -617,7 +617,8 @@ function adminView() {
     <p>${mdj(trialEnd())}まで登録なしで使えます。お店コードとパスワードを登録すると、<b>スタッフの追加</b>や<b>別のスマホ・パソコン</b>からも使えるようになります。データはそのまま引き継がれます。</p>
     <button class="btn pri wide" id="regBtn">お店を登録する</button></div>` : ''}
   <div class="carte"><dl><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd></dl>
-  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button>${S.trial ? '' : '<button class="btn sm danger" id="logout">ログアウト</button>'}</div></div>
+  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button></div>
+  <div class="row"><button class="btn sm" id="relogin">${S.trial ? 'ログイン（登録済みのお店）' : '別のお店・アカウントでログイン'}</button><button class="btn sm danger" id="logout">ログアウト</button></div></div>
   <p style="text-align:center;margin:18px 0 0"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
   <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを消去する' : '自分のアカウントを消去する'}</button>`;
 }
@@ -924,10 +925,27 @@ $('#view').addEventListener('click', async e => {
     else if (t.id === 'editSalon') open(`<h3>お店の名前</h3><label for="sn">お店の名前</label><input id="sn" name="name" required value="${esc(S.salon.name)}">`, async fd => { Object.assign(S.salon, await q(sb.from('salons').update({ name: fd.get('name').trim() }).eq('id', S.salon.id).select().single())); toast('保存しました') });
     else if (t.id === 'myPw') open(`<h3>パスワードを変更</h3><label for="mp">新しいパスワード（8文字以上）</label><input id="mp" name="pw" type="password" minlength="8" required autocomplete="new-password"><label for="mp2">もう一度</label><input id="mp2" name="pw2" type="password" minlength="8" required autocomplete="new-password">`, async fd => { if (fd.get('pw') !== fd.get('pw2')) throw userErr('2つのパスワードが違います'); const { error } = await sb.auth.updateUser({ password: fd.get('pw') }); if (error) throw userErr('変更できませんでした'); toast('パスワードを変更しました') }, '変更する');
     else if (t.id === 'reload') { await loadAll(); toast('最新の状態にしました') }
-    else if (t.id === 'logout') { await sb.auth.signOut(); Object.assign(S, { me: null }); showLogin() }
+    else if (t.id === 'logout') leave(S.trial ? 'start' : 'login');
+    else if (t.id === 'relogin') leave('login');
   } catch (err) { /* 失敗はトーストで表示済み */ }
 });
 // アカウント削除（ストアの決まりで、アプリの中から消せる必要がある）
+// ログアウトして、はじめる画面（start）かログイン画面（login）へ。
+// お試し中は、登録しないと二度とそのお店に入れないので、先に確かめる
+async function leave(to) {
+  const go = async () => {
+    close(); Object.assign(S, { me: null }); await sb.auth.signOut();
+    showLogin(); $('#start').hidden = to !== 'start'; $('#loginForm').hidden = to !== 'login';
+    if (to === 'login') { $('#lid').value = ''; $('#lpw').value = ''; $('#lcode').focus() }
+  };
+  if (!S.trial) return go();
+  open(`<h3>${to === 'login' ? 'ログイン' : 'ログアウト'}する前に</h3>
+  <p><b>このお店はまだ登録していません。</b>このままログアウトすると、今のお店（お客様 ${S.customers.length}人・来店記録 ${S.visits.length}件）には<b>二度と入れなくなります</b>。</p>
+  <p class="hint">続けて使う場合は、先に「お店を登録する」をしてください。データはそのまま引き継がれます。</p>
+  <div class="row" style="margin-top:12px"><button class="btn pri wide" type="button" id="lvReg">先にお店を登録する</button></div>`, async () => { await go(); return false }, 'それでもログアウト');
+  $('#form [type=submit]').classList.add('dangerbtn');
+  $('#lvReg').onclick = () => { close(); regForm() };
+}
 function delAccForm() {
   const owner = S.me.role === 'owner';
   open(`<h3>${owner ? 'お店とアカウントを消去' : '自分のアカウントを消去'}</h3>
