@@ -1,0 +1,16 @@
+{
+  "name": "サロンカルテ",
+  "short_name": "サロンカルテ",
+  "description": "顧客カルテ・予約・売上をスマホひとつで",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#16343a",
+  "theme_color": "#16343a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

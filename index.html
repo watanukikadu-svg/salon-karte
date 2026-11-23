@@ -2,8 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16343a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="サロンカルテ">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>サロンカルテ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Outfit:wght@500;600&display=swap" rel="stylesheet">
@@ -22,7 +29,7 @@
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
 .num{font-family:Outfit,"Zen Kaku Gothic New",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
-header{position:sticky;top:0;z-index:5;background:var(--deep);color:var(--deepInk);padding:14px max(4vw,16px) 12px}
+header{position:sticky;top:0;z-index:5;background:var(--deep);color:var(--deepInk);padding:calc(14px + env(safe-area-inset-top)) max(4vw,16px) 12px}
 header h1{margin:0;font-size:22px;line-height:1.2;font-weight:700}
 header p{margin:2px 0 0;font-size:13px;opacity:.75}
 main{max-width:640px;margin:0 auto;padding:16px max(4vw,16px) 110px}
@@ -166,6 +173,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .lmsg{min-height:1.5em;color:var(--acc);font-weight:700;font-size:14px;margin:10px 0 0}
 .carte.trial{background:var(--accSoft);margin-bottom:12px}.carte.trial p{margin:6px 0 12px;font-size:14px}
 .trialbar{display:block;width:100%;text-align:left;background:var(--accSoft);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;margin:0 0 12px;font:inherit;font-size:13px;cursor:pointer}
+.link.delink{display:block;margin:22px auto 4px;color:var(--acc)}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -485,13 +493,13 @@ function detailView() {
   <dl><dt>電話</dt><dd class="num">${esc(c.tel) || '—'}</dd><dt>誕生日</dt><dd>${bd}</dd>
   <dt>髪質</dt><dd>${esc(c.hair) || '—'}</dd><dt>メモ</dt><dd>${esc(c.memo) || '—'}</dd>
   <dt>来店回数</dt><dd><span class="num">${vs.length}</span> 回</dd><dt>累計</dt><dd class="num">${yen(total)}</dd></dl>
-  <div class="row"><button class="btn sm" id="editC">カルテを編集</button><button class="btn sm" id="bookC">予約を入れる</button>${can('delete_customers') ? '<button class="btn sm danger" id="delC">顧客を削除</button>' : ''}</div></div>
+  <div class="row"><button class="btn sm" id="editC">カルテを編集</button><button class="btn sm" id="bookC">予約を入れる</button></div></div>
   <h2>来店履歴</h2>
   <button class="btn pri wide" id="addV">＋ 施術を記録</button>
   ${vs.map(v => { const ps = photos(v); return `<div class="visit"><div><div class="d">${jdate(v.visited_on)}${v.visited_at ? ' <span class="num">' + hm(v.visited_at) + '</span>' : ''}${v.stylist_id ? '・担当 ' + esc(staffName(v.stylist_id)) + (v.nominated ? '（指名）' : '') : ''}</div><b>${esc(menuStr(v))}</b></div>
   <div class="p num">${yen(v.price)}</div>${(v.visit_items || []).length ? `<div class="m">店販：${v.visit_items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(retail(v))}</span>）</div>` : ''}${v.chem ? `<div class="m">薬剤：${esc(v.chem)}</div>` : ''}${v.memo ? `<div class="m">${esc(v.memo)}</div>` : ''}
   ${ps.length ? `<div class="pics">${ps.map((p, i) => `<button data-pic="${v.id}:${i}" aria-label="写真${i + 1}を拡大"><img src="${img(p.path)}" alt=""></button>`).join('')}</div>` : ''}
-  <div class="row" style="grid-column:1/-1;margin:0"><button class="btn sm" data-ev="${v.id}">編集</button><button class="btn sm danger" data-delv="${v.id}">削除</button></div></div>` }).join('') || '<div class="empty">まだ記録がありません</div>'}`;
+  <div class="row" style="grid-column:1/-1;margin:0"><button class="btn sm" data-ev="${v.id}">編集</button></div></div>` }).join('') || '<div class="empty">まだ記録がありません</div>'}`;
 }
 
 function salesRange() {
@@ -505,6 +513,7 @@ const bars = (obj, cls = '', keepOrder = false) => { const e = keepOrder ? Objec
 function salesView() {
   const R = salesRange(), vs = S.visits.filter(v => v.visited_on >= R.from && v.visited_on <= R.to);
   const ndays = Math.round((new Date(R.to) - new Date(R.from)) / 864e5) + 1;
+  const sofar = Math.max(1, Math.round((new Date(R.to < T ? R.to : T) - new Date(R.from)) / 864e5) + 1); // 1日平均は今日までの日数で割る
   const tech = vs.reduce((s, v) => s + (+v.price || 0), 0), ret = vs.reduce((s, v) => s + retail(v), 0), total = tech + ret, people = new Set(vs.map(v => v.customer_id)).size;
   const byMenu = {}; vs.forEach(v => { const ls = (v.visit_menus || []).length ? v.visit_menus : [{ menu_name: '（メニューなし）', list_price: +v.price }], t = ls.reduce((s, l) => s + l.list_price, 0), k = t ? (+v.price || 0) / t : 0; ls.forEach(l => byMenu[l.menu_name] = (byMenu[l.menu_name] || 0) + (t ? l.list_price * k : (+v.price || 0) / ls.length)) });
   const byProd = {}; vs.forEach(v => (v.visit_items || []).forEach(x => byProd[x.name] = (byProd[x.name] || 0) + x.price * x.qty));
@@ -519,7 +528,7 @@ function salesView() {
   return `<div class="sorts" style="margin:0 0 12px" role="group" aria-label="表示範囲">${[['month', '月'], ['year', '年'], ['custom', '期間を指定']].map(([k, l]) => `<button data-smode="${k}" aria-pressed="${smode === k}">${l}</button>`).join('')}</div>${nav}
   <div class="big"><div class="l">${smode === 'month' ? '月の売上' : smode === 'year' ? '年間の売上' : esc(R.label) + '（' + ndays + '日間）の売上'}（施術＋店販）</div><div class="v num">${yen(total)}</div>
   <div class="kpis"><div><span class="l">施術売上</span><b class="num">${yen(tech)}</b></div><div><span class="l">店販売上</span><b class="num">${yen(ret)}</b></div><div><span class="l">来店件数</span><b>${vs.length}件</b></div><div><span class="l">客単価</span><b class="num">${yen(vs.length ? total / vs.length : 0)}</b></div>
-  <div><span class="l">来店人数</span><b>${people}人</b></div><div><span class="l">1日平均</span><b class="num">${yen(total / ndays)}</b></div></div></div>
+  <div><span class="l">来店人数</span><b>${people}人</b></div><div><span class="l">1日平均</span><b class="num">${yen(total / sofar)}</b></div></div></div>
   <h2>スタッフ別</h2><div class="bars">${Object.entries(bySt).sort((a, b) => b[1].amt - a[1].amt).map(([k, o]) => `<div class="bar st"><span>${esc(k ? staffName(k) : '担当なし')}<small>${o.n}件・指名${o.nom}</small></span><i style="width:${o.amt / stMax * 100}%"></i><span class="num">${yen(o.amt)}</span></div>`).join('') || '<div class="empty">この期間の記録はありません</div>'}</div>
   <h2>メニュー別</h2><div class="bars">${bars(byMenu) || '<div class="empty">この期間の記録はありません</div>'}</div>
   <h2>店販 商品別</h2><div class="bars">${bars(byProd) || '<div class="empty">この期間の店販はありません</div>'}</div>
@@ -584,6 +593,7 @@ function custForm(c) {
     if (old && 'face_path' in o && o.face_path !== old) sb.storage.from(BUCKET).remove([old]);
     toast('保存しました');
   });
+  if (c.id && can('delete_customers')) addDelete('このお客様を削除する', delCust);
   $('#f8').addEventListener('change', e => { const f = e.target.files[0]; if (f) $('#fprev').innerHTML = `<span class="av big2"><img src="${URL.createObjectURL(f)}" alt=""></span>` });
 }
 
@@ -677,6 +687,7 @@ function visitForm(cid, b, ev) {
   upd();
   const room = () => MAXP - keep.length;
   const drawK = () => { if (!ev) return; $('#pk').innerHTML = keep.map((p, i) => `<div class="pk"><img src="${img(p.path)}" alt=""><button type="button" data-k="${i}" aria-label="この写真を外す">×</button></div>`).join(''); $('#v6').hidden = room() <= 0; $('#pvw').textContent = room() <= 0 ? '写真は上限の' + MAXP + '枚です' : '' };
+  if (ev) addDelete('この来店履歴を削除する', () => delVisit(ev.id));
   if (ev) { drawK(); $('#pk').addEventListener('click', e => { const k = e.target.dataset.k; if (k !== undefined) { keep.splice(+k, 1); drawK() } }) }
   $('#v6').addEventListener('change', e => { const fs = [...e.target.files]; $('#pv').innerHTML = fs.slice(0, room()).map(f => `<img src="${URL.createObjectURL(f)}" alt="">`).join(''); $('#pvw').textContent = fs.length > room() ? fs.length + '枚選ばれています。あと' + room() + '枚まで保存します' : '' });
 }
@@ -772,7 +783,7 @@ $('#view').addEventListener('click', async e => {
     else if (d.pic) { const [vid, i] = d.pic.split(':'); const v = S.visits.find(x => x.id === vid); const ps = photos(v); lb(ps.map(p => p.path), +i, async k => { const p = ps[k]; await q(sb.from('visit_photos').delete().eq('id', p.id)); sb.storage.from(BUCKET).remove([p.path]); v.visit_photos = v.visit_photos.filter(x => x.id !== p.id); toast('写真を削除しました') }) }
     else if (d.face) { const c = cust(detail); lb([c.face_path], 0, async () => { const old = c.face_path; await q(sb.from('customers').update({ face_path: null }).eq('id', c.id)); c.face_path = null; sb.storage.from(BUCKET).remove([old]); toast('顔写真を外しました') }) }
     else if (d.delb) { const b = S.bookings.find(x => x.id === d.delb); await q(sb.from('bookings').update({ status: 'cancelled' }).eq('id', b.id)); S.bookings = S.bookings.filter(x => x !== b); render(); toast('予約を取り消しました', async () => { await q(sb.from('bookings').update({ status: 'booked' }).eq('id', b.id)); b.status = 'booked'; S.bookings.push(b) }) }
-    else if (d.delv) { confirmBox('この来店履歴を削除しますか？写真も消えます。', async () => { const v = S.visits.find(x => x.id === d.delv); await q(sb.from('visits').delete().eq('id', v.id)); const ps = photos(v).map(p => p.path); if (ps.length) sb.storage.from(BUCKET).remove(ps); S.visits = S.visits.filter(x => x !== v); await loadAll(); toast('来店履歴を削除しました') }) }
+
     else if (d.em) menuForm(S.menus.find(x => x.id === d.em));
     else if (d.ep) prodForm(S.products.find(x => x.id === d.ep));
     else if (d.es) staffForm(S.staff.find(x => x.id === d.es));
@@ -786,7 +797,7 @@ $('#view').addEventListener('click', async e => {
     else if (t.id === 'editC') custForm(cust(detail));
     else if (t.id === 'bookC') bookForm(detail);
     else if (t.id === 'addV') visitForm(detail);
-    else if (t.id === 'delC') { const c = cust(detail); confirmBox(`${c.name} 様のカルテと来店履歴・写真をすべて削除しますか？元に戻せません。`, async () => { const paths = [c.face_path, ...S.visits.filter(v => v.customer_id === c.id).flatMap(v => photos(v).map(p => p.path))].filter(Boolean); await q(sb.from('customers').delete().eq('id', c.id)); if (paths.length) sb.storage.from(BUCKET).remove(paths); detail = null; await loadAll(); toast('削除しました') }) }
+
     else if (t.id === 'editSalon') open(`<h3>お店の名前</h3><label for="sn">お店の名前</label><input id="sn" name="name" required value="${esc(S.salon.name)}">`, async fd => { Object.assign(S.salon, await q(sb.from('salons').update({ name: fd.get('name').trim() }).eq('id', S.salon.id).select().single())); toast('保存しました') });
     else if (t.id === 'myPw') open(`<h3>パスワードを変更</h3><label for="mp">新しいパスワード（8文字以上）</label><input id="mp" name="pw" type="password" minlength="8" required autocomplete="new-password"><label for="mp2">もう一度</label><input id="mp2" name="pw2" type="password" minlength="8" required autocomplete="new-password">`, async fd => { if (fd.get('pw') !== fd.get('pw2')) throw userErr('2つのパスワードが違います'); const { error } = await sb.auth.updateUser({ password: fd.get('pw') }); if (error) throw userErr('変更できませんでした'); toast('パスワードを変更しました') }, '変更する');
     else if (t.id === 'reload') { await loadAll(); toast('最新の状態にしました') }
@@ -807,6 +818,10 @@ function regForm(why) {
   }, '登録する');
   const n = $('#r1'), c = $('#r2'); n.oninput = () => { if (c.dataset.touched) return; c.value = n.value.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) }; c.oninput = () => { c.dataset.touched = '1' };
 }
+function delVisit(id) { confirmBox('この来店履歴を削除しますか？写真も消えます。', async () => { const v = S.visits.find(x => x.id === id); await q(sb.from('visits').delete().eq('id', v.id)); const ps = photos(v).map(p => p.path); if (ps.length) sb.storage.from(BUCKET).remove(ps); S.visits = S.visits.filter(x => x !== v); await loadAll(); toast('来店履歴を削除しました') }) }
+function delCust() { const c = cust(detail); confirmBox(`${c.name} 様のカルテと来店履歴・写真をすべて削除しますか？元に戻せません。`, async () => { const paths = [c.face_path, ...S.visits.filter(v => v.customer_id === c.id).flatMap(v => photos(v).map(p => p.path))].filter(Boolean); await q(sb.from('customers').delete().eq('id', c.id)); if (paths.length) sb.storage.from(BUCKET).remove(paths); detail = null; await loadAll(); toast('削除しました') }) }
+// 入力シートの一番下に、目立たない削除ボタンを足す
+function addDelete(label, fn) { $('#form').insertAdjacentHTML('beforeend', `<button type="button" class="link danger delink" id="delIn">${label}</button>`); $('#delIn').onclick = fn }
 function confirmBox(msg, ok) { open(`<h3>確認</h3><p>${esc(msg)}</p>`, async () => { await ok(); }, '削除する'); const b = $('#form [type=submit]'); b.classList.add('dangerbtn') }
 
 /* ===== 起動 ===== */
