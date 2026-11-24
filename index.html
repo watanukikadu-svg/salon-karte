@@ -568,9 +568,10 @@ function detailView() {
   <dl><dt>電話</dt><dd class="num">${esc(c.tel) || '—'}</dd><dt>誕生日</dt><dd>${bd}</dd>
   <dt>髪質</dt><dd>${esc(c.hair) || '—'}</dd><dt>メモ</dt><dd>${esc(c.memo) || '—'}</dd>
   <dt>来店回数</dt><dd><span class="num">${vs.length}</span> 回</dd><dt>累計</dt><dd class="num">${yen(total)}</dd></dl>
-  <div class="row"><button class="btn sm" id="editC">カルテを編集</button><button class="btn sm" id="bookC">予約を入れる</button></div></div>
-  <h2>来店履歴</h2>
-  <button class="btn pri wide" id="addV">＋ 施術を記録</button>
+  <div class="row"><button class="btn sm" id="editC">カルテを編集</button></div></div>
+  <button class="btn wide" id="bookC" style="margin-top:16px">予約を入れる</button>
+  <button class="btn pri wide" id="addV" style="margin-top:10px">＋ 施術を記録</button>
+  <h2 style="margin-top:32px">来店履歴</h2>
   ${vs.map(v => { const ps = photos(v); return `<div class="visit"><div><div class="d">${jdate(v.visited_on)}${v.visited_at ? ' <span class="num">' + hm(v.visited_at) + '</span>' : ''}${v.stylist_id ? '・担当 ' + esc(staffName(v.stylist_id)) + (v.nominated ? '（指名）' : '') : ''}</div><b>${esc(menuStr(v))}</b></div>
   <div class="p num">${yen(v.price)}</div>${(v.visit_items || []).length ? `<div class="m">店販：${v.visit_items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(retail(v))}</span>）</div>` : ''}${v.chem ? `<div class="m">薬剤：${esc(v.chem)}</div>` : ''}${v.memo ? `<div class="m">${esc(v.memo)}</div>` : ''}
   ${ps.length ? `<div class="pics">${ps.map((p, i) => `<button data-pic="${v.id}:${i}" aria-label="写真${i + 1}を拡大"><img src="${img(p.path)}" alt=""></button>`).join('')}</div>` : ''}
