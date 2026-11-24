@@ -216,6 +216,10 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .acc{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:6px 10px;margin:12px 0 4px;font-size:15px}.acc dt{color:var(--sub)}.acc dd{margin:0;overflow-wrap:anywhere}
 .btn.bookbtn{background:var(--sel);border-color:var(--sel);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}.btn.bookbtn svg{width:18px;height:18px}
 .visit.upb{border-color:var(--sel);border-width:1.5px}.visit.upb .d{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap}.visit.upb .d svg{margin-right:-6px}.visit.upb .d svg{width:15px;height:15px;color:var(--sel)}
+/* 顧客一覧の「＋ 新しいお客様」：下のタブのすぐ上の右側にいつも出す。PCでは画面の真ん中の列の右端にそろえる */
+.btn.fab{position:fixed;z-index:7;right:max(16px,calc((100vw - 640px) / 2 + 16px));bottom:calc(61px + env(safe-area-inset-bottom) + 14px);min-height:52px;padding:0 22px;border-radius:999px;font-size:16px;box-shadow:0 6px 18px rgb(0 0 0/.25)}
+.fab-space{height:72px}
+body.has-fab .toast{bottom:calc(140px + env(safe-area-inset-bottom))}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -386,6 +390,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 /* ===== ログイン ===== */
 function showLogin(msg) {
+  document.body.classList.remove('has-fab');
   const first = !lsGet('salon-code') && !msg;
   $('#app').hidden = true; $('#login').hidden = false; $('#admin').hidden = true;
   $('#start').hidden = !first; $('#loginForm').hidden = first;
@@ -477,6 +482,7 @@ function render() {
   else if (tab === 'sales') { $('#ttl').textContent = '売上'; v.innerHTML = salesView() }
   else { $('#ttl').textContent = '管理'; v.innerHTML = adminView() }
   $('#sub').textContent = S.salon.name + '・' + S.me.display_name;
+  document.body.classList.toggle('has-fab', tab === 'cust' && !detail); // 右下のボタンがあるときは、お知らせを少し上に出す
   if (S.trial && trialLeft() <= 30) v.insertAdjacentHTML('afterbegin', `<button class="trialbar" id="regBtn">登録なしで使えるのは${mdj(trialEnd())}まで（あと${trialLeft()}日）。<u>お店を登録する</u></button>`);
 }
 const stylists = () => S.staff.filter(s => s.active && s.is_stylist);
@@ -549,7 +555,7 @@ function custView() {
   <div class="sorts" role="group" aria-label="並び替え">${SORTS.map(([k, l]) => `<button data-sort="${k}" aria-pressed="${sk === k}">${l}</button>`).join('')}</div>
   <div class="kana" id="kana" ${sk === 'kana' ? '' : 'hidden'} role="group" aria-label="行で絞り込み">${[['', 'すべて'], ...ROWS.map(r => [r[0], r[0]])].map(([k, l]) => `<button data-row="${k}" aria-pressed="${(window._row || '') === k}">${l}</button>`).join('')}</div>
   <div id="clist">${custList()}</div>
-  <div class="row" style="margin-top:16px"><button class="btn pri wide" id="addC">＋ 新しいお客様</button></div>`;
+  <div class="fab-space"></div><button class="btn pri fab" id="addC" aria-label="新しいお客様を登録">＋ 新しいお客様</button>`;
 }
 function custList() {
   const q0 = (window._q || '').trim(), sk = window._sort || 'kana', kr = sk === 'kana' ? (window._row || '') : '';
