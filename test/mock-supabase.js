@@ -3,7 +3,7 @@
   const uid = () => crypto.randomUUID();
   const SALON = 's1', ME = 'st1';
   const db = {
-    salons: [{ id: SALON, code: 'test', name: 'テストサロン', created_at: new Date().toISOString() }],
+    salons: [{ id: SALON, code: 'test', name: 'テストサロン', created_at: window.__salonCreated || new Date().toISOString(), plan_until: window.__planUntil || null, plan_store: window.__planStore || null }],
     staff: [
       { id: ME, salon_id: SALON, user_id: 'u1', login_id: 'owner', display_name: 'ぬき', role: 'owner', is_stylist: true, can_view_sales: true, can_edit_master: true, can_delete_customers: true, can_manage_staff: true, active: true, sort: 0, created_at: '1' },
       { id: 'st2', salon_id: SALON, user_id: 'u2', login_id: 'sato', display_name: '佐藤', role: 'staff', is_stylist: true, can_view_sales: false, can_edit_master: false, can_delete_customers: false, can_manage_staff: false, active: true, sort: 0, created_at: '2' }],

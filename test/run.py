@@ -11,7 +11,7 @@ MOCK=open(MOCK_PATH).read()
 def setup(p, signed_out=False):
     b=p.chromium.launch(**LAUNCH);pg=b.new_page(viewport={'width':390,'height':844})
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m: m.type=='error' and errs.append(m.text))
-    pg.route('**/supabase-js@*/**',lambda r:r.fulfill(body=('window.__startSignedOut=true;' if signed_out else '')+MOCK,content_type='application/javascript'))
+    pg.route('**/supabase-js@*/**',lambda r:r.fulfill(body=('window.__startSignedOut=true;' if signed_out else '')+"window.__planUntil='2099-01-01T00:00:00Z';"+MOCK,content_type='application/javascript'))
     pg.route('**/fonts.googleapis.com/**',lambda r:r.fulfill(body='',content_type='text/css'))
     calls=[]
     def fn(r):

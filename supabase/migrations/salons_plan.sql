@@ -6,10 +6,12 @@ alter table public.salons
   add column if not exists plan_store text,                 -- どこで払ったか（app_store / rc_billing など）
   add column if not exists plan_checked_at timestamptz;     -- サーバーが最後に確かめた時
 
+-- アプリから（authenticated / anon の役割で）この欄を変えようとしたら止める。
+-- security invoker なので current_user は呼んだ人の役割（サーバーの鍵なら service_role）。
 create or replace function private.salons_keep_plan() returns trigger
-language plpgsql security definer set search_path = '' as $$
+language plpgsql security invoker set search_path = '' as $$
 begin
-  if coalesce(auth.role(), '') <> 'service_role' and (
+  if current_user in ('authenticated', 'anon') and (
        new.plan_until is distinct from old.plan_until
     or new.plan_store is distinct from old.plan_store
     or new.plan_checked_at is distinct from old.plan_checked_at) then

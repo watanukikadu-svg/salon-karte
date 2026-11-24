@@ -6,6 +6,12 @@
 //  - start_trial  : 登録なしのお試しを始める（匿名ログインした人が、自分のお店を自動で作る）
 //  - register     : お試し中のオーナーが、お店コード＋パスワードを登録して本登録にする
 //  - delete_account : アカウントを消去する（オーナー＝お店ごと全部、スタッフ＝自分のログインだけ）
+//  - sync_plan    : 有料プランの状態を RevenueCat に確かめて、お店（salons.plan_until）に記録する
+//  - RevenueCat の webhook（body に event がある）: 課金が変わったお店を確かめ直す
+// 有料プラン：RevenueCat の「お客様ID」はお店のID（salons.id）。iPhone（Apple）でも Web（RevenueCat Web Billing）でも、
+//   同じお店IDで買えば同じ「pro」の権利になるので、どちらで払っても両方で使える。
+//   必要な設定（Supabase の Edge Function の Secrets）：RC_SECRET_KEY（RevenueCat の V1 の秘密の鍵）、RC_WEBHOOK_AUTH（webhook の合言葉）
+//   PLAN_ENFORCE=1 にすると、有料プランでないお店はスタッフを追加できなくなる（1.1.0 を出すときにオンにする）
 // ログイン自体はアプリから「お店コード＋スタッフID＋パスワード」で行う。
 // 内部では loginEmail() で作ったメールアドレス形式のIDを使う（メールは送られない）。
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -79,6 +85,29 @@ async function removeSalonFiles(salonId: string) {
   await walk(salonId);
   for (let i = 0; i < files.length; i += 100) await bucket.remove(files.slice(i, i + 100));
 }
+// ---------- 有料プラン（RevenueCat） ----------
+const ENTITLEMENT = "pro";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const paidNow = (salon: { plan_until?: string | null }) => !!salon?.plan_until && new Date(salon.plan_until).getTime() > Date.now();
+// RevenueCat に、このお店の「pro」の権利がいつまであるかを聞いて、salons に書く
+async function syncPlan(salonId: string) {
+  const key = Deno.env.get("RC_SECRET_KEY") ?? "";
+  if (!key) throw new Error("お支払いの準備がまだできていません");
+  const r = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(salonId)}`, {
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+  });
+  if (!r.ok) throw new Error("お支払いの状態を確かめられませんでした（" + r.status + "）");
+  const sub = (await r.json())?.subscriber ?? {};
+  const ent = sub.entitlements?.[ENTITLEMENT];
+  // expires_date が null の権利は期限なし（ずっと使える）
+  const until = ent ? (ent.expires_date ?? "9999-12-31T00:00:00Z") : null;
+  const store = ent ? (sub.subscriptions?.[ent.product_identifier]?.store ?? null) : null;
+  const row = { plan_until: until, plan_store: store, plan_checked_at: new Date().toISOString() };
+  const { error } = await admin.from("salons").update(row).eq("id", salonId);
+  if (error) throw new Error("お支払いの状態を記録できませんでした");
+  return { ...row, management_url: sub.management_url ?? null };
+}
+
 const canManage = (me: any) => me && (me.role === "owner" || me.can_manage_staff);
 
 async function createLogin(code: string, login: string, password: string) {
@@ -96,6 +125,20 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { return fail("JSONで送ってください"); }
   const action = body?.action;
+
+  // ---------- RevenueCat からの知らせ（webhook） ----------
+  if (body?.event && !action) {
+    const auth = Deno.env.get("RC_WEBHOOK_AUTH") ?? "";
+    if (!auth || !safeEqual(req.headers.get("Authorization") ?? "", auth)) return fail("権限がありません", 403);
+    const ev = body.event;
+    const ids = new Set<string>([ev.app_user_id, ev.original_app_user_id, ...(ev.aliases ?? []), ...(ev.transferred_from ?? []), ...(ev.transferred_to ?? [])]
+      .filter((x) => typeof x === "string" && UUID_RE.test(x)));
+    for (const id of ids) {
+      const { data: s } = await admin.from("salons").select("id").eq("id", id).maybeSingle();
+      if (s) { try { await syncPlan(id); } catch (e) { console.error("sync", id, (e as Error).message); } }
+    }
+    return json({ ok: true });
+  }
 
   try {
     // ---------- 新しいお店（運営者のみ） ----------
@@ -176,6 +219,11 @@ Deno.serve(async (req) => {
       return json({ ok: true, salon_code: code, login_id: me.login_id });
     }
 
+    // ---------- 有料プランの状態を確かめ直す（買った直後・復元・期限が来たとき） ----------
+    if (action === "sync_plan") {
+      return json({ ok: true, ...(await syncPlan(me.salon_id)) });
+    }
+
     // ---------- アカウントを消す ----------
     if (action === "delete_account") {
       // 確認の言葉は「消去」（前のアプリが送る「削除」も受け付ける）
@@ -197,10 +245,11 @@ Deno.serve(async (req) => {
     }
 
     if (!canManage(me)) return fail("スタッフを管理する権限がありません", 403);
-    const { data: salon } = await admin.from("salons").select("id, code").eq("id", me.salon_id).single();
+    const { data: salon } = await admin.from("salons").select("id, code, plan_until").eq("id", me.salon_id).single();
 
     if (action === "create_staff") {
       if (isTrial(user)) return fail("スタッフを追加するには、先にお店の登録をしてください", 403);
+      if (Deno.env.get("PLAN_ENFORCE") === "1" && !paidNow(salon!)) return fail("スタッフを追加するには、有料プランのお申し込みが必要です", 402);
       const login = String(body.login_id ?? "").toLowerCase();
       if (!LOGIN_RE.test(login)) return fail("スタッフIDは半角英小文字・数字・._- で2〜30文字");
       if (!body.display_name) return fail("名前を入れてください");

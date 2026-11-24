@@ -182,6 +182,9 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .lmsg{min-height:1.5em;color:var(--acc);font-weight:700;font-size:14px;margin:10px 0 0}
 .carte.trial{background:var(--accSoft);margin-bottom:12px}.carte.trial p{margin:6px 0 12px;font-size:14px}
 .trialbar{display:block;width:100%;text-align:left;background:var(--accSoft);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;margin:0 0 12px;font:inherit;font-size:13px;cursor:pointer}
+.plans{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}.plans li,.btn.planbtn{display:flex;align-items:baseline;gap:6px;border:1px solid var(--line2);border-radius:12px;padding:12px 14px;background:var(--bg)}.plans li{border:0;background:var(--card)}
+.plans b,.planbtn b{flex:1;text-align:left}.plans .num,.planbtn .num{font-size:20px;font-weight:600}.plans small,.planbtn small{color:var(--sub);font-size:13px}
+.btn.planbtn{min-height:56px;margin-bottom:8px;border-color:var(--acc)}
 .link.delink{display:block;margin:22px auto 4px;color:var(--acc)}
 .pk-list{margin-top:6px}
 .bklink{display:flex;gap:6px;align-items:flex-start;background:var(--accSoft);border-radius:10px;padding:8px 10px;margin:4px 0 8px!important;color:var(--ink)!important}.bklink svg{flex:none;width:16px;height:16px;margin-top:2px;color:var(--acc)}.pk-h{margin-top:14px!important;font-weight:700}
@@ -385,6 +388,7 @@ async function loadAll() {
   $('#login').hidden = true; $('#app').hidden = false;
   if (tab === 'sales' && !can('view_sales')) tab = 'cust';
   render();
+  if (!S.trial && S.salon.plan_until && !paid() && planSynced !== S.salon.id) { planSynced = S.salon.id; syncPlan().then(render).catch(() => {}) }
   signAll([...S.customers.map(c => c.face_path), ...S.visits.flatMap(v => (v.visit_photos || []).map(p => p.path))]).then(render);
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.me && Date.now() - lastLoad > 60000 && !$('#sheet').classList.contains('open')) loadAll() });
@@ -466,13 +470,25 @@ const trialLeft = () => Math.ceil((trialEnd() - Date.now()) / 864e5);
 const mdj = d => (d.getMonth() + 1) + '月' + d.getDate() + '日';
 function render() {
   if (!S.me) return;
-  const expired = S.trial && trialLeft() <= 0;
+  const expired = trialLeft() <= 0 && !paid();
   $('nav.tabs').hidden = expired;
-  if (expired) {
+  if (expired && S.trial) {
     $('#ttl').textContent = 'お店の登録'; $('#sub').textContent = S.salon.name;
     $('#view').innerHTML = `<div class="carte trial"><h2 style="margin-top:0">いつもご利用ありがとうございます</h2>
-      <p>登録なしで使える期間（${TRIAL_MONTHS}か月）が終わりました。<b>お店コードとパスワードを決めるだけ</b>で、これまでのお客様・来店記録・写真はそのまま使い続けられます。</p>
-      <button class="btn pri wide" id="regBtn">お店を登録して続ける</button></div>`;
+      <p>無料でお使いいただける期間（${TRIAL_MONTHS}か月）が終わりました。<b>お店を登録して有料プランにお申し込みいただく</b>と、これまでのお客様・来店記録・写真はそのまま使い続けられます。</p>
+      <button class="btn pri wide" id="regBtn">お店を登録する</button></div>`;
+    return;
+  }
+  if (expired) {
+    // 登録済みで、6か月たって有料プランでない：有料プランの案内だけ（ログアウト・アカウントの消去はできるように）
+    document.body.classList.remove('has-fab');
+    $('#ttl').textContent = '有料プラン'; $('#sub').textContent = S.salon.name + '・' + S.me.display_name;
+    $('#view').innerHTML = `<div class="carte trial"><h2 style="margin-top:0">いつもご利用ありがとうございます</h2>
+      <p>無料でお使いいただける期間（${TRIAL_MONTHS}か月）が終わりました。${S.me.role === 'owner' ? '<b>有料プランにお申し込みいただく</b>と、' : '<b>オーナーが有料プランにお申し込みする</b>と、'}これまでのお客様・来店記録・写真はそのまま使い続けられます。</p>
+      <button class="btn pri wide" id="planBtn">有料プランを見る</button></div>
+      <div class="row"><button class="btn sm" id="relogin">別のお店・アカウントでログイン</button><button class="btn sm danger" id="logout">ログアウト</button></div>
+      <p style="text-align:center;margin:18px 0 0"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
+      <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを消去する' : '自分のアカウントを消去する'}</button>`;
     return;
   }
   document.querySelectorAll('nav.tabs button').forEach(b => { b.setAttribute('aria-selected', b.dataset.tab === tab); if (b.dataset.tab === 'sales') b.hidden = !can('view_sales') });
@@ -484,6 +500,7 @@ function render() {
   else { $('#ttl').textContent = '管理'; v.innerHTML = adminView() }
   $('#sub').textContent = S.salon.name + '・' + S.me.display_name;
   document.body.classList.toggle('has-fab', tab === 'cust' && !detail); // 右下のボタンがあるときは、お知らせを少し上に出す
+  if (!S.trial && !paid() && trialLeft() <= 30) v.insertAdjacentHTML('afterbegin', `<button class="trialbar" id="planBtn">無料でお使いいただけるのは${mdj(trialEnd())}まで（あと${trialLeft()}日）。<u>有料プランを見る</u></button>`);
   if (S.trial && trialLeft() <= 30) v.insertAdjacentHTML('afterbegin', `<button class="trialbar" id="regBtn">登録なしで使えるのは${mdj(trialEnd())}まで（あと${trialLeft()}日）。<u>お店を登録する</u></button>`);
 }
 const stylists = () => S.staff.filter(s => s.active && s.is_stylist);
@@ -663,8 +680,8 @@ function adminView() {
   ${S.trial ? `<div class="carte trial"><b>お試し中（登録なし）</b>
     <p>${mdj(trialEnd())}まで登録なしで使えます。お店コードとパスワードを登録すると、<b>スタッフの追加</b>や<b>別のスマホ・パソコン</b>からも使えるようになります。データはそのまま引き継がれます。</p>
     <button class="btn pri wide" id="regBtn">お店を登録する</button></div>` : ''}
-  <dl class="acc"><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd></dl>
-  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button></div>
+  <dl class="acc"><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd>${S.trial ? '' : `<dt>プラン</dt><dd>${planLabel()}</dd>`}</dl>
+  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}${S.trial ? '' : '<button class="btn sm" id="planBtn">有料プラン</button>'}<button class="btn sm" id="reload">最新に更新</button></div>
   <div class="row"><button class="btn sm" id="relogin">${S.trial ? 'ログイン（登録済みのお店）' : '別のお店・アカウントでログイン'}</button><button class="btn sm danger" id="logout">ログアウト</button></div></section>
   <p style="text-align:center;margin:18px 0 0"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
   <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを消去する' : '自分のアカウントを消去する'}</button>`;
@@ -1050,7 +1067,8 @@ $('#view').addEventListener('click', async e => {
     else if (d.es) staffForm(S.staff.find(x => x.id === d.es));
     else if (t.id === 'addM') menuForm();
     else if (t.id === 'addP') prodForm();
-    else if (t.id === 'addS') S.trial ? regForm('スタッフを追加するには、先にお店の登録が必要です（1分で終わります）') : staffForm();
+    else if (t.id === 'addS') S.trial ? regForm('スタッフを追加するには、先にお店の登録が必要です（1分で終わります）') : !paid() ? planForm('スタッフを追加するには、有料プランのお申し込みが必要です') : staffForm();
+    else if (t.id === 'planBtn') planForm();
     else if (t.id === 'regBtn') regForm();
     else if (t.id === 'delAcc') delAccForm();
     else if (t.id === 'addB') bookForm();
@@ -1088,7 +1106,8 @@ function delAccForm() {
   const owner = S.me.role === 'owner';
   open(`<h3>${owner ? 'お店とアカウントを消去' : '自分のアカウントを消去'}</h3>
   ${owner ? `<p><b>「${esc(S.salon.name)}」のすべてのデータが消えます。元に戻せません。</b></p>
-  <ul class="hint" style="padding-left:1.2em;margin:6px 0 10px"><li>お客様のカルテ・来店履歴・写真</li><li>予約・売上の記録</li><li>メニュー・店販商品</li><li>スタッフ全員のアカウント（だれもログインできなくなります）</li></ul>`
+  <ul class="hint" style="padding-left:1.2em;margin:6px 0 10px"><li>お客様のカルテ・来店履歴・写真</li><li>予約・売上の記録</li><li>メニュー・店販商品</li><li>スタッフ全員のアカウント（だれもログインできなくなります）</li></ul>
+  ${paid() ? `<p class="carte trial" style="font-size:14px"><b>有料プランの自動更新は、お店を消しても止まりません。</b>${S.salon.plan_store === 'app_store' ? 'iPhone の「設定」→ 一番上の名前 →「サブスクリプション」から、先に解約してください。' : 'お申し込みのときに届いたメールから、先に解約してください。'}</p>` : ''}`
   : `<p>あなた（${esc(S.me.display_name)}）のログインが消え、このアプリに入れなくなります。お店のデータ（お客様・来店記録など）は消えずに残ります。</p>`}
   <label for="dc">確認のため「消去」と入力してください</label><input id="dc" name="confirm" autocomplete="off" required placeholder="消去">`, async fd => {
     if (fd.get('confirm').trim() !== '消去') throw userErr('「消去」と入力してください');
@@ -1100,6 +1119,109 @@ function delAccForm() {
     return false;
   }, '消去する');
   $('#form [type=submit]').classList.add('dangerbtn');
+}
+/* ===== 有料プラン（RevenueCat） ===== */
+// iPhone アプリ：Apple の課金（RevenueCat の部品 window.RCPurchases。アプリの中にだけ入っている。build.mjs が入れる）
+// Web：RevenueCat の Web Purchase Link（お店のIDつきの申し込みページ）でカード払い
+// どちらも RevenueCat の「お客様ID」はお店のID。どちらで払っても、サーバーが salons.plan_until に期限を書くので両方で使える。
+// ※ iPhone アプリの中では、Web の申し込み・値段は案内しない（Apple の決まり）
+const PAY = {
+  iosKey: '',  // RevenueCat の Apple 用の公開キー（appl_ で始まる）
+  webLink: '', // RevenueCat の Web Purchase Link（https://pay.rev.cat/… の形。うしろにお店のIDをつける）
+  eula: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+  appleSubs: 'https://apps.apple.com/account/subscriptions',
+  ...(window.__pay || {}), // テストで差しかえる
+};
+let planSynced = null, rcUser = null;
+const isApp = () => !!window.Capacitor?.isNativePlatform?.();
+const paid = () => !!S.salon?.plan_until && new Date(S.salon.plan_until).getTime() > Date.now();
+const ymdJ = d => d.getFullYear() >= 9999 ? '期限なし' : d.getFullYear() + '年' + mdj(d);
+const planLabel = () => paid() ? `有料プラン（${ymdJ(new Date(S.salon.plan_until))}まで${S.salon.plan_until.startsWith('9999') ? '' : '・自動更新'}）`
+  : trialLeft() <= 0 ? '無料期間は終わりました' : `無料期間（${ymdJ(trialEnd())}まで）`;
+async function syncPlan() {
+  const r = await staffAdmin({ action: 'sync_plan' });
+  Object.assign(S.salon, { plan_until: r.plan_until, plan_store: r.plan_store });
+  S.planMgmt = r.management_url || null;
+  return r;
+}
+// RevenueCat の部品を、このお店のIDで使えるようにする（iPhone アプリだけ）
+async function rc() {
+  const P = window.RCPurchases;
+  if (!P || !PAY.iosKey || window.Capacitor?.getPlatform?.() !== 'ios') return null;
+  if (!rcUser) await P.configure({ apiKey: PAY.iosKey, appUserID: S.salon.id });
+  else if (rcUser !== S.salon.id) await P.logIn({ appUserID: S.salon.id });
+  rcUser = S.salon.id;
+  return P;
+}
+const PLAN_FEATURES = `<ul class="hint" style="padding-left:1.2em;margin:6px 0 12px">
+  <li>${TRIAL_MONTHS}か月をすぎても、これまでどおりすべての機能が使えます</li>
+  <li>スタッフを追加して、スタッフそれぞれのスマホ・パソコンからも使えます（人数の制限なし）</li></ul>`;
+async function planForm(why) {
+  const owner = S.me.role === 'owner', app = isApp();
+  const legal = app
+    ? `<p class="hint" style="margin-top:14px"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:14px">利用規約</a><a class="link" href="${PAY.eula}" target="_blank" rel="noopener" style="margin-right:14px">使用許諾契約（EULA）</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>`
+    : `<p class="hint" style="margin-top:14px"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:14px">利用規約</a><a class="link" href="tokushoho.html" target="_blank" rel="noopener" style="margin-right:14px">特定商取引法に基づく表記</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>`;
+  let body;
+  if (paid()) {
+    const st = S.salon.plan_store, appStore = st === 'app_store';
+    const manage = appStore
+      ? (app ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${PAY.appleSubs}" target="_blank" rel="noopener">ご契約の確認・解約（App Store）</a>`
+             : '<p class="hint">iPhone の App Store でお申し込み中です。ご契約の確認・解約は、iPhone の「設定」→ 一番上の名前 →「サブスクリプション」から行えます。</p>')
+      : (!app && S.planMgmt ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${esc(S.planMgmt)}" target="_blank" rel="noopener">お支払いの管理（カードの変更・解約）</a>`
+             : '<p class="hint">ご契約の確認・解約は、お申し込みのときに届いたメールから行えます。</p>');
+    body = `<p><b>有料プランをご利用中です。</b></p><dl class="acc"><dt>期限</dt><dd>${planLabel().replace(/^有料プラン（|）$/g, '')}</dd></dl>${PLAN_FEATURES}${owner ? manage : ''}`;
+  } else if (!owner) {
+    body = `${PLAN_FEATURES}<p>有料プランのお申し込みは、<b>オーナー</b>が行います。オーナーに伝えてください。</p>`;
+  } else if (S.trial) {
+    body = `${PLAN_FEATURES}<p>有料プランにお申し込みいただく前に、<b>お店の登録</b>が必要です（1分で終わります）。データはそのまま引き継がれます。</p><button class="btn pri wide" type="button" id="plReg">お店を登録する</button>`;
+  } else if (app) {
+    body = `${PLAN_FEATURES}<div id="plPkgs"><p class="hint">読み込んでいます…</p></div>
+    <p class="hint">お支払いはお使いの Apple アカウントに請求されます。期間が終わる24時間前までに解約しない限り、同じ期間・同じ金額で自動で更新されます。解約は、iPhone の「設定」→ 一番上の名前 →「サブスクリプション」からいつでもできます。</p>
+    <button class="link" type="button" id="plRestore">購入を復元する</button>${legal}`;
+  } else {
+    body = `${PLAN_FEATURES}<ul class="plans"><li><b>月額プラン</b><span class="num">500円</span><small>／月（税込）</small></li><li><b>年額プラン</b><span class="num">5,000円</span><small>／年（税込）</small></li></ul>
+    ${PAY.webLink ? `<a class="btn pri wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" id="plWeb" href="${esc(PAY.webLink + S.salon.id)}" target="_blank" rel="noopener">申し込む（クレジットカード）</a>
+    <p class="hint">別のタブでお申し込みのページが開きます。お支払いが終わったら、この画面に戻って「お支払いを確認する」を押してください。いつでも解約でき、解約しても期間の終わりまで使えます。</p>
+    <button class="btn wide" type="button" id="plCheck" style="margin-top:10px">お支払いを確認する</button>` : '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'}${legal}`;
+  }
+  open(`<h3>有料プラン</h3>${why ? `<p class="hint">${esc(why)}</p>` : ''}${body}`, async () => { close(); return false }, '閉じる');
+  $('#cancel').remove(); $('#form [type=submit]').classList.remove('pri');
+  const done = async () => { await loadAll(); close(); toast('有料プランのお申し込みが確認できました。ありがとうございます') };
+  if ($('#plReg')) $('#plReg').onclick = () => { close(); regForm() };
+  if ($('#plCheck')) $('#plCheck').onclick = async () => {
+    const b = $('#plCheck'); if (b.disabled) return; b.disabled = true; b.textContent = '確認しています…';
+    try { await syncPlan(); if (paid()) return await done(); toast('まだお支払いが確認できません。少し待ってからもう一度押してください') }
+    catch (e) { toast(e.message || '確認できませんでした') }
+    b.disabled = false; b.textContent = 'お支払いを確認する';
+  };
+  if ($('#plPkgs')) {
+    const box = $('#plPkgs');
+    try {
+      const P = await rc();
+      if (!P) { box.innerHTML = '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'; return }
+      const pkgs = (await P.getOfferings())?.current?.availablePackages || [];
+      if (!pkgs.length) { box.innerHTML = '<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度開いてください。</p>'; return }
+      const label = k => ({ MONTHLY: ['月額プラン', '月'], ANNUAL: ['年額プラン', '年'] })[k.packageType] || [k.product.title, ''];
+      box.innerHTML = pkgs.map((k, i) => { const [n, per] = label(k); return `<button class="btn wide planbtn" type="button" data-pk="${i}"><b>${esc(n)}</b><span class="num">${esc(k.product.priceString)}</span>${per ? `<small>／${per}</small>` : ''}</button>` }).join('');
+      box.querySelectorAll('[data-pk]').forEach(b => b.onclick = async () => {
+        if (busy) return; busy = true; box.querySelectorAll('button').forEach(x => x.disabled = true);
+        try {
+          try { await P.purchasePackage({ aPackage: pkgs[+b.dataset.pk] }) }
+          catch (e) { if (!(e?.userCancelled || String(e?.code) === '1')) toast('お申し込みできませんでした。もう一度お試しください'); return }
+          // 払ったあと：サーバーに確かめてもらい、お店の記録を更新する
+          try { await syncPlan() } catch (e) { /* 下でお知らせ */ }
+          if (paid()) await done();
+          else toast('お申し込みを受け付けました。反映まで少し時間がかかることがあります。少し待ってから「最新に更新」を押してください');
+        } finally { busy = false; box.querySelectorAll('button').forEach(x => x.disabled = false) }
+      });
+    } catch (e) { box.innerHTML = '<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度開いてください。</p>' }
+  }
+  if ($('#plRestore')) $('#plRestore').onclick = async () => {
+    if (busy) return; busy = true;
+    try { const P = await rc(); if (!P) throw 0; await P.restorePurchases(); await syncPlan(); if (paid()) await done(); else toast('復元できるお申し込みが見つかりませんでした') }
+    catch (e) { toast('復元できませんでした。もう一度お試しください') }
+    finally { busy = false }
+  };
 }
 function regForm(why) {
   const auto = /[a-z0-9]/i.test(S.salon.name) ? S.salon.name.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) : '';
