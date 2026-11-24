@@ -23,7 +23,7 @@
    LAYOUT: one column, sticky header, bottom tab bar, sheets slide up for forms */
 :root{color-scheme:light dark;
 --bg:light-dark(#ffffff,#0e1a1d);--card:light-dark(#f3f6f6,#16272b);--ink:light-dark(#122326,#e8f0f0);
---sub:light-dark(#5b6d70,#9db1b4);--line:light-dark(#dfe7e8,#26393d);--deep:light-dark(#16343a,#0a1517);
+--sub:light-dark(#5b6d70,#9db1b4);--line:light-dark(#dfe7e8,#26393d);--line2:light-dark(#bccacc,#3f585d);--deep:light-dark(#16343a,#0a1517);
 --deepInk:#f2f7f7;--sel:light-dark(#16343a,#2c5961);--acc:#e0566a;--accSoft:light-dark(#fde8eb,#3a1f25);--ok:light-dark(#2f7d63,#6fcaa8)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
@@ -188,7 +188,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .mv{display:flex;gap:6px}.mv .btn{min-width:44px}.mv .btn:disabled{opacity:.3;cursor:default}
 .msel{position:relative}.msel select{width:100%;padding-right:96px}.msel .mp{position:absolute;right:36px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:15px;pointer-events:none}
 .bkb{display:flex;align-items:center;gap:4px;width:max-content;margin-top:4px;padding:2px 8px;border-radius:999px;background:var(--accSoft);color:var(--acc);font-size:12px;font-weight:700}.bkb svg{width:14px;height:14px}
-.pk-row,.pk-sel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 2px;font:inherit;color:inherit;cursor:pointer}
+.pk-row,.pk-sel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line2);padding:8px 2px;font:inherit;color:inherit;cursor:pointer}
 .pk-sel{border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:default}
 .pk-row .nm,.pk-sel .nm{font-weight:700}.pk-row .kn,.pk-sel .kn{font-size:13px;color:var(--sub)}.pk-row .last b.soon{color:var(--acc)}.pk-row .last{text-align:right;font-size:12px;color:var(--sub)}
 .bhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.bhead h2{margin-right:auto}.seg{margin:0}
