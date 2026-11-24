@@ -37,6 +37,15 @@
   - 結果のログは `ci-logs` ブランチ（`git fetch --depth 1 origin ci-logs` → `git show origin/ci-logs:ios-ci.log`）
   - ときどき GitHub 側で「取り消し（cancelled）」になることがある。アプリの中身の問題ではない。次のビルドに変更は全部入る
   - GitHub の Secrets：APPLE_TEAM_ID, ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8（ユーザーが登録済み）
+- **iPhone 専用・縦向きだけ**（TARGETED_DEVICE_FAMILY = 1。iPad 用の画面写真がいらないように）
+- **App Store のページ**：GitHub Actions の「App Store の情報を送る」（`.github/workflows/store.yml`、Fastfile の `store`）。ubuntu で fastlane deliver を使う
+  - 文：`fastlane/metadata/`（説明文・キーワード・サブタイトルなど）、審査の人へのメモ：`fastlane/review_information/`
+  - 画面写真：`store/make_screenshots.py` で作る（6.9インチ 1320×2868、見本のデータはすべて架空）→ `store/screenshots/`
+  - 動かし方：`gh api -X POST repos/watanukikadu-svg/salon-karte/actions/workflows/store.yml/dispatches -f ref=main -f 'inputs[version]=1.0.0' -f 'inputs[submit]=false'`（画面写真だけ：`-f 'inputs[only_screenshots]=true'`、審査に出す：`-f 'inputs[submit]=true' -f 'inputs[build]=番号'`）
+  - 結果のログは `store-logs` ブランチ
+  - 審査の連絡先（姓・名・電話番号）が App Store Connect に入っていないと、文を送る作業は「No data」などで止まる（画面写真だけなら送れる）
+  - 価格・年齢制限・App のプライバシー・審査の連絡先は、ユーザーが App Store Connect で手で入れる
+- サポートのページ：`support.html`
 - Android 版は作る仕組みはあるが出さない（Google Play の「テスター12人・14日」の決まりがあるため）。ANDROID_KEYSTORE_PASSWORD も今は登録していない。
 - アイコン：紺の背景に金色のはさみ（ユーザーが ChatGPT で作った絵）。`icons/icon-1024.png` が元。
 
@@ -67,7 +76,7 @@
 - 直したら、全部のテストを通してから push する。
 
 ## これから（ユーザーと話したが、まだやっていないこと）
-- App Store への申請（スクリーンショット・説明文・プライバシーの記入・審査）
+- App Store への申請：画面写真・説明文は送った。ユーザーが価格・年齢制限・プライバシー・審査の連絡先を入れたら、ビルド28で審査に出す
 - Supabase を有料プランにする（本番で使う前）
 - 長く使われていないお試し店の掃除、お試し6か月の期限をサーバー側でも守る
 - ほかの端末の変更をすぐ画面に出す（リアルタイム更新）
