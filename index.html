@@ -711,24 +711,30 @@ function custForm(c) {
   $('#f8').addEventListener('change', e => { const f = e.target.files[0]; if (f) $('#fprev').innerHTML = `<span class="av big2"><img src="${URL.createObjectURL(f)}" alt=""></span>` });
 }
 
-const menuOpts = sel => { const ns = S.menus.filter(m => m.active).map(m => m.name); if (sel && !ns.includes(sel)) ns.push(sel); return ns.map(n => `<option ${n === sel ? 'selected' : ''}>${esc(n)}</option>`).join('') };
-const priceOf = n => S.menus.find(m => m.name === n) || { name: n, price: 0, duration_min: 60 };
+// メニューは名前ではなく「登録したメニューそのもの（id）」で選ぶ（例：カット4500円とカット4000円を分けるため）
+// 同じ名前のメニューがあるときだけ、選択肢に金額も出す。消したメニューなどは 'n:名前' で表す
+const dupName = n => S.menus.filter(m => m.active && m.name === n).length > 1;
+const menuLabel = m => esc(m.name) + (dupName(m.name) ? `（${yen(m.price)}）` : '');
+const menuOf = v => S.menus.find(m => m.id === v) || (String(v || '').startsWith('n:') ? (S.menus.find(m => m.active && m.name === v.slice(2)) || { id: v, name: v.slice(2), price: 0, duration_min: 60 }) : { id: v, name: '', price: 0, duration_min: 60 });
+const menuOpts = sel => { const act = S.menus.filter(m => m.active); let h = act.map(m => `<option value="${m.id}" ${m.id === sel ? 'selected' : ''}>${menuLabel(m)}</option>`).join(''); if (sel && !act.some(m => m.id === sel)) h += `<option value="${esc(sel)}" selected>${esc(menuOf(sel).name)}</option>`; return h };
+// 予約に入っているメニューを、選択肢の値（id）にする（前の予約は名前しかないので名前から探す）
+const bookingMenuVals = b => (b.menu_names || []).map((n, i) => { const id = (b.menu_ids || [])[i]; if (id && S.menus.some(m => m.id === id)) return id; const m = S.menus.find(x => x.active && x.name === n); return m ? m.id : 'n:' + n });
 function bookForm(cid, b) {
   b = b || {};
   if (!S.customers.length) return toast('先にお客様を登録してください');
   open(`<h3>${b.id ? '予約を変更' : '予約を追加'}</h3>
   <label for="b1q">お客様 *</label><input type="hidden" id="b1" name="cid" value="${esc(b.customer_id || cid || '')}"><div id="b1pick"></div>
   <div class="two"><div><label for="b2">日付</label><input id="b2" name="date" type="date" value="${b.booked_on || day}" required></div><div><label for="b3">時間</label><input id="b3" name="time" type="time" value="${hm(b.start_time) || '10:00'}" step="300" required></div></div>
-  <label>メニュー</label><div id="bmrows">${((b.menu_names || []).length ? b.menu_names : [undefined]).map(bmrow).join('')}</div>
+  <label>メニュー</label><div id="bmrows">${(bookingMenuVals(b).length ? bookingMenuVals(b) : [undefined]).map(bmrow).join('')}</div>
   <button class="btn sm" type="button" id="addBm" style="margin-top:8px">＋ メニューを追加</button><p class="hint" id="bmsum"></p>
   ${S.products.length ? `<label>店販（買う予定の商品）</label><div id="bprows">${(b.items || []).map(x => prow(x.product_id, x.qty)).join('')}</div>
   <button class="btn sm" type="button" id="addBp" style="margin-top:8px">＋ 店販を追加</button><p class="hint" id="bpsum"></p>` : ''}
   <div class="two"><div><label for="stylist">担当スタイリスト</label>${stylistSel('stylist', b.stylist_id || (S.me.is_stylist ? S.me.id : ''))}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${b.nominated ? 'checked' : ''}> 指名あり</label></div></div>`, async fd => {
     if (!fd.get('cid')) { $('#b1q')?.focus(); throw userErr('お客様を選んでください') }
-    const ms = fd.getAll('menu').filter(Boolean).map(priceOf);
+    const ms = fd.getAll('menu').filter(Boolean).map(menuOf);
     const its = {}; document.querySelectorAll('#bprows .prw').forEach(rw => { const id = rw.querySelector('select').value, n = +rw.querySelector('input').value || 0; if (id && n > 0) its[id] = (its[id] || 0) + n });
     const items = Object.entries(its).map(([pid, n]) => { const p = S.products.find(x => x.id === pid); return { product_id: pid, name: p.name, price: +p.price, qty: n } });
-    const o = { items, customer_id: fd.get('cid'), booked_on: fd.get('date'), start_time: fd.get('time'), menu_names: ms.map(m => m.name), price: ms.reduce((t, m) => t + (+m.price || 0), 0), duration_min: ms.reduce((t, m) => t + (+m.duration_min || 0), 0) || 60, stylist_id: fd.get('stylist') || null, nominated: !!fd.get('nominated') };
+    const o = { items, customer_id: fd.get('cid'), booked_on: fd.get('date'), start_time: fd.get('time'), menu_names: ms.map(m => m.name), menu_ids: ms.map(m => S.menus.some(x => x.id === m.id) ? m.id : ''), price: ms.reduce((t, m) => t + (+m.price || 0), 0), duration_min: ms.reduce((t, m) => t + (+m.duration_min || 0), 0) || 60, stylist_id: fd.get('stylist') || null, nominated: !!fd.get('nominated') };
     if (S.bookings.some(x => x.id !== b.id && x.booked_on === o.booked_on && hm(x.start_time) === o.start_time && (!o.stylist_id || x.stylist_id === o.stylist_id))) toast('同じ時間に予約があります（保存はしました）');
     if (b.id) { const row = await q(sb.from('bookings').update(o).eq('id', b.id).select().single()); Object.assign(b, row) }
     else { const row = await q(sb.from('bookings').insert({ salon_id: S.salon.id, created_by: S.me.id, ...o }).select().single()); S.bookings.push(row) }
@@ -738,8 +744,8 @@ function bookForm(cid, b) {
   // メニューを複数入れる：合計の金額と時間を出す
   const box = $('#bmrows');
   const fix = () => { const xs = box.querySelectorAll('.mx'); xs.forEach(x => x.hidden = xs.length < 2);
-    box.querySelectorAll('.msel').forEach(w => { w.querySelector('.mp').textContent = yen(priceOf(w.querySelector('select').value).price) });
-    const ms = [...box.querySelectorAll('select')].map(x => priceOf(x.value)); const min = ms.reduce((t, m) => t + (+m.duration_min || 0), 0);
+    box.querySelectorAll('.msel').forEach(w => { w.querySelector('.mp').textContent = yen(menuOf(w.querySelector('select').value).price) });
+    const ms = [...box.querySelectorAll('select')].map(x => menuOf(x.value)); const min = ms.reduce((t, m) => t + (+m.duration_min || 0), 0);
     $('#bmsum').textContent = ms.length > 1 ? `合計 ${yen(ms.reduce((t, m) => t + (+m.price || 0), 0))}・${Math.floor(min / 60) ? Math.floor(min / 60) + '時間' : ''}${min % 60 ? min % 60 + '分' : ''}` : '' };
   box.addEventListener('change', fix);
   box.addEventListener('click', e => { if (e.target.classList.contains('mx')) { e.target.parentElement.remove(); fix() } });
@@ -817,19 +823,23 @@ function visitForm(cid, b, ev) {
   // 「今日」は開いたときの日付で決める（アプリを開いたまま日付が変わっても、その日の予約を見つけられるように）
   const td = ymd(new Date());
   const auto = !ev && !b; if (auto) b = openBooking(cid, td);
-  const pre = ev ? (ev.visit_menus || []).slice().sort((a, c) => a.sort - c.sort).map(l => l.menu_name) : b ? (b.menu_names || []) : [];
-  const opts = S.menus.filter(m => m.active).map(m => ({ name: m.name, price: +m.price }));
-  (ev?.visit_menus || []).forEach(l => { if (!opts.some(o => o.name === l.menu_name)) opts.push({ name: l.menu_name, price: +l.list_price }) });
-  if (b) (b.menu_names || []).forEach(n => { if (!opts.some(o => o.name === n)) opts.push({ name: n, price: +b.price }) });
-  if (!opts.length) opts.push({ name: 'カット', price: 0 });
-  const startNames = pre.length ? pre : [opts[0].name];
+  // 選択肢はメニューそのもの。同じ名前でも金額がちがえば別の行
+  const opts = S.menus.filter(m => m.active).map(m => ({ id: m.id, name: m.name, price: +m.price, dur: +m.duration_min || 60 }));
+  const pick = (name, price, id) => { let i = id ? opts.findIndex(o => o.id === id) : -1;
+    if (i < 0 && price != null) i = opts.findIndex(o => o.name === name && o.price === price);
+    if (i < 0) i = opts.findIndex(o => o.name === name);
+    if (i < 0) { opts.push({ id: '', name, price: +price || 0, dur: 60 }); i = opts.length - 1 } return i };
+  const startIdx = ev ? (ev.visit_menus || []).slice().sort((a, c) => a.sort - c.sort).map(l => pick(l.menu_name, +l.list_price))
+    : b ? (b.menu_names || []).map((n, i) => pick(n, null, (b.menu_ids || [])[i])) : [];
+  if (!opts.length) opts.push({ id: '', name: 'カット', price: 0, dur: 60 });
+  if (!startIdx.length) startIdx.push(0);
   let keep = ev ? photos(ev).slice() : [];
   const myStylist = ev ? ev.stylist_id : b ? b.stylist_id : (S.me.is_stylist ? S.me.id : '');
   open(`<h3>${ev ? '来店履歴を編集' : '施術を記録'}</h3>${!ev && b ? `<p class="hint bklink">${CAL_ICON}${jdate(b.booked_on)} ${hm(b.start_time)} の予約とつなげて記録します。保存すると、予約は「来店済み」になります。</p>` : ''}
   <div class="two"><div><label for="v1">日付</label><input id="v1" name="date" type="date" value="${ev ? ev.visited_on : b ? b.booked_on : td}"></div>
   <div><label for="v1t">時間</label><input id="v1t" name="time" type="time" step="300" value="${ev ? hm(ev.visited_at) : b ? hm(b.start_time) : nowT()}"></div></div>
   <div class="two"><div><label for="vst">担当スタイリスト</label>${stylistSel('vst', myStylist)}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${(ev ? ev.nominated : b?.nominated) ? 'checked' : ''}> 指名あり</label></div></div>
-  <label>メニュー</label><div id="mrows">${startNames.map(n => mrow(opts, opts.findIndex(o => o.name === n))).join('')}</div>
+  <label>メニュー</label><div id="mrows">${startIdx.map(i => mrow(opts, i)).join('')}</div>
   <button class="btn sm" type="button" id="addMr" style="margin-top:8px">＋ メニューを追加</button>
   <label for="v3">金額（円）</label><input id="v3" name="price" type="number" inputmode="numeric" min="0" step="10" value="${ev ? ev.price : b ? b.price : opts[0].price}">
   <p class="hint" id="vsum"></p>
@@ -869,8 +879,8 @@ function visitForm(cid, b, ev) {
     const link = ev ? null : !auto ? b : (b && b.booked_on === o.visited_on ? b : openBooking(cid, o.visited_on));
     if (link) { const br = await q(sb.from('bookings').update({ status: 'done', visit_id: vid }).eq('id', link.id).select().single()); Object.assign(link, br) }
     // 予約なしで来店した人も、記録した日時・メニュー・担当で予約の画面に残す（あとから振り返れるように）
-    const walk = { booked_on: o.visited_on, start_time: o.visited_at || nowT(), menu_names: sel.map(m => m.name), price: o.price,
-      duration_min: sel.reduce((t, m) => t + (+priceOf(m.name).duration_min || 0), 0) || 60, stylist_id: o.stylist_id, nominated: o.nominated,
+    const walk = { booked_on: o.visited_on, start_time: o.visited_at || nowT(), menu_names: sel.map(m => m.name), menu_ids: sel.map(m => m.id || ''), price: o.price,
+      duration_min: sel.reduce((t, m) => t + (m.dur || 60), 0) || 60, stylist_id: o.stylist_id, nominated: o.nominated,
       items: (row.visit_items || []).map(x => ({ product_id: x.product_id, name: x.name, price: x.price, qty: x.qty })) };
     const mine = ev ? S.bookings.find(x => x.visit_id === vid && x.walk_in) : null;
     if (mine) Object.assign(mine, await q(sb.from('bookings').update(walk).eq('id', mine.id).select().single()));
@@ -914,7 +924,7 @@ function menuForm(m) {
   <div><label for="m3">所要時間（分）</label><input id="m3" name="dur" type="number" inputmode="numeric" min="5" step="5" required value="${m.duration_min ?? 60}"></div></div>
   ${m.id ? '<button class="btn danger wide" type="button" id="delM" style="margin-top:16px">このメニューを削除</button>' : ''}`, async fd => {
     const o = { name: fd.get('name').trim(), price: +fd.get('price') || 0, duration_min: +fd.get('dur') || 60 };
-    if (S.menus.some(x => x.name === o.name && x.id !== m.id)) throw userErr('同じ名前のメニューがあります');
+    if (S.menus.some(x => x.id !== m.id && x.active !== false && x.name === o.name && +x.price === o.price && +x.duration_min === o.duration_min)) throw userErr('同じ名前・金額・時間のメニューがすでにあります');
     if (m.id) Object.assign(m, await q(sb.from('menus').update(o).eq('id', m.id).select().single()));
     else S.menus.push(await q(sb.from('menus').insert({ salon_id: S.salon.id, sort: S.menus.length, ...o }).select().single()));
     toast('保存しました');

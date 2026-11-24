@@ -23,6 +23,7 @@ python3 test/walk_in.py       # 1つだけ
 | booked_badge.py | 「予約あり」の印 |
 | due_soon.py / due_soon_none.py | 来店周期から、そろそろ来店しそうなお客様（いる・いない） |
 | booking_menus.py | 予約のメニュー複数・合計 |
+| same_name_menus.py | 同じ名前のメニュー（カット4800円・4000円）を取りちがえない |
 | booking_items.py | 予約の店販 |
 | booking_avatar.py | 予約カードの顔アイコン |
 | timeline.py | 予約のタイムライン表示 |

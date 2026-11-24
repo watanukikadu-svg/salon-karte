@@ -26,7 +26,7 @@
       const T = db[this.t]; let out;
       const match = r => this.f.every(f => f(r));
       if (this.op === 'insert') {
-        const rows = (Array.isArray(this.payload) ? this.payload : [this.payload]).map(r => ({ id: uid(), created_at: new Date().toISOString(), ...r }));
+        const rows = (Array.isArray(this.payload) ? this.payload : [this.payload]).map(r => ({ id: uid(), created_at: new Date().toISOString(), ...(['menus', 'products'].includes(this.t) ? { active: true } : {}), ...r })); // 本物と同じく active は最初 true
         rows.forEach(r => { T.push(r); if (this.t === 'visit_items' && r.product_id) { const p = db.products.find(x => x.id === r.product_id); p.stock -= r.qty } });
         if (this.t === 'visit_photos') { const n = db.visit_photos.filter(p => p.visit_id === rows[0].visit_id).length; if (n > 9) return { data: null, error: { message: 'photo limit 9' } } }
         out = rows;
