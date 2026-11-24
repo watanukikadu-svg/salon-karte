@@ -1,0 +1,65 @@
+# App Store のページ（説明文・キーワード・画面写真）を送る。審査に出すこともできる。
+# 動かし方：GitHub の「Actions」→「App Store の情報を送る」→「Run workflow」
+#   submit を true にすると、build のビルドで審査に出す（先に App Store Connect で
+#   「App のプライバシー」「価格」「年齢制限」「審査の連絡先」を入れておく）
+# 結果のログは store-logs ブランチに保存する（Claude が読めるように）。
+name: App Store の情報を送る
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "バージョン（例: 1.0.0）"
+        required: true
+        default: "1.0.0"
+      submit:
+        description: "審査に出す（true / false）"
+        required: true
+        default: "false"
+      build:
+        description: "審査に出すビルド番号（submit が true のとき）"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  store:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      VERSION: ${{ inputs.version }}
+      SUBMIT: ${{ inputs.submit }}
+      SUBMIT_BUILD: ${{ inputs.build }}
+      FASTLANE_SKIP_UPDATE_CHECK: "1"
+      FASTLANE_HIDE_CHANGELOG: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 画面写真を fastlane の置き場所にそろえる
+        run: |
+          mkdir -p fastlane/screenshots/ja
+          cp store/screenshots/*.png fastlane/screenshots/ja/
+
+      - name: fastlane を入れる
+        run: sudo gem install fastlane --no-document
+
+      - name: App Store に送る
+        run: |
+          set -o pipefail
+          fastlane ios store 2>&1 | tee "$RUNNER_TEMP/store.log"
+
+      - name: ログを store-logs ブランチに保存する
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          cp "$RUNNER_TEMP/store.log" "$RUNNER_TEMP/logs/store.log" 2>/dev/null || true
+          echo "run ${{ github.run_number }} / ${{ job.status }} / submit=${{ inputs.submit }} build=${{ inputs.build }} / $(date -u)" > "$RUNNER_TEMP/logs/STATUS"
+          cd "$RUNNER_TEMP/logs"
+          git init -q && git checkout -q -b store-logs
+          git add -A && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "store ${{ github.run_number }} log"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" store-logs

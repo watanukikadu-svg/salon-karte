@@ -3,3 +3,4 @@ www
 build/
 fastlane/report.xml
 fastlane/README.md
+fastlane/screenshots/

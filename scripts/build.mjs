@@ -6,7 +6,7 @@ import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 const OUT = "www";
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
-for (const f of ["privacy.html", "terms.html", "manifest.webmanifest"]) cpSync(f, `${OUT}/${f}`);
+for (const f of ["privacy.html", "terms.html", "support.html", "manifest.webmanifest"]) cpSync(f, `${OUT}/${f}`);
 cpSync("icons", `${OUT}/icons`, { recursive: true });
 cpSync("node_modules/@supabase/supabase-js/dist/umd/supabase.js", `${OUT}/supabase.js`);
 
