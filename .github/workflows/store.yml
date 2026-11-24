@@ -19,6 +19,10 @@ on:
       build:
         description: "審査に出すビルド番号（submit が true のとき）"
         required: false
+      only_screenshots:
+        description: "画面写真だけ送る（true / false）"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -35,6 +39,7 @@ jobs:
       VERSION: ${{ inputs.version }}
       SUBMIT: ${{ inputs.submit }}
       SUBMIT_BUILD: ${{ inputs.build }}
+      ONLY_SCREENSHOTS: ${{ inputs.only_screenshots }}
       FASTLANE_SKIP_UPDATE_CHECK: "1"
       FASTLANE_HIDE_CHANGELOG: "1"
     steps:

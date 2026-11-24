@@ -113,6 +113,7 @@ platform :ios do
       app_identifier: APP_ID,
       app_version: ENV.fetch("VERSION"),
       skip_binary_upload: true,
+      skip_metadata: ENV["ONLY_SCREENSHOTS"] == "true", # 画面写真だけ送るとき
       metadata_path: "fastlane/metadata",
       screenshots_path: "fastlane/screenshots",
       overwrite_screenshots: true,
