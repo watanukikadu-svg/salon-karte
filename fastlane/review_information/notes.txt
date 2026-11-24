@@ -1,9 +1,30 @@
-ログインは不要です。最初の画面で「はじめる」を押すと、お試しのお店が自動で作られ、すべての機能をすぐに試せます。
+Thank you for reviewing. Answers to the requested information:
 
-・お客様の登録：「顧客カルテ」タブの右下「＋ 新しいお客様」
-・予約：「予約」タブの「＋ 予約を追加」
-・施術の記録：お客様のカルテの「＋ 施術を記録」
-・スタッフの追加やほかの端末で使うには、「管理」タブの「お店を登録する」で登録します（お店の名前・お店コード・パスワード）。
-・アカウントの削除：「管理」タブの一番下「お店とアカウントを消去する」→「消去」と入力。お店のすべてのデータが消えます。
+1. SCREEN RECORDING
+A screen recording captured on a physical iPhone (latest iOS) is attached. It starts from launching the app and shows: starting the app, adding a customer, adding a booking, recording a visit with photos, sales, shop registration (account creation), logout and login, and account deletion.
 
-No login is required. Tap "はじめる" (Start) on the first screen to create a trial shop and try every feature. Account deletion: Admin tab (管理) > bottom > "お店とアカウントを消去する", then type 消去.
+2. PURPOSE AND TARGET AUDIENCE
+美容室カルテ (Beauty Salon Karte) is a customer-record app for small hair salons in Japan (owners and stylists). Many small salons still keep customer records ("karte") on paper. The app lets them keep each customer's visit history, treatment notes and hair photos, bookings, sales and staff on one iPhone, so a stylist can check what was done last time before the customer sits down. It is for any salon; it is not made for one specific company.
+
+3. HOW TO USE (NO LOGIN NEEDED)
+- No account or credentials are needed. On the first screen tap "はじめる" (Start). A trial shop is created automatically (anonymous sign-in) and every feature can be used at once.
+- Add a customer: "顧客カルテ" (Customers) tab > round "＋" button at bottom right.
+- Bookings: "予約" (Bookings) tab > "＋ 予約を追加" (Add booking).
+- Record a visit: open a customer > "＋ 施術を記録" (Record treatment). Up to 9 photos per visit.
+- Sales: "売上" (Sales) tab.
+- Account registration: "管理" (Admin) tab > "お店を登録する" (Register shop): shop name, shop code and password. This is needed only to add staff or use another device.
+- Login / logout: "管理" (Admin) tab > "ログイン" / "ログアウト". Login uses shop code + staff ID (leave empty for the owner) + password.
+- Account deletion: "管理" (Admin) tab > bottom > "お店とアカウントを消去する" (Delete shop and account), then type 消去 to confirm. All data of the shop is deleted from the server.
+- There is no user-generated content shared with other users (each shop only sees its own data), no in-app purchases and no paid content. The app is free.
+
+4. EXTERNAL SERVICES
+- Supabase (supabase.com, Tokyo region): database, authentication (anonymous sign-in for the trial, and shop code + password login) and photo storage.
+No payment processors, advertising, analytics or AI services are used.
+
+5. REGIONAL DIFFERENCES
+The app works the same in all regions where it is available. The interface is in Japanese. (It is not distributed in mainland China.)
+
+6. REGULATED INDUSTRY / THIRD-PARTY MATERIAL
+Not applicable. The app is a record-keeping tool for hair salons; it gives no medical, financial or legal services and uses no protected third-party material.
+
+Contact: STAYGOLD, watakadu@icloud.com
