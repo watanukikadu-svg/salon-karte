@@ -760,13 +760,13 @@ const CAL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const bookBadge = nb => nb ? `<span class="bkb">${CAL_ICON}予約あり ${jdate(nb.booked_on)} <span class="num">${hm(nb.start_time)}</span></span>` : '';
 // 来店周期から「そろそろ来店しそうなお客様」を予想する
 //  周期＝そのお客様の来店の間隔の真ん中の値（1回しか来ていない人はお店全体の真ん中の値。7日未満の間隔は数えない）
-//  目安の日＝前回の来店日＋周期。目安まで14日以内〜周期1回分すぎまでの人を、目安に近い順に6人。予約がある人は出さない
+//  目安の日＝前回の来店日＋周期。予約がない人を、目安の日に近い順に6人（今日より先の日付の来店は数えない）
 const dayNo = d => Math.round(new Date(d + 'T00:00') / 864e5);
 const median = a => { const x = a.slice().sort((p, q) => p - q); return x.length ? x[Math.floor(x.length / 2)] : null };
 function duePredictions(except) {
   const tN = dayNo(T), all = [];
   const per = S.customers.map(c => {
-    const ds = [...new Set(S.visits.filter(v => v.customer_id === c.id).map(v => v.visited_on))].sort();
+    const ds = [...new Set(S.visits.filter(v => v.customer_id === c.id && v.visited_on <= T).map(v => v.visited_on))].sort();
     const gaps = ds.slice(1).map((d, i) => dayNo(d) - dayNo(ds[i])).filter(g => g >= 7); all.push(...gaps);
     return { c, ds, gaps };
   });
@@ -774,7 +774,7 @@ function duePredictions(except) {
   return per.filter(p => p.ds.length && !nextBooking(p.c.id, except)).map(p => {
     const cyc = p.gaps.length ? median(p.gaps) : shop;
     return { c: p.c, cyc, guess: !p.gaps.length, diff: dayNo(p.ds[p.ds.length - 1]) + cyc - tN };
-  }).filter(x => x.diff <= 14 && x.diff >= -x.cyc).sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff) || a.diff - b.diff).slice(0, 6);
+  }).sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff) || a.diff - b.diff).slice(0, 6);
 }
 function custPicker(id, except) {
   const box = $('#' + id + 'pick'), hidden = $('#' + id);
