@@ -166,6 +166,11 @@ input,select,textarea{width:100%;min-height:46px;border-radius:12px;border:1px s
 textarea{min-height:80px;resize:vertical;line-height:1.5}
 textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+/* iPhone の Safari では日付・時間の欄が中身の幅より小さくならず、はみ出すため */
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;text-align:left}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
+/* 予約を追加：お客様の一覧と日付・時間の間をあける */
+#b1pick{margin-bottom:40px}
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;display:none;gap:12px;align-items:center}
 .toast.show{display:flex}
 .toast button{background:none;border:0;color:var(--acc);font:inherit;font-weight:700;min-height:36px;cursor:pointer}
