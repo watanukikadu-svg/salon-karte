@@ -215,7 +215,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .btn.add{color:var(--acc);border-color:var(--acc);font-weight:700}
 .acc{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:6px 10px;margin:12px 0 4px;font-size:15px}.acc dt{color:var(--sub)}.acc dd{margin:0;overflow-wrap:anywhere}
 .btn.bookbtn{background:var(--sel);border-color:var(--sel);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}.btn.bookbtn svg{width:18px;height:18px}
-.visit.upb{border-color:var(--sel);border-width:1.5px}.visit.upb .d{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.visit.upb .d svg{width:15px;height:15px;color:var(--sel)}
+.visit.upb{border-color:var(--sel);border-width:1.5px}.visit.upb .d{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap}.visit.upb .d svg{margin-right:-6px}.visit.upb .d svg{width:15px;height:15px;color:var(--sel)}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -498,7 +498,7 @@ function bookView() {
     ${(b.items || []).length ? `<div class="menu">店販：${b.items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(b.items.reduce((t, x) => t + x.price * x.qty, 0))}</span>）</div>` : ''}
     ${b.stylist_id ? `<div class="menu">担当：${esc(staffName(b.stylist_id))}${b.nominated ? ' <span class="tag">指名</span>' : ''}</div>` : ''}
     </div><div class="row bkrow">${b.status === 'done' ? `<span class="tag done">${b.walk_in ? '予約なしで来店・カルテ記録済み' : '来店済み・カルテ記録済み'}</span>` : `<button class="btn sm" data-eb="${b.id}">変更</button>`}
-    <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}">取消</button>` : ''}</div></li>`;
+    <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}" style="margin-left:auto">取消</button>` : ''}</div></li>`;
   };
   const items = list.map(item).join('');
   const sel = bview === 'tl' && list.find(b => b.id === tlSel);
@@ -584,9 +584,9 @@ function detailView() {
     if (!up.length) return '';
     return `<h2 style="margin-top:32px">これからの予約 <span class="tag">${up.length}件</span></h2>` + up.map(b => {
       const end = new Date(b.booked_on + 'T' + hm(b.start_time)); end.setMinutes(end.getMinutes() + (+b.duration_min || 60));
-      return `<div class="visit upb"><div><div class="d">${CAL_ICON}${jdate(b.booked_on)} <span class="num">${hm(b.start_time)}〜${pad(end.getHours())}:${pad(end.getMinutes())}</span>${b.stylist_id ? '・担当 ' + esc(staffName(b.stylist_id)) + (b.nominated ? '（指名）' : '') : ''}</div><b>${esc((b.menu_names || []).join('・')) || '（メニューなし）'}</b></div>
+      return `<div class="visit upb"><div><div class="d">${CAL_ICON}<span>${jdate(b.booked_on)} <span class="num">${hm(b.start_time)}〜${pad(end.getHours())}:${pad(end.getMinutes())}</span></span>${b.stylist_id ? `<span class="who2">担当 ${esc(staffName(b.stylist_id))}${b.nominated ? '（指名）' : ''}</span>` : ''}</div><b>${esc((b.menu_names || []).join('・')) || '（メニューなし）'}</b></div>
       <div class="p num">${yen(b.price)}</div>${(b.items || []).length ? `<div class="m">店販：${b.items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(b.items.reduce((t, x) => t + x.price * x.qty, 0))}</span>）</div>` : ''}
-      <div class="row" style="grid-column:1/-1;margin:0"><button class="btn sm" data-eb="${b.id}">変更</button><button class="btn sm danger" data-delb="${b.id}">取消</button></div></div>`;
+      <div class="row" style="grid-column:1/-1;margin:0"><button class="btn sm" data-eb="${b.id}">変更</button><button class="btn sm danger" data-delb="${b.id}" style="margin-left:auto">取消</button></div></div>`;
     }).join('');
   })()}
   <h2 style="margin-top:32px">来店履歴</h2>
