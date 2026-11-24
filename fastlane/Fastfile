@@ -102,6 +102,12 @@ platform :ios do
       key_content: ENV.fetch("ASC_KEY_P8"),
     )
     submit = ENV["SUBMIT"] == "true"
+    # 審査の人へのメモとメールは、審査に出すときだけ送る
+    # （姓・名・電話番号は App Store Connect で手で入れてもらう。それがないと Apple が受け付けないため）
+    review = submit ? {
+      email_address: File.read("fastlane/review_information/email_address.txt").strip,
+      notes: File.read("fastlane/review_information/notes.txt").strip,
+    } : nil
     deliver(
       api_key: api_key,
       app_identifier: APP_ID,
@@ -115,6 +121,7 @@ platform :ios do
       submit_for_review: submit,
       build_number: submit ? ENV.fetch("SUBMIT_BUILD") : nil,
       automatic_release: false,
+      app_review_information: review,
       submission_information: {
         add_id_info_uses_idfa: false,
         export_compliance_uses_encryption: false,
