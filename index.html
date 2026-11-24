@@ -760,7 +760,7 @@ const CAL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const bookBadge = nb => nb ? `<span class="bkb">${CAL_ICON}予約あり ${jdate(nb.booked_on)} <span class="num">${hm(nb.start_time)}</span></span>` : '';
 // 来店周期から「そろそろ来店しそうなお客様」を予想する
 //  周期＝そのお客様の来店の間隔の真ん中の値（1回しか来ていない人はお店全体の真ん中の値。7日未満の間隔は数えない）
-//  目安の日＝前回の来店日＋周期。予約がない人を、目安の日に近い順に6人（今日より先の日付の来店は数えない）
+//  目安の日＝前回の来店日＋周期。目安の日の前後14日以内で、予約がない人を、目安の日に近い順に6人（今日より先の日付の来店は数えない）
 const dayNo = d => Math.round(new Date(d + 'T00:00') / 864e5);
 const median = a => { const x = a.slice().sort((p, q) => p - q); return x.length ? x[Math.floor(x.length / 2)] : null };
 function duePredictions(except) {
@@ -774,7 +774,7 @@ function duePredictions(except) {
   return per.filter(p => p.ds.length && !nextBooking(p.c.id, except)).map(p => {
     const cyc = p.gaps.length ? median(p.gaps) : shop;
     return { c: p.c, cyc, guess: !p.gaps.length, diff: dayNo(p.ds[p.ds.length - 1]) + cyc - tN };
-  }).sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff) || a.diff - b.diff).slice(0, 6);
+  }).filter(x => Math.abs(x.diff) <= 14).sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff) || a.diff - b.diff).slice(0, 6);
 }
 function custPicker(id, except) {
   const box = $('#' + id + 'pick'), hidden = $('#' + id);
@@ -783,9 +783,8 @@ function custPicker(id, except) {
     q = q.trim();
     if (!q) {
       const pred = duePredictions(except);
-      if (pred.length) return '<p class="hint pk-h">来店周期から、そろそろ来店しそうなお客様</p>' + pred.map(x => row(x.c, x)).join('');
-      const recent = S.customers.filter(c => lastVisit(c.id)).sort((a, b) => vkey(lastVisit(b.id)).localeCompare(vkey(lastVisit(a.id)))).slice(0, 6);
-      return (recent.length ? '<p class="hint pk-h">最近来店したお客様</p>' + recent.map(c => row(c)).join('') : '');
+      // 当てはまる人がいなければ何も出さない
+      return pred.length ? '<p class="hint pk-h">来店周期から、そろそろ来店しそうなお客様</p>' + pred.map(x => row(x.c, x)).join('') : '';
     }
     const hq = hira(q).replace(/\s/g, ''), dq = digits(q);
     const hit = S.customers.filter(c => hira(c.name + c.kana).replace(/\s/g, '').includes(hq) || (dq.length >= 3 && digits(c.tel).includes(dq)))
