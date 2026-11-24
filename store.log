@@ -1,0 +1,172 @@
+[13:15:47]: [33mGet started using a Gemfile for fastlane https://docs.fastlane.tools/getting-started/ios/setup/#use-a-gemfile[0m
+[13:15:47]: fastlane 2.242.0 (Ruby 3.3.8, gem)
+[13:15:47]: Sending anonymous analytics information
+[13:15:47]: Learn more at https://docs.fastlane.tools/#metrics
+[13:15:47]: No personal or sensitive data is sent.
+[13:15:47]: You can disable this by adding `opt_out_usage` at the top of your Fastfile
+[13:15:47]: [32m------------------------------[0m
+[13:15:47]: [32m--- Step: default_platform ---[0m
+[13:15:47]: [32m------------------------------[0m
+[13:15:47]: [32mDriving the lane 'ios store' 🚀[0m
+[13:15:47]: [32m---------------------------------------[0m
+[13:15:47]: [32m--- Step: app_store_connect_api_key ---[0m
+[13:15:47]: [32m---------------------------------------[0m
+[13:15:47]: [32m---------------------[0m
+[13:15:47]: [32m--- Step: deliver ---[0m
+[13:15:47]: [32m---------------------[0m
+[13:15:47]: Creating authorization token for App Store Connect API
+
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                                                                                                                             [32mdeliver 2.242.0 Summary[0m                                                                                                                             |
++--------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| api_key                                                            | API_KEY_REDACTED                                                                                                                                                                                           |
+| app_identifier                                                     | com.watanukikadu.salonkarte                                                                                                                                                                                |
+| app_version                                                        | 1.0.0                                                                                                                                                                                                      |
+| skip_binary_upload                                                 | true                                                                                                                                                                                                       |
+| skip_metadata                                                      | false                                                                                                                                                                                                      |
+| metadata_path                                                      | fastlane/metadata                                                                                                                                                                                          |
+| screenshots_path                                                   | fastlane/screenshots                                                                                                                                                                                       |
+| overwrite_screenshots                                              | true                                                                                                                                                                                                       |
+| force                                                              | true                                                                                                                                                                                                       |
+| run_precheck_before_submit                                         | false                                                                                                                                                                                                      |
+| submit_for_review                                                  | true                                                                                                                                                                                                       |
+| build_number                                                       | 28                                                                                                                                                                                                         |
+| automatic_release                                                  | false                                                                                                                                                                                                      |
+| app_review_information.email_address                               | watakadu@icloud.com                                                                                                                                                                                        |
+| app_review_information.notes                                       | ログインは不要です。最初の画面で「はじめる」を押すと、お試しのお店が自動で作られ、すべての機能をすぐに試せます。                                                                                           |
+|                                                                    |                                                                                                                                                                                                            |
+|                                                                    | ・お客様の登録：「顧客カルテ」タブの右下「＋ 新しいお客様」                                                                                                                                                |
+|                                                                    | ・予約：「予約」タブの「＋ 予約を追加」                                                                                                                                                                    |
+|                                                                    | ・施術の記録：お客様のカルテの「＋ 施術を記録」                                                                                                                                                            |
+|                                                                    | ・スタッフの追加やほかの端末で使うには、「管理」タブの「お店を登録する」で登録します（お店の名前・お店コード・パスワード）。                                                                               |
+|                                                                    | ・アカウントの削除：「管理」タブの一番下「お店とアカウントを消去する」→「消去」と入力。お店のすべてのデータが消えます。                                                                                    |
+|                                                                    |                                                                                                                                                                                                            |
+|                                                                    | No login is required. Tap "はじめる" (Start) on the first screen to create a trial shop and try every feature. Account deletion: Admin tab (管理) > bottom > "お店とアカウントを消去する", then type 消去. |
+| submission_information.add_id_info_uses_idfa                       | false                                                                                                                                                                                                      |
+| submission_information.export_compliance_uses_encryption           | false                                                                                                                                                                                                      |
+| submission_information.content_rights_contains_third_party_content | false                                                                                                                                                                                                      |
+| submission_information.content_rights_has_rights                   | true                                                                                                                                                                                                       |
+| platform                                                           | ios                                                                                                                                                                                                        |
+| edit_live                                                          | false                                                                                                                                                                                                      |
+| use_live_version                                                   | false                                                                                                                                                                                                      |
+| preview_frame_time_code                                            | 00:00:05:00                                                                                                                                                                                                |
+| overwrite_preview_videos                                           | false                                                                                                                                                                                                      |
+| skip_screenshots                                                   | false                                                                                                                                                                                                      |
+| skip_app_version_update                                            | false                                                                                                                                                                                                      |
+| screenshot_processing_timeout                                      | 3600                                                                                                                                                                                                       |
+| sync_screenshots                                                   | false                                                                                                                                                                                                      |
+| verify_only                                                        | false                                                                                                                                                                                                      |
+| reject_if_possible                                                 | false                                                                                                                                                                                                      |
+| version_check_wait_retry_limit                                     | 7                                                                                                                                                                                                          |
+| phased_release                                                     | false                                                                                                                                                                                                      |
+| reset_ratings                                                      | false                                                                                                                                                                                                      |
+| precheck_default_rule_level                                        | warn                                                                                                                                                                                                       |
+| ignore_language_directory_validation                               | false                                                                                                                                                                                                      |
+| precheck_include_in_app_purchases                                  | true                                                                                                                                                                                                       |
++--------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+[13:15:48]: Making sure the latest version on App Store Connect matches '1.0.0'...
+[13:15:48]: [32m'1.0.0' is the latest version on App Store Connect[0m
+[13:15:48]: Loading 'fastlane/metadata/ja/description.txt'...
+[13:15:48]: Loading 'fastlane/metadata/ja/keywords.txt'...
+[13:15:48]: Loading 'fastlane/metadata/ja/support_url.txt'...
+[13:15:48]: Loading 'fastlane/metadata/ja/marketing_url.txt'...
+[13:15:48]: Loading 'fastlane/metadata/ja/promotional_text.txt'...
+[13:15:48]: Loading 'fastlane/metadata/ja/name.txt'...
+[13:15:48]: Loading 'fastlane/metadata/ja/subtitle.txt'...
+[13:15:48]: Loading 'fastlane/metadata/ja/privacy_url.txt'...
+[13:15:48]: Loading 'fastlane/metadata/copyright.txt'...
+[13:15:48]: Loading 'fastlane/metadata/primary_category.txt'...
+[13:15:48]: Loading 'fastlane/metadata/secondary_category.txt'...
+[13:15:50]: No changes to localized App Info detected. Skipping upload.
+[13:15:51]: [33mWill begin uploading metadata for '1.0.0' on App Store Connect[0m
+[13:15:51]: Uploading metadata to App Store Connect for version
+[13:15:55]: Uploading metadata to App Store Connect for localized version 'ja'
+[13:15:57]: Uploading app review information to App Store Connect
+[13:15:59]: [33mWill begin uploading snapshots for '1.0.0' on App Store Connect[0m
+[13:15:59]: Starting with the upload of screenshots...
+[13:16:00]: Deleted 'ja APP_IPHONE_67' -  (0.671450845 secs)
+[13:16:00]: [33mNumber of screenshots not deleted: 0[0m
+[13:16:00]: Successfully deleted all screenshots
+[13:16:03]: Uploaded 'fastlane/screenshots/ja/6-sales.png'... (2.035623418 secs)
+[13:16:03]: Uploaded 'fastlane/screenshots/ja/3-booking.png'... (2.133562179 secs)
+[13:16:03]: Uploaded 'fastlane/screenshots/ja/2-carte.png'... (2.175754037 secs)
+[13:16:03]: Uploaded 'fastlane/screenshots/ja/5-record.png'... (2.176420156 secs)
+[13:16:03]: Uploaded 'fastlane/screenshots/ja/1-customers.png'... (2.316225934 secs)
+[13:16:03]: Uploaded 'fastlane/screenshots/ja/4-timeline.png'... (2.439868819 secs)
+[13:16:03]: Waiting for all the screenshots to finish being processed...
+[13:16:09]: Successfully uploaded all screenshots
+[13:16:09]: Sorting screenshots uploaded...
+[13:16:10]: [32mSuccessfully uploaded screenshots to App Store Connect[0m
+[13:16:10]: Selecting existing build-number: 28
+[13:16:11]: Selecting build 1.0.0 (28)...
+[13:16:13]: [32mSuccessfully selected build[0m
+[13:16:14]: [32mSuccessfully updated contents rights declaration on App Store Connect[0m
++------------------------------+
+|         [33mLane Context[0m         |
++------------------+-----------+
+| DEFAULT_PLATFORM | ios       |
+| PLATFORM_NAME    | ios       |
+| LANE_NAME        | ios store |
++------------------+-----------+
+[13:16:17]: [31mCalled from Fastfile at line 110[0m
+[13:16:17]: [31m```[0m
+[13:16:17]: [31m    108:	    rf = ->(name) { File.read(["review_information/#{name}", "fastlane/review_information/#{name}"].find { |f| File.exist?(f) }).strip }[0m
+[13:16:17]: [31m    109:	    review = submit ? { email_address: rf.("email_address.txt"), notes: rf.("notes.txt") } : nil[0m
+[13:16:17]: [31m => 110:	    deliver([0m
+[13:16:17]: [31m    111:	      api_key: api_key,[0m
+[13:16:17]: [31m    112:	      app_identifier: APP_ID,[0m
+[13:16:17]: [31m```[0m
+
++------------------------------------------------+
+|                [32mfastlane summary[0m                |
++------+---------------------------+-------------+
+| Step | Action                    | Time (in s) |
++------+---------------------------+-------------+
+| 1    | default_platform          | 0           |
+| 2    | app_store_connect_api_key | 0           |
+| 💥   | [31mdeliver[0m                   | 29          |
++------+---------------------------+-------------+
+
+[13:16:17]: [31mfastlane finished with errors[0m
+
+Looking for related GitHub issues on fastlane/fastlane...
+
+/var/lib/gems/3.3.0/gems/fastlane-2.242.0/spaceship/lib/spaceship/connect_api/api_client.rb:222:in `handle_response': [31m[!] appStoreVersions with id 'df575041-27c8-49ba-81f9-cd317ee24159' is not in valid state. - This resource cannot be reviewed, please check associated errors to see why. (Spaceship::UnexpectedResponse)
+App submission blocked - Cannot submit version due to unfulfilled compliance requirement.
+App submission blocked - Cannot submit version due to unfulfilled compliance requirement.[0m
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/spaceship/lib/spaceship/connect_api/api_client.rb:125:in `post'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/spaceship/lib/spaceship/connect_api/tunes/tunes.rb:1273:in `post_review_submission_item'
+	from /usr/lib/ruby/3.3.0/forwardable.rb:240:in `post_review_submission_item'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/spaceship/lib/spaceship/connect_api/models/review_submission.rb:69:in `add_app_store_version_to_review_items'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/deliver/lib/deliver/submit_for_review.rb:48:in `create_review_submission'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/deliver/lib/deliver/submit_for_review.rb:25:in `submit!'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/deliver/lib/deliver/runner.rb:287:in `submit_for_review'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/deliver/lib/deliver/runner.rb:75:in `run'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/actions/upload_to_app_store.rb:25:in `run'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/runner.rb:261:in `block (2 levels) in execute_action'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/actions/actions_helper.rb:69:in `execute_action'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/runner.rb:253:in `block in execute_action'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/runner.rb:227:in `chdir'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/runner.rb:227:in `execute_action'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/runner.rb:158:in `trigger_action_by_name'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/fast_file.rb:159:in `method_missing'
+	from Fastfile:110:in `block (2 levels) in parsing_binding'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/lane.rb:41:in `call'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/runner.rb:49:in `block in execute'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/runner.rb:45:in `chdir'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/runner.rb:45:in `execute'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/lane_manager.rb:46:in `cruise_lane'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/command_line_handler.rb:34:in `handle'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/commands_generator.rb:110:in `block (2 levels) in run'
+	from /var/lib/gems/3.3.0/gems/commander-4.6.0/lib/commander/command.rb:187:in `call'
+	from /var/lib/gems/3.3.0/gems/commander-4.6.0/lib/commander/command.rb:157:in `run'
+	from /var/lib/gems/3.3.0/gems/commander-4.6.0/lib/commander/runner.rb:444:in `run_active_command'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane_core/lib/fastlane_core/ui/fastlane_runner.rb:129:in `run!'
+	from /var/lib/gems/3.3.0/gems/commander-4.6.0/lib/commander/delegates.rb:18:in `run!'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/commands_generator.rb:369:in `run'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/commands_generator.rb:43:in `start'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/fastlane/lib/fastlane/cli_tools_distributor.rb:140:in `take_off'
+	from /var/lib/gems/3.3.0/gems/fastlane-2.242.0/bin/fastlane:25:in `<top (required)>'
+	from /usr/local/bin/fastlane:25:in `load'
+	from /usr/local/bin/fastlane:25:in `<main>'
