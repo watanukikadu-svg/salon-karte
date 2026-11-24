@@ -89,4 +89,7 @@
   - index.html の `PAY`（iosKey＝RevenueCat の Apple 用公開キー appl_…、webLink＝Web Purchase Link）が空の間は「準備中」と出る
   - Supabase の Secrets（ユーザーがダッシュボードで入れる）：RC_SECRET_KEY（V1 の秘密の鍵）、RC_WEBHOOK_AUTH（webhook の Authorization の値）。PLAN_ENFORCE=1 でサーバーもスタッフ追加を止める（1.1.0 を出すときにオン）
   - サーバーの処理（sync_plan・webhook）と salons の欄は本番に入れ済み（今のアプリには影響なし）
+  - 済んだ設定（11/24）：RevenueCat のアカウント・アプリ「美容室カルテ (App Store)」（アプリ内課金キー・App Store Connect API キー・Apple のサーバー通知 URL）、商品 salonkarte_pro_monthly（¥600）・salonkarte_pro_yearly（¥6,000）（グループ「有料プラン」）、権利 pro、Offering default（$rc_monthly・$rc_annual）、PAY.iosKey、Supabase の RC_SECRET_KEY・RC_WEBHOOK_AUTH、RevenueCat の webhook（テストで 200 を確認）
+  - RevenueCat が自動で作った見本（Test Store の商品・権利「美容室カルテ_pro」）は使わない。消さずに置いてある
+  - サブスクリプションの審査用スクリーンショット：`store/make_iap_screenshot.py` → `store/iap/paywall.png`
   - 出す前にやること：tokushoho.html の「運営責任者［未記入］」を埋める、PAY を入れる、App Store Connect の商品・App のプライバシー（購入履歴）、利用規約・プライバシーポリシーの改定日をそろえる、PLAN_ENFORCE=1、main に入れる
