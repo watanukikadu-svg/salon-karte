@@ -15,7 +15,7 @@ A screen recording captured on a physical iPhone (latest iOS) is attached. It st
 - Account registration: "管理" (Admin) tab > "お店を登録する" (Register shop): shop name, shop code and password. This is needed only to add staff or use another device.
 - Login / logout: "管理" (Admin) tab > "ログイン" / "ログアウト". Login uses shop code + staff ID (leave empty for the owner) + password.
 - Account deletion: "管理" (Admin) tab > bottom > "お店とアカウントを消去する" (Delete shop and account), then type 消去 to confirm. All data of the shop is deleted from the server.
-- There is no user-generated content shared with other users (each shop only sees its own data), no in-app purchases and no paid content. The app is free.
+- There is no user-generated content shared with other users (each shop only sees its own data), and this version has no in-app purchases, paid content or paid features: every feature is free to use.
 
 4. EXTERNAL SERVICES
 - Supabase (supabase.com, Tokyo region): database, authentication (anonymous sign-in for the trial, and shop code + password login) and photo storage.
