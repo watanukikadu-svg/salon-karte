@@ -209,6 +209,7 @@ textarea.tall{min-height:calc(5 * 1.5em + 18px)}
 .sec .adm{margin:0}.sec .adm li:last-child{border-bottom:0}
 .btn.add{color:var(--acc);border-color:var(--acc);font-weight:700}
 .acc{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:6px 10px;margin:12px 0 4px;font-size:15px}.acc dt{color:var(--sub)}.acc dd{margin:0;overflow-wrap:anywhere}
+.btn.bookbtn{background:var(--sel);border-color:var(--sel);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}.btn.bookbtn svg{width:18px;height:18px}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -569,7 +570,7 @@ function detailView() {
   <dt>髪質</dt><dd>${esc(c.hair) || '—'}</dd><dt>メモ</dt><dd>${esc(c.memo) || '—'}</dd>
   <dt>来店回数</dt><dd><span class="num">${vs.length}</span> 回</dd><dt>累計</dt><dd class="num">${yen(total)}</dd></dl>
   <div class="row"><button class="btn sm" id="editC">カルテを編集</button></div></div>
-  <button class="btn wide" id="bookC" style="margin-top:16px">予約を入れる</button>
+  <button class="btn wide bookbtn" id="bookC" style="margin-top:16px">${CAL_ICON}予約を入れる</button>
   <button class="btn pri wide" id="addV" style="margin-top:10px">＋ 施術を記録</button>
   <h2 style="margin-top:32px">来店履歴</h2>
   ${vs.map(v => { const ps = photos(v); return `<div class="visit"><div><div class="d">${jdate(v.visited_on)}${v.visited_at ? ' <span class="num">' + hm(v.visited_at) + '</span>' : ''}${v.stylist_id ? '・担当 ' + esc(staffName(v.stylist_id)) + (v.nominated ? '（指名）' : '') : ''}</div><b>${esc(menuStr(v))}</b></div>
