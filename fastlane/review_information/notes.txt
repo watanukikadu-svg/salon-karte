@@ -1,30 +1,32 @@
-Thank you for reviewing. Answers to the requested information:
+Thank you for reviewing 美容室カルテ. Here is the information you requested.
 
 1. SCREEN RECORDING
-A screen recording captured on a physical iPhone (latest iOS) is attached. It starts from launching the app and shows: starting the app, adding a customer, adding a booking, recording a visit with photos, sales, shop registration (account creation), logout and login, and account deletion.
+A screen recording captured on a physical iPhone running the latest iOS is attached to our reply in App Review. It begins with launching the app and shows the typical flow: starting the app, adding a customer, adding a booking, recording a treatment with a photo, the sales screen, shop registration (account creation), logout and login, and account deletion.
 
 2. PURPOSE AND TARGET AUDIENCE
-美容室カルテ (Beauty Salon Karte) is a customer-record app for small hair salons in Japan (owners and stylists). Many small salons still keep customer records ("karte") on paper. The app lets them keep each customer's visit history, treatment notes and hair photos, bookings, sales and staff on one iPhone, so a stylist can check what was done last time before the customer sits down. It is for any salon; it is not made for one specific company.
+美容室カルテ ("Beauty Salon Karte") is a customer-record app for small hair salons in Japan, used by salon owners and stylists. Many small salons still keep customer records ("karte") on paper. The app keeps each customer's visit history, treatment notes, hair photos, bookings, sales and staff on one iPhone, so a stylist can check what was done last time before the customer sits down. It is available to any hair salon and is not made for one specific company or organization.
 
-3. HOW TO USE (NO LOGIN NEEDED)
-- No account or credentials are needed. On the first screen tap "はじめる" (Start). A trial shop is created automatically (anonymous sign-in) and every feature can be used at once.
-- Add a customer: "顧客カルテ" (Customers) tab > round "＋" button at bottom right.
-- Bookings: "予約" (Bookings) tab > "＋ 予約を追加" (Add booking).
-- Record a visit: open a customer > "＋ 施術を記録" (Record treatment). Up to 9 photos per visit.
+3. HOW TO USE THE APP (NO LOGIN CREDENTIALS NEEDED)
+- No account is needed to review the app. On the first screen, tap "はじめる" (Start). A trial shop is created automatically (anonymous sign-in), and every feature can be used immediately.
+- Add a customer: "顧客カルテ" (Customers) tab > "＋ 新しいお客様" (New customer) button at the bottom right.
+- Add a booking: "予約" (Bookings) tab > "＋ 予約を追加" (Add booking).
+- Record a treatment: open a customer > "＋ 施術を記録" (Record treatment). Up to 9 photos can be added per visit.
 - Sales: "売上" (Sales) tab.
-- Account registration: "管理" (Admin) tab > "お店を登録する" (Register shop): shop name, shop code and password. This is needed only to add staff or use another device.
-- Login / logout: "管理" (Admin) tab > "ログイン" / "ログアウト". Login uses shop code + staff ID (leave empty for the owner) + password.
-- Account deletion: "管理" (Admin) tab > bottom > "お店とアカウントを消去する" (Delete shop and account), then type 消去 to confirm. All data of the shop is deleted from the server.
-- There is no user-generated content shared with other users (each shop only sees its own data), and this version has no in-app purchases, paid content or paid features: every feature is free to use.
+- Account registration: "管理" (Admin) tab > "お店を登録する" (Register shop). Enter a shop name, a shop code and a password. Registration is only needed to add staff or to use the shop on another device.
+- Logout: "管理" (Admin) tab > "ログアウト" (Log out).
+- Login: on the login screen, enter the shop code and password. The staff ID can be left empty for the owner.
+- Account deletion: "管理" (Admin) tab > bottom of the screen > "お店とアカウントを消去する" (Delete shop and account) > type 消去 to confirm. All of the shop's data is deleted from the server.
+- There is no user-generated content shared between users; each shop can only see its own data.
+- This version has no in-app purchases, paid content or paid features. Every feature is free to use.
 
 4. EXTERNAL SERVICES
 - Supabase (supabase.com, Tokyo region): database, authentication (anonymous sign-in for the trial, and shop code + password login) and photo storage.
-No payment processors, advertising, analytics or AI services are used.
+The app does not use any payment processor, advertising, analytics or AI service.
 
 5. REGIONAL DIFFERENCES
-The app works the same in all regions where it is available. The interface is in Japanese. (It is not distributed in mainland China.)
+The app works the same in every region where it is available. The interface is in Japanese. The app is not distributed in mainland China.
 
 6. REGULATED INDUSTRY / THIRD-PARTY MATERIAL
-Not applicable. The app is a record-keeping tool for hair salons; it gives no medical, financial or legal services and uses no protected third-party material.
+Not applicable. The app is a record-keeping tool for hair salons. It does not provide medical, financial or legal services, and it does not use protected third-party material.
 
 Contact: STAYGOLD, watakadu@icloud.com
