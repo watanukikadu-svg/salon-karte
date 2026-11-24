@@ -215,6 +215,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .btn.add{color:var(--acc);border-color:var(--acc);font-weight:700}
 .acc{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:6px 10px;margin:12px 0 4px;font-size:15px}.acc dt{color:var(--sub)}.acc dd{margin:0;overflow-wrap:anywhere}
 .btn.bookbtn{background:var(--sel);border-color:var(--sel);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}.btn.bookbtn svg{width:18px;height:18px}
+.visit.upb{border-color:var(--sel);border-width:1.5px}.visit.upb .d{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.visit.upb .d svg{width:15px;height:15px;color:var(--sel)}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -577,6 +578,17 @@ function detailView() {
   <div class="row"><button class="btn sm" id="editC">カルテを編集</button></div></div>
   <button class="btn wide bookbtn" id="bookC" style="margin-top:16px">${CAL_ICON}予約を入れる</button>
   <button class="btn pri wide" id="addV" style="margin-top:10px">＋ 施術を記録</button>
+  ${(() => {
+    // このお客様の、これからの予約（今日以降・まだ来店していないもの）
+    const up = S.bookings.filter(b => b.customer_id === c.id && b.status !== 'done' && b.booked_on >= T).sort((a, b) => (a.booked_on + a.start_time).localeCompare(b.booked_on + b.start_time));
+    if (!up.length) return '';
+    return `<h2 style="margin-top:32px">これからの予約 <span class="tag">${up.length}件</span></h2>` + up.map(b => {
+      const end = new Date(b.booked_on + 'T' + hm(b.start_time)); end.setMinutes(end.getMinutes() + (+b.duration_min || 60));
+      return `<div class="visit upb"><div><div class="d">${CAL_ICON}${jdate(b.booked_on)} <span class="num">${hm(b.start_time)}〜${pad(end.getHours())}:${pad(end.getMinutes())}</span>${b.stylist_id ? '・担当 ' + esc(staffName(b.stylist_id)) + (b.nominated ? '（指名）' : '') : ''}</div><b>${esc((b.menu_names || []).join('・')) || '（メニューなし）'}</b></div>
+      <div class="p num">${yen(b.price)}</div>${(b.items || []).length ? `<div class="m">店販：${b.items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(b.items.reduce((t, x) => t + x.price * x.qty, 0))}</span>）</div>` : ''}
+      <div class="row" style="grid-column:1/-1;margin:0"><button class="btn sm" data-eb="${b.id}">変更</button><button class="btn sm danger" data-delb="${b.id}">取消</button></div></div>`;
+    }).join('');
+  })()}
   <h2 style="margin-top:32px">来店履歴</h2>
   ${vs.map(v => { const ps = photos(v); return `<div class="visit"><div><div class="d">${jdate(v.visited_on)}${v.visited_at ? ' <span class="num">' + hm(v.visited_at) + '</span>' : ''}${v.stylist_id ? '・担当 ' + esc(staffName(v.stylist_id)) + (v.nominated ? '（指名）' : '') : ''}</div><b>${esc(menuStr(v))}</b></div>
   <div class="p num">${yen(v.price)}</div>${(v.visit_items || []).length ? `<div class="m">店販：${v.visit_items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(retail(v))}</span>）</div>` : ''}${v.chem ? `<div class="m">薬剤：${esc(v.chem)}</div>` : ''}${v.memo ? `<div class="m">${esc(v.memo)}</div>` : ''}
