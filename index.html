@@ -220,6 +220,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .btn.fab{position:fixed;z-index:7;right:max(16px,calc((100vw - 640px) / 2 + 16px));bottom:calc(61px + env(safe-area-inset-bottom) + 14px);min-height:52px;padding:0 22px;border-radius:999px;font-size:16px;box-shadow:0 6px 18px rgb(0 0 0/.25)}
 .fab-space{height:72px}
 body.has-fab .toast{bottom:calc(140px + env(safe-area-inset-bottom))}
+.bday{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px}
 .link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
 [hidden]{display:none!important}
 .bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
@@ -686,6 +687,25 @@ $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') close(
 $('#form').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !e.isComposing) e.preventDefault() });
 const userErr = m => { const e = new Error(m); toast(m); e.shown = true; return e };
 
+// 誕生日は「年・月・日」の3つの選択（iPhone では下からホイールが出て「完了」で閉じられる。カレンダーの小窓は閉じにくいため）
+function bdaySel(v) {
+  const [y, m, d] = (v || '').split('-').map(Number), ty = new Date().getFullYear();
+  const opt = (val, label, sel) => `<option value="${val}" ${sel ? 'selected' : ''}>${label}</option>`;
+  const ys = [opt('', '年', !y)]; for (let i = ty; i >= 1920; i--) ys.push(opt(i, i + '年', i === y));
+  const ms = [opt('', '月', !m)]; for (let i = 1; i <= 12; i++) ms.push(opt(i, i + '月', i === m));
+  const ds = [opt('', '日', !d)]; for (let i = 1; i <= 31; i++) ds.push(opt(i, i + '日', i === d));
+  return `<div class="bday"><select id="f7" name="by" aria-label="誕生日の年">${ys.join('')}</select><select name="bm" aria-label="誕生日の月">${ms.join('')}</select><select name="bd" aria-label="誕生日の日">${ds.join('')}</select></div>`;
+}
+// 3つとも選ばれていれば「YYYY-MM-DD」、1つも選ばれていなければ未登録。途中まで・ない日付は知らせる
+function bdayOf(fd) {
+  const y = +fd.get('by'), m = +fd.get('bm'), d = +fd.get('bd');
+  if (!y && !m && !d) return null;
+  if (!y || !m || !d) throw userErr('誕生日は「年・月・日」をすべて選んでください（わからなければすべて空に）');
+  const dt = new Date(y, m - 1, d);
+  if (dt.getMonth() !== m - 1) throw userErr(m + '月' + d + '日はありません');
+  if (dt > new Date()) throw userErr('誕生日が今日より先になっています');
+  return y + '-' + pad(m) + '-' + pad(d);
+}
 function custForm(c) {
   c = c || {};
   open(`<h3>${c.id ? 'カルテを編集' : '新しいお客様'}</h3>
@@ -694,11 +714,11 @@ function custForm(c) {
   <label for="f1">お名前 *</label><input id="f1" name="name" required value="${esc(c.name)}">
   <label for="f2">ふりがな</label><input id="f2" name="kana" value="${esc(c.kana)}">
   <label for="f3">電話番号</label><input id="f3" name="tel" type="tel" value="${esc(c.tel)}">
-  <label for="f7">誕生日</label><input id="f7" name="birthday" type="date" max="${T}" value="${esc(c.birthday)}">
+  <label for="f7">誕生日</label>${bdaySel(c.birthday)}
   <label for="f4">髪質</label><input id="f4" name="hair" placeholder="例：細め・クセあり" value="${esc(c.hair)}">
   <label for="f5">アレルギー・注意点</label><input id="f5" name="allergy" value="${esc(c.allergy)}">
   <label for="f6">メモ</label><textarea id="f6" name="memo" rows="5" class="tall">${esc(c.memo)}</textarea>`, async fd => {
-    const o = { name: fd.get('name').trim(), kana: fd.get('kana').trim(), tel: fd.get('tel').trim(), birthday: fd.get('birthday') || null, hair: fd.get('hair'), allergy: fd.get('allergy'), memo: fd.get('memo') };
+    const o = { name: fd.get('name').trim(), kana: fd.get('kana').trim(), tel: fd.get('tel').trim(), birthday: bdayOf(fd), hair: fd.get('hair'), allergy: fd.get('allergy'), memo: fd.get('memo') };
     const id = c.id || uuid(), file = fd.get('face'), old = c.face_path;
     if (file && file.size) { const b = await shrink(file, 300, true); if (b) o.face_path = await upload(b, `${S.salon.id}/faces/${id}-${Date.now()}.jpg`) }
     else if (fd.get('noface')) o.face_path = null;

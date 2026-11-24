@@ -31,6 +31,7 @@ python3 test/walk_in.py       # 1つだけ
 | walk_in.py | 予約なしで来店 → 予約の画面に残る・直す・消す |
 | upcoming.py | カルテの「これからの予約」 |
 | carte_buttons.py | カルテのボタンの並び |
+| birthday_select.py | 誕生日を「年・月・日」の選択で入れる（未登録・途中まで・ない日付・うるう年） |
 | new_customer_button.py | 顧客一覧の「＋ 新しいお客様」が右下にいつも出る（100人・スマホとPC） |
 | delete_buttons.py | 顧客・来店履歴の削除が編集画面にある・1日平均 |
 | photo_limit.py / photo_limit_existing.py | 写真は9枚まで・お知らせの文 |
