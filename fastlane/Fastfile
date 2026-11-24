@@ -104,10 +104,9 @@ platform :ios do
     submit = ENV["SUBMIT"] == "true"
     # 審査の人へのメモとメールは、審査に出すときだけ送る
     # （姓・名・電話番号は App Store Connect で手で入れてもらう。それがないと Apple が受け付けないため）
-    review = submit ? {
-      email_address: File.read("fastlane/review_information/email_address.txt").strip,
-      notes: File.read("fastlane/review_information/notes.txt").strip,
-    } : nil
+    # fastlane はレーンの中では fastlane フォルダを基準にするので、どちらからでも見つかるようにする
+    rf = ->(name) { File.read(["review_information/#{name}", "fastlane/review_information/#{name}"].find { |f| File.exist?(f) }).strip }
+    review = submit ? { email_address: rf.("email_address.txt"), notes: rf.("notes.txt") } : nil
     deliver(
       api_key: api_key,
       app_identifier: APP_ID,
