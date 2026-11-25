@@ -681,7 +681,8 @@ function adminView() {
     <p>${mdj(trialEnd())}まで登録なしで使えます。お店コードとパスワードを登録すると、<b>スタッフの追加</b>や<b>別のスマホ・パソコン</b>からも使えるようになります。データはそのまま引き継がれます。</p>
     <button class="btn pri wide" id="regBtn">お店を登録する</button></div>` : ''}
   <dl class="acc"><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd>${S.trial ? '' : `<dt>プラン</dt><dd>${planLabel()}</dd>`}</dl>
-  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}${S.trial ? '' : '<button class="btn sm" id="planBtn">有料プラン</button>'}<button class="btn sm" id="reload">最新に更新</button></div>
+  ${S.trial ? '' : paid() ? '<button class="btn wide" id="planBtn" style="margin:8px 0 4px">有料プランの確認</button>' : '<button class="btn pri wide" id="planBtn" style="margin:8px 0 4px">有料プランを見る</button>'}
+  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button></div>
   <div class="row"><button class="btn sm" id="relogin">${S.trial ? 'ログイン（登録済みのお店）' : '別のお店・アカウントでログイン'}</button><button class="btn sm danger" id="logout">ログアウト</button></div></section>
   <p style="text-align:center;margin:18px 0 0"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
   <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを消去する' : '自分のアカウントを消去する'}</button>`;
@@ -1130,9 +1131,11 @@ const PAY = {
   webLink: '', // RevenueCat の Web Purchase Link（https://pay.rev.cat/… の形。うしろにお店のIDをつける）
   eula: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
   appleSubs: 'https://apps.apple.com/account/subscriptions',
+  timeoutMs: 15000, // Apple から値段が返ってこないとき、この時間で「読み込めませんでした」にする
   ...(window.__pay || {}), // テストで差しかえる
 };
-let planSynced = null, rcUser = null;
+let planSynced = null, rcUser = null, rcReady = null;
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ng) => setTimeout(() => ng(new Error('timeout')), ms))]);
 const isApp = () => !!window.Capacitor?.isNativePlatform?.();
 const paid = () => !!S.salon?.plan_until && new Date(S.salon.plan_until).getTime() > Date.now();
 const ymdJ = d => d.getFullYear() >= 9999 ? '期限なし' : d.getFullYear() + '年' + mdj(d);
@@ -1148,9 +1151,10 @@ async function syncPlan() {
 async function rc() {
   const P = window.RCPurchases;
   if (!P || !PAY.iosKey || window.Capacitor?.getPlatform?.() !== 'ios') return null;
-  if (!rcUser) await P.configure({ apiKey: PAY.iosKey, appUserID: S.salon.id });
-  else if (rcUser !== S.salon.id) await P.logIn({ appUserID: S.salon.id });
-  rcUser = S.salon.id;
+  // 準備（configure）は1回だけ。途中で時間切れになっても、もう一度呼ぶと同じ準備の終わりを待つ
+  if (!rcReady) { const id = S.salon.id; rcReady = P.configure({ apiKey: PAY.iosKey, appUserID: id }).then(() => { rcUser = id }).catch(e => { rcReady = null; throw e }) }
+  await rcReady;
+  if (rcUser !== S.salon.id) { await P.logIn({ appUserID: S.salon.id }); rcUser = S.salon.id }
   return P;
 }
 const PLAN_FEATURES = `<ul class="hint" style="padding-left:1.2em;margin:6px 0 12px">
@@ -1177,7 +1181,8 @@ async function planForm(why) {
   } else if (app) {
     body = `${PLAN_FEATURES}<div id="plPkgs"><p class="hint">読み込んでいます…</p></div>
     <p class="hint">お支払いはお使いの Apple アカウントに請求されます。期間が終わる24時間前までに解約しない限り、同じ期間・同じ金額で自動で更新されます。解約は、iPhone の「設定」→ 一番上の名前 →「サブスクリプション」からいつでもできます。</p>
-    <button class="link" type="button" id="plRestore">購入を復元する</button>${legal}`;
+    <button class="link" type="button" id="plRestore">購入を復元する</button>
+    <p class="hint" style="margin-top:0">機種変更やアプリの入れ直しのあと、前にお申し込みした有料プランが反映されていないときに押してください。</p>${legal}`;
   } else {
     body = `${PLAN_FEATURES}<ul class="plans"><li><b>月額プラン</b><span class="num">500円</span><small>／月（税込）</small></li><li><b>年額プラン</b><span class="num">5,000円</span><small>／年（税込）</small></li></ul>
     ${PAY.webLink ? `<a class="btn pri wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" id="plWeb" href="${esc(PAY.webLink + S.salon.id)}" target="_blank" rel="noopener">申し込む（クレジットカード）</a>
@@ -1196,11 +1201,13 @@ async function planForm(why) {
   };
   if ($('#plPkgs')) {
     const box = $('#plPkgs');
+    const loadPkgs = async () => {
+    box.innerHTML = '<p class="hint">読み込んでいます…</p>';
     try {
-      const P = await rc();
+      const P = await withTimeout(rc(), PAY.timeoutMs);
       if (!P) { box.innerHTML = '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'; return }
-      const pkgs = (await P.getOfferings())?.current?.availablePackages || [];
-      if (!pkgs.length) { box.innerHTML = '<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度開いてください。</p>'; return }
+      const pkgs = (await withTimeout(P.getOfferings(), PAY.timeoutMs))?.current?.availablePackages || [];
+      if (!pkgs.length) throw new Error('no packages');
       const label = k => ({ MONTHLY: ['月額プラン', '月'], ANNUAL: ['年額プラン', '年'] })[k.packageType] || [k.product.title, ''];
       box.innerHTML = pkgs.map((k, i) => { const [n, per] = label(k); return `<button class="btn wide planbtn" type="button" data-pk="${i}"><b>${esc(n)}</b><span class="num">${esc(k.product.priceString)}</span>${per ? `<small>／${per}</small>` : ''}</button>` }).join('');
       box.querySelectorAll('[data-pk]').forEach(b => b.onclick = async () => {
@@ -1214,11 +1221,16 @@ async function planForm(why) {
           else toast('お申し込みを受け付けました。反映まで少し時間がかかることがあります。少し待ってから「最新に更新」を押してください');
         } finally { busy = false; box.querySelectorAll('button').forEach(x => x.disabled = false) }
       });
-    } catch (e) { box.innerHTML = '<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度開いてください。</p>' }
+    } catch (e) {
+      box.innerHTML = '<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度お試しください。</p><button class="btn wide" type="button" id="plRetry" style="margin:6px 0 8px">もう一度読み込む</button>';
+      $('#plRetry').onclick = loadPkgs;
+    }
+    };
+    loadPkgs();
   }
   if ($('#plRestore')) $('#plRestore').onclick = async () => {
     if (busy) return; busy = true;
-    try { const P = await rc(); if (!P) throw 0; await P.restorePurchases(); await syncPlan(); if (paid()) await done(); else toast('復元できるお申し込みが見つかりませんでした') }
+    try { const P = await withTimeout(rc(), PAY.timeoutMs); if (!P) throw 0; await withTimeout(P.restorePurchases(), PAY.timeoutMs * 2); await syncPlan(); if (paid()) await done(); else toast('復元できるお申し込みが見つかりませんでした') }
     catch (e) { toast('復元できませんでした。もう一度お試しください') }
     finally { busy = false }
   };

@@ -138,6 +138,29 @@ with sync_playwright() as p:
     check('アプリ：確認が遅れたら「受け付けました」', '受け付けました' in pg.inner_text('#toastMsg'), pg.inner_text('#toastMsg'))
     check('エラーなし(9b)', not errs, errs); b.close()
 
+    # 9c) アプリ：Apple から返事がない → 時間切れで「もう一度読み込む」、押すと読み込める
+    HANG = NATIVE.replace("window.__pay={iosKey:'appl_test'};", "window.__pay={iosKey:'appl_test',timeoutMs:400};").replace(
+        "getOfferings:async()=>(", "getOfferings:async()=>{if(!window.__ok)return new Promise(()=>{});return (").replace(
+        "priceString:'¥6,000'}}]}}),", "priceString:'¥6,000'}}]}})},")
+    b, pg, errs, calls = setup(p, EXPIRED + HANG)
+    pg.click('#planBtn'); pg.wait_for_timeout(900)
+    f = pg.inner_text('#form')
+    check('アプリ：時間切れで読み込み中のままにしない', '読み込んでいます' not in f and '読み込めませんでした' in f and pg.locator('#plRetry').count() == 1, f.replace('\n', ' ')[:120])
+    pg.evaluate('window.__ok=true'); pg.click('#plRetry'); pg.wait_for_timeout(500)
+    check('アプリ：もう一度読み込むで値段が出る', '¥600' in pg.inner_text('#form'))
+    check('エラーなし(9c)', not errs, errs); b.close()
+
+    # 11) 管理タブ：有料プランのボタン（未払いは目立つ色・課金済みはふつう）
+    b, pg, errs, calls = setup(p)
+    pg.click('nav.tabs button[data-tab=admin]'); pg.wait_for_timeout(200)
+    check('未払い：有料プランを見る（目立つボタン）', pg.inner_text('#planBtn') == '有料プランを見る' and 'pri' in pg.get_attribute('#planBtn', 'class'))
+    pg.locator('#planBtn').scroll_into_view_if_needed(); pg.screenshot(path=OUT + 'plan_admin.png')
+    b.close()
+    b, pg, errs, calls = setup(p, f"window.__planUntil='{FUTURE}';")
+    pg.click('nav.tabs button[data-tab=admin]'); pg.wait_for_timeout(200)
+    check('課金済み：有料プランの確認（ふつうのボタン）', pg.inner_text('#planBtn') == '有料プランの確認' and 'pri' not in pg.get_attribute('#planBtn', 'class'))
+    check('エラーなし(11)', not errs, errs); b.close()
+
     # 10) お試し（登録なし）で期限切れ → 先にお店の登録
     b, pg, errs, calls = setup(p, EXPIRED + "window.__anon=true;")
     check('登録なし・期限切れ：登録の画面', pg.inner_text('#ttl') == 'お店の登録')
