@@ -95,4 +95,4 @@
   - 11/27：有料アプリ契約・銀行口座・納税フォーム（W-8BEN と米国外の証明書）はすべて有効。月額・年額とも Ready to Submit。年額プランは「審査用に追加」で提出物の下書きに入っている（1.1.0 と一緒に出す）
   - サブスクリプションの審査用スクリーンショット：`store/make_iap_screenshot.py` → `store/iap/paywall.png`
   - tokushoho.html の運営責任者は「綿貫和也」（11/26 決定）
-  - 出す前にやること：PAY.webLink を入れる、App Store Connect の商品・App のプライバシー（購入履歴）、利用規約・プライバシーポリシーの改定日をそろえる、PLAN_ENFORCE=1、main に入れる
+  - 出す前にやること：**PAY.debug を false にする（原因調べ用の記録を消す）**、PAY.webLink を入れる、App Store Connect の商品・App のプライバシー（購入履歴）、利用規約・プライバシーポリシーの改定日をそろえる、PLAN_ENFORCE=1、main に入れる

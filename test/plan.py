@@ -163,10 +163,13 @@ with sync_playwright() as p:
 
     # 9d) アプリ：Apple が「やめた」と返した → サーバーに確かめに行き、理由を画面に残す
     CANCEL = NATIVE.replace("purchasePackage:async o=>{", "purchasePackage:async o=>{const e=new Error('Purchase was cancelled.');e.code='1';e.userCancelled=true;throw e;")
+    CANCEL = CANCEL.replace("configure:async o=>{", "setLogLevel:async()=>{},setLogHandler:cb=>{window.__log=cb},configure:async o=>{").replace(
+        "purchasePackage:async o=>{const e", "purchasePackage:async o=>{__log&&__log({logLevel:'ERROR',message:'StoreKit test log'});const e")
     b, pg, errs, calls = setup(p, EXPIRED + CANCEL)
     pg.click('#planBtn'); pg.wait_for_timeout(300); pg.click('[data-pk="0"]'); pg.wait_for_timeout(500)
     f = pg.inner_text('#form')
     check('アプリ：やめた扱いでもサーバーに確かめる', any(c.get('action') == 'sync_plan' for c in calls))
+    check('アプリ：原因調べ用の記録を出す', 'StoreKit test log' in f)
     check('アプリ：やめた扱いの理由を画面に残す', '完了していません' in f and 'Purchase was cancelled' in f, f.replace('\n', ' ')[-160:])
     check('エラーなし(9d)', not errs, errs); b.close()
 
