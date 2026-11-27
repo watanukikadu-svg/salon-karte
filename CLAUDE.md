@@ -93,6 +93,9 @@
   - RevenueCat が自動で作った見本（Test Store の商品・権利「美容室カルテ_pro」）は使わない。消さずに置いてある
   - 注意：課金の部品（window.RCPurchases）は then も含めどんな名前にも反応するので、async 関数から返したり await したりすると永久に止まる（ビルド33までの「準備で時間切れ」の原因）。テストの偽物も同じ作り（Proxy）にしてある
   - 11/27：有料アプリ契約・銀行口座・納税フォーム（W-8BEN と米国外の証明書）はすべて有効。月額・年額とも Ready to Submit。年額プランは「審査用に追加」で提出物の下書きに入っている（1.1.0 と一緒に出す）
+  - 11/28：**TestFlight（ビルド37）でお試しの支払いが成功**（STAYGOLD のお店。salons.plan_until・plan_store=app_store が入り、画面も有料プランに変わった）。TestFlight の月額は1日で1か月分が過ぎる。
+    - 途中で「支払い画面が出ずにすぐ『やめた』（SKErrorDomain 2 / SKInternalErrorDomain 13）」になったが、**iPhone の再起動で直った**（アプリの不具合ではなかった）。同じことを言われたら、まず再起動をすすめる
+    - そのとき試しに StoreKit 1 にしたが、元の既定（StoreKit 2）に戻した。**出す前にもう一度 TestFlight で支払いを確かめる**
   - サブスクリプションの審査用スクリーンショット：`store/make_iap_screenshot.py` → `store/iap/paywall.png`
   - tokushoho.html の運営責任者は「綿貫和也」（11/26 決定）
   - 出す前にやること：**PAY.debug を false にする（原因調べ用の記録を消す）**、PAY.webLink を入れる、App Store Connect の商品・App のプライバシー（購入履歴）、利用規約・プライバシーポリシーの改定日をそろえる、PLAN_ENFORCE=1、main に入れる
