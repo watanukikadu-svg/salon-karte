@@ -1217,12 +1217,19 @@ async function planForm(why) {
       box.querySelectorAll('[data-pk]').forEach(b => b.onclick = async () => {
         if (busy) return; busy = true; box.querySelectorAll('button').forEach(x => x.disabled = true);
         try {
-          try { await P.purchasePackage({ aPackage: pkgs[+b.dataset.pk] }) }
-          catch (e) { if (!(e?.userCancelled || String(e?.code) === '1')) toast('お申し込みできませんでした。もう一度お試しください'); return }
-          // 払ったあと：サーバーに確かめてもらい、お店の記録を更新する
-          try { await syncPlan() } catch (e) { /* 下でお知らせ */ }
-          if (paid()) await done();
-          else toast('お申し込みを受け付けました。反映まで少し時間がかかることがあります。少し待ってから「最新に更新」を押してください');
+          let err = null, syncErr = null;
+          try { await P.purchasePackage({ aPackage: pkgs[+b.dataset.pk] }) } catch (e) { err = e }
+          // 結果がどうであれ、サーバーに確かめてもらう（Apple 側で払えていれば、ここで反映される）
+          try { await syncPlan() } catch (e) { syncErr = e }
+          if (paid()) return await done();
+          const cancelled = !!(err?.userCancelled || String(err?.code) === '1');
+          const why = err ? [err.code, err.message].filter(Boolean).join(' ').slice(0, 160) : syncErr ? String(syncErr.message || '').slice(0, 160) : '';
+          const msg = cancelled ? 'お申し込みは完了していません（途中でやめた扱いになりました）。'
+            : err ? 'お申し込みできませんでした。もう一度お試しください。'
+            : 'お申し込みを受け付けました。反映まで少し時間がかかることがあります。少し待ってから「最新に更新」を押してください。';
+          toast(msg);
+          let m = $('#plMsg'); if (!m) { box.insertAdjacentHTML('afterend', '<div id="plMsg"></div>'); m = $('#plMsg') }
+          m.innerHTML = `<p class="hint" style="color:var(--acc)">${esc(msg)}</p>${why ? `<p class="hint" style="font-size:11px;opacity:.8">理由：${esc(why)}</p>` : ''}`;
         } finally { busy = false; box.querySelectorAll('button').forEach(x => x.disabled = false) }
       });
     } catch (e) {

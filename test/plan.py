@@ -161,6 +161,15 @@ with sync_playwright() as p:
     check('課金済み：有料プランの確認（ふつうのボタン）', pg.inner_text('#planBtn') == '有料プランの確認' and 'pri' not in pg.get_attribute('#planBtn', 'class'))
     check('エラーなし(11)', not errs, errs); b.close()
 
+    # 9d) アプリ：Apple が「やめた」と返した → サーバーに確かめに行き、理由を画面に残す
+    CANCEL = NATIVE.replace("purchasePackage:async o=>{", "purchasePackage:async o=>{const e=new Error('Purchase was cancelled.');e.code='1';e.userCancelled=true;throw e;")
+    b, pg, errs, calls = setup(p, EXPIRED + CANCEL)
+    pg.click('#planBtn'); pg.wait_for_timeout(300); pg.click('[data-pk="0"]'); pg.wait_for_timeout(500)
+    f = pg.inner_text('#form')
+    check('アプリ：やめた扱いでもサーバーに確かめる', any(c.get('action') == 'sync_plan' for c in calls))
+    check('アプリ：やめた扱いの理由を画面に残す', '完了していません' in f and 'Purchase was cancelled' in f, f.replace('\n', ' ')[-160:])
+    check('エラーなし(9d)', not errs, errs); b.close()
+
     # 10) お試し（登録なし）で期限切れ → 先にお店の登録
     b, pg, errs, calls = setup(p, EXPIRED + "window.__anon=true;")
     check('登録なし・期限切れ：登録の画面', pg.inner_text('#ttl') == 'お店の登録')
