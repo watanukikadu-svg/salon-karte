@@ -1222,7 +1222,9 @@ async function planForm(why) {
         } finally { busy = false; box.querySelectorAll('button').forEach(x => x.disabled = false) }
       });
     } catch (e) {
-      box.innerHTML = '<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度お試しください。</p><button class="btn wide" type="button" id="plRetry" style="margin:6px 0 8px">もう一度読み込む</button>';
+      // 原因を調べられるように、返ってきた理由を小さく出す（時間切れ・商品なし・設定のまちがいなど）
+      const why = e?.message === 'timeout' ? 'Apple から返事がありません（時間切れ）' : e?.message === 'no packages' ? '商品が見つかりません' : [e?.code, e?.message].filter(Boolean).join(' ').slice(0, 160);
+      box.innerHTML = `<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度お試しください。</p>${why ? `<p class="hint" style="font-size:11px;opacity:.8">理由：${esc(why)}</p>` : ''}<button class="btn wide" type="button" id="plRetry" style="margin:6px 0 8px">もう一度読み込む</button>`;
       $('#plRetry').onclick = loadPkgs;
     }
     };
