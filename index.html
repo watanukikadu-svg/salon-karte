@@ -1154,8 +1154,9 @@ async function syncPlan() {
 async function rc() {
   const P = window.RCPurchases;
   if (!P || !PAY.iosKey || window.Capacitor?.getPlatform?.() !== 'ios') return false;
+  // 支払いは Apple の古い方式（StoreKit 1）を使う。新しい方式（StoreKit 2）だと TestFlight で支払い画面が出ずに、すぐ「やめた」扱いになったため（ビルド35）
   // 準備（configure）は1回だけ。途中で時間切れになっても、もう一度呼ぶと同じ準備の終わりを待つ
-  if (!rcReady) { const id = S.salon.id; rcReady = P.configure({ apiKey: PAY.iosKey, appUserID: id }).then(() => { rcUser = id }).catch(e => { rcReady = null; throw e }) }
+  if (!rcReady) { const id = S.salon.id; rcReady = P.configure({ apiKey: PAY.iosKey, appUserID: id, storeKitVersion: 'STOREKIT_1' }).then(() => { rcUser = id }).catch(e => { rcReady = null; throw e }) }
   await rcReady;
   if (rcUser !== S.salon.id) { await P.logIn({ appUserID: S.salon.id }); rcUser = S.salon.id }
   return true;
