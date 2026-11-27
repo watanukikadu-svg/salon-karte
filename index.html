@@ -1131,7 +1131,7 @@ const PAY = {
   webLink: '', // RevenueCat の Web Purchase Link（https://pay.rev.cat/… の形。うしろにお店のIDをつける）
   eula: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
   appleSubs: 'https://apps.apple.com/account/subscriptions',
-  timeoutMs: 15000, // Apple から値段が返ってこないとき、この時間で「読み込めませんでした」にする
+  timeoutMs: 45000, // Apple から値段が返ってこないとき、この時間で「読み込めませんでした」にする（RevenueCat は Apple を30秒ほど待つことがあるので、それより長く）
   ...(window.__pay || {}), // テストで差しかえる
 };
 let planSynced = null, rcUser = null, rcReady = null;
@@ -1202,7 +1202,7 @@ async function planForm(why) {
   if ($('#plPkgs')) {
     const box = $('#plPkgs');
     const loadPkgs = async () => {
-    box.innerHTML = '<p class="hint">読み込んでいます…</p>';
+    box.innerHTML = '<p class="hint">読み込んでいます…（30秒ほどかかることがあります）</p>';
     try {
       const P = await withTimeout(rc(), PAY.timeoutMs);
       if (!P) { box.innerHTML = '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'; return }
