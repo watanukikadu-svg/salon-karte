@@ -1148,14 +1148,17 @@ async function syncPlan() {
   return r;
 }
 // RevenueCat の部品を、このお店のIDで使えるようにする（iPhone アプリだけ）
+// ※ 部品（window.RCPurchases）そのものを async 関数から返したり await したりしないこと。
+//    部品はどんな名前（then も）にも反応するので、「終わっていない作業」と思われて永久に待ってしまう。
+//    ここでは使えるかどうか（true/false）だけを返し、部品は window.RCPurchases から直接使う。
 async function rc() {
   const P = window.RCPurchases;
-  if (!P || !PAY.iosKey || window.Capacitor?.getPlatform?.() !== 'ios') return null;
+  if (!P || !PAY.iosKey || window.Capacitor?.getPlatform?.() !== 'ios') return false;
   // 準備（configure）は1回だけ。途中で時間切れになっても、もう一度呼ぶと同じ準備の終わりを待つ
   if (!rcReady) { const id = S.salon.id; rcReady = P.configure({ apiKey: PAY.iosKey, appUserID: id }).then(() => { rcUser = id }).catch(e => { rcReady = null; throw e }) }
   await rcReady;
   if (rcUser !== S.salon.id) { await P.logIn({ appUserID: S.salon.id }); rcUser = S.salon.id }
-  return P;
+  return true;
 }
 const PLAN_FEATURES = `<ul class="hint" style="padding-left:1.2em;margin:6px 0 12px">
   <li>${TRIAL_MONTHS}か月をすぎても、これまでどおりすべての機能が使えます</li>
@@ -1205,8 +1208,8 @@ async function planForm(why) {
     const loadPkgs = async () => {
     box.innerHTML = '<p class="hint">読み込んでいます…（30秒ほどかかることがあります）</p>';
     try {
-      step = '準備'; const P = await withTimeout(rc(), PAY.timeoutMs);
-      if (!P) { box.innerHTML = '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'; return }
+      step = '準備'; const ok = await withTimeout(rc(), PAY.timeoutMs); const P = window.RCPurchases;
+      if (!ok) { box.innerHTML = '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'; return }
       step = '値段の読み込み'; const pkgs = (await withTimeout(P.getOfferings(), PAY.timeoutMs))?.current?.availablePackages || [];
       if (!pkgs.length) throw new Error('no packages');
       const label = k => ({ MONTHLY: ['月額プラン', '月'], ANNUAL: ['年額プラン', '年'] })[k.packageType] || [k.product.title, ''];
@@ -1235,7 +1238,7 @@ async function planForm(why) {
   }
   if ($('#plRestore')) $('#plRestore').onclick = async () => {
     if (busy) return; busy = true;
-    try { const P = await withTimeout(rc(), PAY.timeoutMs); if (!P) throw 0; await withTimeout(P.restorePurchases(), PAY.timeoutMs * 2); await syncPlan(); if (paid()) await done(); else toast('復元できるお申し込みが見つかりませんでした') }
+    try { if (!(await withTimeout(rc(), PAY.timeoutMs))) throw 0; const P = window.RCPurchases; await withTimeout(P.restorePurchases(), PAY.timeoutMs * 2); await syncPlan(); if (paid()) await done(); else toast('復元できるお申し込みが見つかりませんでした') }
     catch (e) { toast('復元できませんでした。もう一度お試しください') }
     finally { busy = false }
   };

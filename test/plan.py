@@ -30,11 +30,11 @@ def setup(p, pre='', sync=None):
 EXPIRED = "window.__salonCreated=(()=>{const d=new Date();d.setMonth(d.getMonth()-7);return d.toISOString()})();"
 SOON = "window.__salonCreated=(()=>{const d=new Date();d.setMonth(d.getMonth()-6);d.setDate(d.getDate()+20);return d.toISOString()})();"
 NATIVE = """window.Capacitor={isNativePlatform:()=>true,getPlatform:()=>'ios'};window.__pay={iosKey:'appl_test'};
-window.__rc=[];window.RCPurchases={
+window.__rc=[];window.RCPurchases=(o=>new Proxy(o,{get:(t,k)=>k in t?t[k]:(()=>Promise.reject(new Error(String(k)+" is not implemented")))}))({
  configure:async o=>{__rc.push(['configure',o.appUserID])},logIn:async o=>{__rc.push(['logIn',o.appUserID])},
  getOfferings:async()=>({current:{availablePackages:[{packageType:'MONTHLY',product:{title:'月額',priceString:'¥600'}},{packageType:'ANNUAL',product:{title:'年額',priceString:'¥6,000'}}]}}),
  purchasePackage:async o=>{__rc.push(['buy',o.aPackage.packageType]);__db.salons[0].plan_until='2099-01-01T00:00:00Z';__db.salons[0].plan_store='app_store';return {}},
- restorePurchases:async()=>{__rc.push(['restore']);return {}}};"""
+ restorePurchases:async()=>{__rc.push(['restore']);return {}}});"""
 
 with sync_playwright() as p:
     # 1) Web：無料期間中・課金なし → 管理タブにプラン、スタッフ追加で有料プランの案内

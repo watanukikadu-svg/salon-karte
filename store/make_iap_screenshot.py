@@ -7,8 +7,8 @@ from playwright.sync_api import sync_playwright
 MOCK = open(os.path.join(ROOT, 'test', 'mock-supabase.js')).read()
 NATIVE = """window.Capacitor={isNativePlatform:()=>true,getPlatform:()=>'ios'};
 window.__salonCreated=(()=>{const d=new Date();d.setMonth(d.getMonth()-7);return d.toISOString()})();
-window.RCPurchases={configure:async()=>{},logIn:async()=>{},restorePurchases:async()=>({}),purchasePackage:async()=>({}),
- getOfferings:async()=>({current:{availablePackages:[{packageType:'MONTHLY',product:{title:'月額プラン',priceString:'¥600'}},{packageType:'ANNUAL',product:{title:'年額プラン',priceString:'¥6,000'}}]}})};"""
+window.RCPurchases=(o=>new Proxy(o,{get:(t,k)=>k in t?t[k]:(()=>Promise.reject(new Error(String(k)+" is not implemented")))}))({configure:async()=>{},logIn:async()=>{},restorePurchases:async()=>({}),purchasePackage:async()=>({}),
+ getOfferings:async()=>({current:{availablePackages:[{packageType:'MONTHLY',product:{title:'月額プラン',priceString:'¥600'}},{packageType:'ANNUAL',product:{title:'年額プラン',priceString:'¥6,000'}}]}})});"""
 _exe = glob.glob('/opt/pw-browsers/chromium*/chrome-linux*/chrome'); LAUNCH = dict(executable_path=_exe[0]) if _exe else {}
 with sync_playwright() as p:
     b = p.chromium.launch(**LAUNCH)
