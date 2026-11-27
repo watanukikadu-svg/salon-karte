@@ -145,7 +145,7 @@ with sync_playwright() as p:
     b, pg, errs, calls = setup(p, EXPIRED + HANG)
     pg.click('#planBtn'); pg.wait_for_timeout(900)
     f = pg.inner_text('#form')
-    check('アプリ：時間切れで読み込み中のままにしない', '読み込んでいます' not in f and '読み込めませんでした' in f and pg.locator('#plRetry').count() == 1, f.replace('\n', ' ')[:120])
+    check('アプリ：時間切れで読み込み中のままにしない', '読み込んでいます' not in f and '読み込めませんでした' in f and '時間切れ（値段の読み込み' in f and pg.locator('#plRetry').count() == 1, f.replace('\n', ' ')[:120])
     pg.evaluate('window.__ok=true'); pg.click('#plRetry'); pg.wait_for_timeout(500)
     check('アプリ：もう一度読み込むで値段が出る', '¥600' in pg.inner_text('#form'))
     check('エラーなし(9c)', not errs, errs); b.close()

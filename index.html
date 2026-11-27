@@ -1201,12 +1201,13 @@ async function planForm(why) {
   };
   if ($('#plPkgs')) {
     const box = $('#plPkgs');
+    let step = '';
     const loadPkgs = async () => {
     box.innerHTML = '<p class="hint">読み込んでいます…（30秒ほどかかることがあります）</p>';
     try {
-      const P = await withTimeout(rc(), PAY.timeoutMs);
+      step = '準備'; const P = await withTimeout(rc(), PAY.timeoutMs);
       if (!P) { box.innerHTML = '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'; return }
-      const pkgs = (await withTimeout(P.getOfferings(), PAY.timeoutMs))?.current?.availablePackages || [];
+      step = '値段の読み込み'; const pkgs = (await withTimeout(P.getOfferings(), PAY.timeoutMs))?.current?.availablePackages || [];
       if (!pkgs.length) throw new Error('no packages');
       const label = k => ({ MONTHLY: ['月額プラン', '月'], ANNUAL: ['年額プラン', '年'] })[k.packageType] || [k.product.title, ''];
       box.innerHTML = pkgs.map((k, i) => { const [n, per] = label(k); return `<button class="btn wide planbtn" type="button" data-pk="${i}"><b>${esc(n)}</b><span class="num">${esc(k.product.priceString)}</span>${per ? `<small>／${per}</small>` : ''}</button>` }).join('');
@@ -1223,7 +1224,9 @@ async function planForm(why) {
       });
     } catch (e) {
       // 原因を調べられるように、返ってきた理由を小さく出す（時間切れ・商品なし・設定のまちがいなど）
-      const why = e?.message === 'timeout' ? 'Apple から返事がありません（時間切れ）' : e?.message === 'no packages' ? '商品が見つかりません' : [e?.code, e?.message].filter(Boolean).join(' ').slice(0, 160);
+      // 原因をしぼるための情報：止まった手順と、アプリの中に課金の部品（Purchases）が登録されているか
+      const cap = window.Capacitor, plug = cap?.isPluginAvailable ? (cap.isPluginAvailable('Purchases') ? 'あり' : 'なし') : '不明';
+      const why = e?.message === 'timeout' ? `時間切れ（${step}・部品${plug}）` : e?.message === 'no packages' ? '商品が見つかりません' : [e?.code, e?.message].filter(Boolean).join(' ').slice(0, 160);
       box.innerHTML = `<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度お試しください。</p>${why ? `<p class="hint" style="font-size:11px;opacity:.8">理由：${esc(why)}</p>` : ''}<button class="btn wide" type="button" id="plRetry" style="margin:6px 0 8px">もう一度読み込む</button>`;
       $('#plRetry').onclick = loadPkgs;
     }
