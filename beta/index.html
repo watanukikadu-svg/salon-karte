@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16343a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="美容室カルテ">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>美容室カルテ（お試し版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Outfit:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* 美容室カルテ 本番版
+   VOICE: calm, tidy, a tool a stylist trusts between cuts
+   IDEA: the salon's appointment book and carte card, in a phone
+   PICTURE: the working app itself — today's book with big hanging times
+   COLOUR and TYPE: white ground, deep mirror-teal #16343a, hair-colour coral #e0566a; Zen Kaku Gothic New + Outfit numerals
+   LAYOUT: one column, sticky header, bottom tab bar, sheets slide up for forms */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#0e1a1d);--card:light-dark(#f3f6f6,#16272b);--ink:light-dark(#122326,#e8f0f0);
+--sub:light-dark(#5b6d70,#9db1b4);--line:light-dark(#dfe7e8,#26393d);--line2:light-dark(#bccacc,#3f585d);--deep:light-dark(#16343a,#0a1517);
+--deepInk:#f2f7f7;--sel:light-dark(#16343a,#2c5961);--acc:#e0566a;--accSoft:light-dark(#fde8eb,#3a1f25);--ok:light-dark(#2f7d63,#6fcaa8)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0;touch-action:manipulation} /* 2回すばやくたたいても拡大しない（2本指の拡大はできる） */
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
+.num{font-family:Outfit,"Zen Kaku Gothic New",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+header{position:sticky;top:0;z-index:5;background:var(--deep);color:var(--deepInk);padding:calc(14px + env(safe-area-inset-top)) max(4vw,16px) 12px}
+header h1{margin:0;font-size:22px;line-height:1.2;font-weight:700}
+header p{margin:2px 0 0;font-size:13px;opacity:.75}
+main{max-width:640px;margin:0 auto;padding:16px max(4vw,16px) 110px}
+.demo{font-size:13px;color:var(--sub);margin:0 0 12px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{min-height:60px;border:0;background:none;color:var(--sub);font:inherit;font-size:13px;display:grid;place-items:center;gap:2px;padding:8px 0;cursor:pointer}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-selected=true]{color:var(--acc);font-weight:700}
+h2{font-size:20px;margin:18px 0 10px;line-height:1.2}
+.x{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 -4px;scrollbar-width:none}
+.days button{flex:none;width:56px;min-height:64px;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer;display:grid;place-items:center;padding:6px 0;line-height:1.2}
+.days button small{font-size:13px;color:var(--sub)}
+.days button b{font:600 20px Outfit,sans-serif}
+.days button[aria-pressed=true]{background:var(--sel);border-color:var(--sel);color:var(--deepInk)}
+.days button[aria-pressed=true] small{color:var(--deepInk);opacity:.8}
+.days button.has::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--acc)}
+.cal{background:var(--card);border-radius:18px;padding:10px 10px 12px}
+.calh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.calh b{font-size:17px}
+.calh button{min-width:44px;min-height:44px;border:0;border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:20px;cursor:pointer}
+.calg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.calg .w{font-size:13px;color:var(--sub);padding:2px 0}
+.calg .w:first-child{color:var(--acc)}
+.calg button{min-height:44px;border:0;border-radius:12px;background:transparent;color:var(--ink);font:500 16px Outfit,sans-serif;cursor:pointer;display:grid;place-items:center;align-content:center;gap:2px;padding:0}
+.calg button.past{color:var(--sub);opacity:.6}
+.calg button.td{box-shadow:inset 0 0 0 2px var(--acc)}
+.calg button[aria-pressed=true]{background:var(--sel);color:var(--deepInk)}
+.calg button i{width:5px;height:5px;border-radius:50%;background:transparent}
+.calg button.has i{background:var(--acc)}
+.today{margin-top:8px;width:100%}
+.pics{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pics button{padding:0;border:0;background:none;cursor:zoom-in;aspect-ratio:1;border-radius:10px;overflow:hidden}
+.pics img{width:100%;height:100%;object-fit:cover;display:block}
+.pv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.pv img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}
+.hint{font-size:13px;color:var(--sub);margin:4px 0 0}
+.lb{position:fixed;inset:0;z-index:30;background:rgb(0 0 0/.9);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+.lb.open{display:flex}
+.lb img{max-width:100%;max-height:78vh;border-radius:12px}
+.lb .row{justify-content:center}
+.lb .btn{background:#fff;color:#122326;border-color:#fff}
+.lb .cnt{color:#fff;font-size:14px}
+.sorts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.sorts button{min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
+.sorts button[aria-pressed=true]{background:var(--sel);border-color:var(--sel);color:var(--deepInk);font-weight:700}
+.list .last b{font-weight:700;color:var(--ink)}.list .last b.soon{color:var(--acc)}
+.kana{display:flex;gap:6px;overflow-x:auto;margin:10px -16px 0;padding:2px 16px 6px;scroll-snap-type:x proximity;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.kana::-webkit-scrollbar{display:none}
+.kana[hidden]{display:none}
+.kana button{flex:none;scroll-snap-align:start;min-width:48px;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:17px;font-weight:500;cursor:pointer}
+.kana button:first-child{font-size:14px}
+.kana button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.list li.gh{font-size:13px;font-weight:700;color:var(--sub);padding:12px 4px 2px;border-bottom:1px solid var(--line)}
+.av{overflow:hidden;flex:none}.av img{width:100%;height:100%;object-fit:cover;display:block}
+.av.big2{width:72px;height:72px;font-size:26px}
+.face{display:flex;gap:14px;align-items:center;margin-bottom:10px}
+.facebtn{padding:0;border:0;background:none;border-radius:50%;cursor:zoom-in}
+.facein{display:flex;gap:14px;align-items:center}
+.chk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:15px;margin-top:8px}.chk input{width:22px;min-height:22px;height:22px}
+.warnt{color:var(--acc);font-weight:700}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;margin-top:8px}.mrow:first-child{margin-top:0}
+.mx{min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--sub);font-size:20px;cursor:pointer}.mx[hidden]{display:none}
+.mrow:has(.mx[hidden]){grid-template-columns:minmax(0,1fr)}
+.prw{display:grid;grid-template-columns:minmax(0,1fr) 64px 44px;gap:8px;margin-top:8px}.prw input{text-align:center;padding:8px 4px}
+.mchips{display:flex;flex-wrap:wrap;gap:8px}
+.mchip{margin:0;color:var(--ink);font-size:15px;cursor:pointer}
+.mchip input{position:absolute;opacity:0;width:1px;height:1px;min-height:0}
+.mchip span{display:flex;flex-direction:column;justify-content:center;min-height:52px;padding:6px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);line-height:1.3}
+.mchip small{font-size:13px;color:var(--sub)}
+.mchip input:checked+span{background:var(--deep);border-color:var(--deep);color:var(--deepInk)}
+.mchip input:checked+span small{color:var(--deepInk);opacity:.8}
+.mchip input:focus-visible+span{outline:3px solid var(--acc);outline-offset:2px}
+.pv.ed{margin:0 0 8px}.pk{position:relative}.pk img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.pk button{position:absolute;top:4px;right:4px;width:32px;height:32px;border-radius:50%;border:0;background:rgb(0 0 0/.65);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+.adm{list-style:none;padding:0;margin:0 0 12px}
+.adm li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.adm small{color:var(--sub);font-size:13px}.adm small.low{color:var(--acc);font-weight:700}
+.adm li.empty{display:block;border:0}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.prow small{color:var(--sub);font-size:13px}.prow input{text-align:center}
+.book{list-style:none;margin:14px 0 0;padding:0}
+.book li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:14px;margin-top:12px;border:1px solid var(--line);border-radius:16px;background:var(--bg);box-shadow:0 1px 3px rgb(0 0 0/.05)}
+.book li:has(.tag.done){background:var(--card)}
+.book .bkrow{grid-column:1/-1;margin:0}
+.book .t{font:600 22px/1.1 Outfit,sans-serif}
+.book .t small{display:block;font-size:13px;color:var(--sub);font-weight:500;margin-top:4px}
+.book .who{font-weight:700;font-size:17px;display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}
+.av.sm{width:32px;height:32px;font-size:14px}
+.book .menu{color:var(--sub);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:15px;font-weight:500;cursor:pointer}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.btn.sm{min-height:40px;padding:0 12px;font-size:14px}
+.btn.wide{width:100%}
+.btn.danger{color:var(--acc)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.tag{display:inline-block;font-size:13px;padding:2px 10px;border-radius:99px;background:var(--card);color:var(--sub)}
+.tag.done{background:transparent;color:var(--ok);border:1px solid currentColor}
+.tag.warn{background:var(--accSoft);color:var(--acc);font-weight:700}
+.empty{padding:28px 16px;text-align:center;color:var(--sub);background:var(--card);border-radius:16px;margin-top:14px}
+.search{width:100%;min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:16px;padding:0 14px}
+.list{list-style:none;padding:0;margin:10px 0 0}
+.list li button{width:100%;text-align:start;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 4px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;cursor:pointer}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--sel);color:var(--deepInk);font-weight:700}
+.list .nm{font-weight:700}.list .kn{font-size:13px;color:var(--sub)}
+.list .last{font-size:13px;color:var(--sub);text-align:end}
+.carte{background:var(--card);border-radius:18px;padding:16px;margin-top:6px}
+.carte dl{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:6px 10px;margin:10px 0 0;font-size:15px}
+.carte dt{color:var(--sub)}.carte dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.visit{border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px;background:var(--bg);box-shadow:0 1px 3px rgb(0 0 0/.05);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px}
+.visit .d{font-weight:600}.visit b{font-size:17px}
+.visit .d{font-size:13px;color:var(--sub)}.visit .p{font-weight:600;text-align:end}
+.visit .m{grid-column:1/-1;font-size:14px;color:var(--sub);white-space:pre-wrap}
+.visit img{grid-column:1/-1;width:120px;height:120px;object-fit:cover;border-radius:12px}
+.big{background:var(--deep);color:var(--deepInk);border-radius:20px;padding:20px}
+.big .v{font:600 clamp(36px,11vw,52px)/1.05 Outfit,sans-serif}
+.big .l{font-size:14px;opacity:.8}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.kpis div{border-top:1px solid color-mix(in srgb,var(--deepInk) 25%,transparent);padding-top:10px}
+.kpis b{display:block;font:600 22px Outfit,sans-serif}
+.bars{margin-top:8px}
+.bar{display:grid;grid-template-columns:5.5em minmax(0,1fr) 5.5em;gap:10px;align-items:center;padding:6px 0;font-size:14px}
+.bar i{display:block;height:14px;border-radius:7px;background:var(--acc)}
+.bar i.dim{background:var(--deep)}
+.bar .num{text-align:end}
+.month{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.month b{font-size:18px}
+.sheet{position:fixed;inset:0;z-index:10;background:rgb(0 0 0/.45);display:none;align-items:flex-end;justify-content:center}
+.sheet.open{display:flex}
+.sheet form{background:var(--bg);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:18px max(4vw,16px) calc(20px + env(safe-area-inset-bottom))}
+.sheet h3{margin:0 0 12px;font-size:20px}
+label{display:block;font-size:14px;color:var(--sub);margin:12px 0 4px}
+input,select,textarea{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:16px;padding:8px 12px}
+textarea{min-height:80px;resize:vertical;line-height:1.5}
+textarea.tall{min-height:calc(5 * 1.5em + 18px)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+/* iPhone の Safari では日付・時間の欄が中身の幅より小さくならず、はみ出すため */
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;text-align:left}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
+/* 予約を追加：お客様の一覧と日付・時間の間をあける */
+#b1pick{margin-bottom:40px}
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;display:none;gap:12px;align-items:center}
+.toast.show{display:flex}
+.toast button{background:none;border:0;color:var(--acc);font:inherit;font-weight:700;min-height:36px;cursor:pointer}
+.back{background:none;border:0;color:var(--acc);font:inherit;font-weight:700;min-height:44px;padding:0;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.sheet.open form{animation:up .22s ease-out}@keyframes up{from{transform:translateY(40px);opacity:0}}}
+.login{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:var(--deep)}
+.lcard{width:100%;max-width:420px;background:var(--bg);border-radius:22px;padding:24px 20px}
+.lcard h1{margin:0 0 4px;font-size:24px}.lcard p.s{margin:0 0 8px;color:var(--sub);font-size:14px}
+.lmsg{min-height:1.5em;color:var(--acc);font-weight:700;font-size:14px;margin:10px 0 0}
+.carte.trial{background:var(--accSoft);margin-bottom:12px}.carte.trial p{margin:6px 0 12px;font-size:14px}
+.trialbar{display:block;width:100%;text-align:left;background:var(--accSoft);color:var(--ink);border:0;border-radius:12px;padding:10px 12px;margin:0 0 12px;font:inherit;font-size:13px;cursor:pointer}
+.plans{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}.plans li,.btn.planbtn{display:flex;align-items:baseline;gap:6px;border:1px solid var(--line2);border-radius:12px;padding:12px 14px;background:var(--bg)}.plans li{border:0;background:var(--card)}
+.plans b,.planbtn b{flex:1;text-align:left}.plans .num,.planbtn .num{font-size:20px;font-weight:600}.plans small,.planbtn small{color:var(--sub);font-size:13px}
+.btn.planbtn{min-height:56px;margin-bottom:8px;border-color:var(--acc)}
+.link.delink{display:block;margin:22px auto 4px;color:var(--acc)}
+.pk-list{margin-top:6px}
+.bklink{display:flex;gap:6px;align-items:flex-start;background:var(--accSoft);border-radius:10px;padding:8px 10px;margin:4px 0 8px!important;color:var(--ink)!important}.bklink svg{flex:none;width:16px;height:16px;margin-top:2px;color:var(--acc)}.pk-h{margin-top:14px!important;font-weight:700}
+.mv{display:flex;gap:6px}.mv .btn{min-width:44px}.mv .btn:disabled{opacity:.3;cursor:default}
+.msel{position:relative}.msel select{width:100%;padding-right:96px}.msel .mp{position:absolute;right:36px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:15px;pointer-events:none}
+.bkb{display:flex;align-items:center;gap:4px;width:max-content;margin-top:4px;padding:2px 8px;border-radius:999px;background:var(--accSoft);color:var(--acc);font-size:12px;font-weight:700}.bkb svg{width:14px;height:14px}
+.pk-row,.pk-sel{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line2);padding:8px 2px;font:inherit;color:inherit;cursor:pointer}
+.pk-sel{border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:default}
+.pk-row .nm,.pk-sel .nm{font-weight:700}.pk-row .kn,.pk-sel .kn{font-size:13px;color:var(--sub)}.pk-row .last b.soon{color:var(--acc)}.pk-row .last{text-align:right;font-size:12px;color:var(--sub)}
+.bhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.bhead h2{margin-right:auto}.seg{margin:0}
+.tlw{overflow-x:auto;margin:8px 0 12px;border:1px solid var(--line);border-radius:14px;-webkit-overflow-scrolling:touch}
+.tl{position:relative;font-size:12px}
+.tlh,.tlr{display:flex;border-bottom:1px solid var(--line)}.tlr:last-child{border-bottom:0}
+.tln{position:sticky;left:0;z-index:3;flex:none;width:76px;padding:8px 6px;background:var(--card);font-weight:700;font-size:13px;border-right:1px solid var(--line);overflow-wrap:anywhere}
+.tlt{position:relative;flex:none}
+.tlh{height:30px}.tlh .tln{padding:0}
+.tlh span{position:absolute;top:7px;padding-left:4px;color:var(--sub);font-size:12px}
+.tlt i{position:absolute;top:0;bottom:0;border-left:1px solid var(--line)}.tlt i.half{border-left-style:dashed;opacity:.6}
+.tlt .now{position:absolute;top:0;bottom:0;border-left:2px solid var(--acc);z-index:2}
+.tlb{position:absolute;height:38px;border-radius:8px;border:0;padding:2px 6px;text-align:left;font:inherit;font-size:12px;font-weight:700;line-height:1.25;color:#122326;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:1}
+.tlb small{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.tlb.c0{background:#fff08a}.tlb.c1{background:#cfe3f7}.tlb.c2{background:#efb1e3}.tlb.c3{background:#bfe8b0}.tlb.c4{background:#ffd3a8}.tlb.c5{background:#d9cff5}
+.tlb.done{opacity:.45}.tlb.on{outline:3px solid var(--acc);outline-offset:1px;z-index:2}
+.swb{position:fixed;left:0;top:50%;z-index:50;width:40px;height:40px;margin-top:-20px;border-radius:50%;background:var(--deep);color:#fff;display:grid;place-items:center;font-size:24px;line-height:1;opacity:0;transform:translateX(-40px);pointer-events:none;transition:opacity .15s,background .15s}
+.swb.on{opacity:.85;transition:opacity .15s}.swb.go{background:var(--acc);opacity:1}
+.lcard a,.hint a{color:var(--acc)}
+.sec{border:1px solid var(--line);border-radius:18px;padding:6px 16px 14px;margin:0 0 16px;background:var(--bg);box-shadow:0 1px 3px rgb(0 0 0/.05)}
+.sech{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 -16px 4px;padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+.sech h2{margin:0;font-size:18px}.sech .row{margin:0;gap:6px}
+.sec .adm{margin:0}.sec .adm li:last-child{border-bottom:0}
+.btn.add{color:var(--acc);border-color:var(--acc);font-weight:700}
+.acc{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:6px 10px;margin:12px 0 4px;font-size:15px}.acc dt{color:var(--sub)}.acc dd{margin:0;overflow-wrap:anywhere}
+.btn.bookbtn{background:var(--sel);border-color:var(--sel);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}.btn.bookbtn svg{width:18px;height:18px}
+.visit.upb{border-color:var(--sel);border-width:1.5px}.visit.upb .d{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap}.visit.upb .d svg{margin-right:-6px}.visit.upb .d svg{width:15px;height:15px;color:var(--sel)}
+/* 顧客一覧の「＋ 新しいお客様」：下のタブのすぐ上の右側にいつも出す。PCでは画面の真ん中の列の右端にそろえる */
+.btn.fab{position:fixed;z-index:7;right:max(16px,calc((100vw - 640px) / 2 + 16px));bottom:calc(61px + env(safe-area-inset-bottom) + 14px);min-height:52px;padding:0 22px;border-radius:999px;font-size:16px;box-shadow:0 6px 18px rgb(0 0 0/.25)}
+.fab-space{height:72px}
+body.has-fab .toast{bottom:calc(140px + env(safe-area-inset-bottom))}
+.bday{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px}
+.link{background:none;border:0;color:var(--sub);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;cursor:pointer;padding:0;margin-top:8px}
+[hidden]{display:none!important}
+.bar.st span:first-child small{display:block;font-size:12px;color:var(--sub)}
+.dangerbtn{background:var(--acc)!important}
+.chk input:disabled+*{opacity:.5}
+</style>
+</head>
+<body>
+<section class="login" id="login" hidden>
+  <div class="lcard">
+    <div id="start" hidden>
+      <h1>美容室カルテ</h1><p class="s">顧客カルテ・予約・売上をスマホひとつで。<br>登録なしで、今すぐ使えます。</p>
+      <button class="btn pri wide" type="button" id="startBtn" style="margin-top:18px">はじめる</button>
+      <p class="lmsg" id="smsg"></p>
+      <button class="link" type="button" id="toLogin">登録済みの方はこちら（ログイン）</button>
+      <p class="hint" style="margin-top:14px">「はじめる」を押すと、<a href="terms.html" target="_blank" rel="noopener">利用規約</a>と<a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意したものとします。</p>
+    </div>
+    <form id="loginForm" autocomplete="on">
+      <h1>美容室カルテ</h1><p class="s">お店コードとパスワードでログイン</p>
+      <label for="lcode">お店コード</label><input id="lcode" autocapitalize="off" autocomplete="organization" required>
+      <label for="lid">スタッフID <small>（オーナーは空欄でOK）</small></label><input id="lid" autocapitalize="off" autocomplete="username" placeholder="スタッフの方だけ入力">
+      <label for="lpw">パスワード</label><input id="lpw" type="password" autocomplete="current-password" required>
+      <button class="btn pri wide" type="submit" style="margin-top:18px">ログイン</button>
+      <p class="lmsg" id="lmsg"></p>
+      <button class="link" type="button" id="toStart">はじめての方はこちら（登録なしで使う）</button><br>
+      <button class="link" type="button" id="toAdmin">運営者：新しいお店を作る</button><br>
+      <a class="link" href="terms.html" target="_blank" rel="noopener" style="display:inline-block;line-height:44px;margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener" style="display:inline-block;line-height:44px">プライバシーポリシー</a>
+    </form>
+    <form id="admin" hidden autocomplete="off">
+      <h1>新しいお店を作る</h1><p class="s">運営者用。合言葉（ADMIN_KEY）が必要です</p>
+      <label for="ak">合言葉（ADMIN_KEY）</label><input id="ak" name="admin_key" type="password" required>
+      <label for="an">お店の名前</label><input id="an" name="salon_name" required>
+      <label for="ac">お店コード（ログイン用・英小文字と数字）</label><input id="ac" name="salon_code" autocapitalize="off" required placeholder="例：nuki-salon">
+      <label for="aop">オーナーのパスワード（8文字以上）</label><input id="aop" name="owner_password" type="password" minlength="8" required autocomplete="new-password">
+      <p class="s" style="margin-top:10px">オーナーは「お店コード＋パスワード」だけでログインできます。名前はログイン後に「管理」から変えられます。</p>
+      <button class="btn pri wide" type="submit" style="margin-top:18px">お店を作る</button>
+      <p class="lmsg" id="amsg"></p>
+      <button class="link" type="button" id="backLogin">‹ ログインに戻る</button>
+    </form>
+  </div>
+</section>
+<div id="app" hidden>
+<header><h1 id="ttl">顧客カルテ</h1><p id="sub"></p></header>
+<main id="view"></main>
+<nav class="tabs" role="tablist">
+  <button data-tab="cust" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>顧客カルテ</button>
+  <button data-tab="book" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>予約</button>
+  <button data-tab="sales" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>売上</button>
+  <button data-tab="admin" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>管理</button>
+</nav>
+</div>
+<div class="sheet" id="sheet"><form id="form" autocomplete="off"></form></div>
+<div class="lb" id="lb" role="dialog" aria-label="写真"><img id="lbImg" alt="施術写真"><span class="cnt num" id="lbCnt"></span>
+<div class="row"><button class="btn" type="button" data-lb="prev">‹ 前</button><button class="btn" type="button" data-lb="next">次 ›</button><button class="btn" type="button" data-lb="del">削除</button><button class="btn" type="button" data-lb="close">閉じる</button></div></div>
+<div class="swb" id="swb" aria-hidden="true">‹</div>
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="undo" type="button">元に戻す</button></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
+<script>
+{
+/* ===== 設定 ===== */
+const SB_URL = 'https://lnawjlzsgaeziovfxkvk.supabase.co';
+const SB_KEY = 'sb_publishable_4cUAKD5aEzQe4lo1D-fAzQ_mqxvKIxa';
+const BUCKET = 'salon-photos';
+const MAXP = 9;
+const loginEmail = (code, login) => `${login}.${code}@staff.example.com`;
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+/* ===== 小道具 ===== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const yen = n => '¥' + Math.round(n || 0).toLocaleString('ja-JP');
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x };
+const WD = '日月火水木金土';
+const jdate = s => { const d = new Date(s + 'T00:00'); return (d.getMonth() + 1) + '/' + d.getDate() + '(' + WD[d.getDay()] + ')' };
+const hm = t => (t || '').slice(0, 5);
+const nowT = () => { const d = new Date(); return pad(d.getHours()) + ':' + pad(Math.floor(d.getMinutes() / 5) * 5) };
+const uuid = () => crypto.randomUUID();
+let today = new Date(), T = ymd(today);
+const lsGet = k => { try { return localStorage.getItem(k) } catch (e) { return null } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v) } catch (e) {} };
+
+/* ===== 状態 ===== */
+const S = { salon: null, me: null, staff: [], menus: [], products: [], customers: [], visits: [], bookings: [] };
+const urlCache = {};
+let menuSorting = false, prodSorting = false, staffSorting = false;
+let bview = lsGet('bview') === 'tl' ? 'tl' : 'list', tlSel = null;
+let tab = 'cust', day = T, calM = T.slice(0, 7), detail = null, month = T.slice(0, 7), undoFn = null, tt = null, lastLoad = 0, busy = false;
+let smode = 'month', syear = today.getFullYear(), sfrom = ymd(addDays(today, -29)), sto = T;
+
+const can = p => !!S.me && (S.me.role === 'owner' || !!S.me['can_' + p]);
+const cust = id => S.customers.find(c => c.id === id) || { name: '（削除された顧客）', kana: '' };
+const staffName = id => S.staff.find(s => s.id === id)?.display_name || '';
+const vkey = v => v.visited_on + ' ' + (v.visited_at || '00:00');
+const lastVisit = id => S.visits.filter(v => v.customer_id === id).sort((a, b) => vkey(b).localeCompare(vkey(a)))[0];
+const retail = v => (v.visit_items || []).reduce((s, x) => s + x.price * x.qty, 0);
+const menuStr = v => (v.visit_menus || []).slice().sort((a, b) => a.sort - b.sort).map(m => m.menu_name).join('・') || '（メニューなし）';
+const photos = v => (v.visit_photos || []).slice().sort((a, b) => a.sort - b.sort);
+
+function toast(msg, undo) {
+  undoFn = undo || null; $('#toastMsg').textContent = msg; $('#undo').style.display = undo ? '' : 'none';
+  $('#toast').classList.add('show'); clearTimeout(tt); tt = setTimeout(() => $('#toast').classList.remove('show'), 4000);
+}
+$('#undo').addEventListener('click', async () => { $('#toast').classList.remove('show'); if (undoFn) { await undoFn(); render() } });
+const fail = (e, msg) => { console.error(e); toast(msg || 'うまく保存できませんでした。電波を確認してもう一度お試しください'); };
+async function q(p, msg) { const { data, error } = await p; if (error) { fail(error, msg); throw error } return data }
+
+/* ===== 写真 ===== */
+function shrink(file, max, square) {
+  return new Promise(res => {
+    const img = new Image(), r = new FileReader();
+    r.onerror = () => res(null);
+    r.onload = () => {
+      img.onerror = () => res(null);
+      img.onload = () => {
+        const c = document.createElement('canvas'), g = c.getContext('2d');
+        if (square) { const m = Math.min(img.width, img.height); c.width = c.height = max; g.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, max, max) }
+        else { const s = Math.min(1, max / Math.max(img.width, img.height)); c.width = img.width * s; c.height = img.height * s; g.drawImage(img, 0, 0, c.width, c.height) }
+        c.toBlob(b => res(b), 'image/jpeg', .8);
+      }; img.src = r.result;
+    }; r.readAsDataURL(file);
+  });
+}
+async function upload(blob, path) {
+  const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+  if (error) throw error;
+  urlCache[path] = URL.createObjectURL(blob);
+  return path;
+}
+async function signAll(paths) {
+  const need = [...new Set(paths.filter(p => p && !urlCache[p]))];
+  for (let i = 0; i < need.length; i += 100) {
+    const { data } = await sb.storage.from(BUCKET).createSignedUrls(need.slice(i, i + 100), 60 * 60 * 6);
+    (data || []).forEach(d => { if (d.signedUrl) urlCache[d.path] = d.signedUrl });
+  }
+}
+const img = p => urlCache[p] || 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+const avatar = (c, cls = 'av') => c.face_path ? `<span class="${cls}"><img src="${img(c.face_path)}" alt=""></span>` : `<span class="${cls}">${esc((c.name || '?')[0])}</span>`;
+
+/* ===== 読み込み ===== */
+async function loadAll() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return showLogin();
+  S.trial = !!user.is_anonymous && !user.email;
+  const me = (await sb.from('staff').select('*').eq('user_id', user.id).eq('active', true).maybeSingle()).data;
+  if (!me && S.trial) { await sb.auth.signOut(); return showLogin() }
+  if (!me) { await sb.auth.signOut(); return showLogin('このアカウントは使えません。オーナーに確認してください') }
+  const [salon, staff, menus, products, customers, visits, bookings] = await Promise.all([
+    sb.from('salons').select('*').eq('id', me.salon_id).single(),
+    sb.from('staff').select('*').order('sort').order('created_at'),
+    sb.from('menus').select('*').order('sort').order('created_at'),
+    sb.from('products').select('*').order('sort').order('created_at'),
+    sb.from('customers').select('*'),
+    sb.from('visits').select('*, visit_menus(*), visit_items(*), visit_photos(*)'),
+    sb.from('bookings').select('*').neq('status', 'cancelled'),
+  ]);
+  const err = [salon, staff, menus, products, customers, visits, bookings].find(r => r.error);
+  if (err) { fail(err.error, '読み込めませんでした。電波を確認してください'); return }
+  Object.assign(S, { me, salon: salon.data, staff: staff.data, menus: menus.data, products: products.data, customers: customers.data, visits: visits.data, bookings: bookings.data });
+  lastLoad = Date.now(); today = new Date(); T = ymd(today);
+  $('#login').hidden = true; $('#app').hidden = false;
+  if (tab === 'sales' && !can('view_sales')) tab = 'cust';
+  render();
+  if (!S.trial && S.salon.plan_until && !paid() && planSynced !== S.salon.id) { planSynced = S.salon.id; syncPlan().then(render).catch(() => {}) }
+  signAll([...S.customers.map(c => c.face_path), ...S.visits.flatMap(v => (v.visit_photos || []).map(p => p.path))]).then(render);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.me && Date.now() - lastLoad > 60000 && !$('#sheet').classList.contains('open')) loadAll() });
+
+/* ===== ログイン ===== */
+function showLogin(msg) {
+  document.body.classList.remove('has-fab');
+  const first = !lsGet('salon-code') && !msg;
+  $('#app').hidden = true; $('#login').hidden = false; $('#admin').hidden = true;
+  $('#start').hidden = !first; $('#loginForm').hidden = first;
+  $('#lcode').value = lsGet('salon-code') || '';
+  $('#lmsg').textContent = msg || '';
+}
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault(); if (busy) return; busy = true;
+  const code = $('#lcode').value.trim().toLowerCase(), id = $('#lid').value.trim().toLowerCase() || 'owner', pw = $('#lpw').value;
+  $('#lmsg').textContent = 'ログインしています…';
+  const { error } = await sb.auth.signInWithPassword({ email: loginEmail(code, id), password: pw });
+  busy = false;
+  if (error) { $('#lmsg').textContent = 'お店コードかパスワードが違います'; return }
+  lsSet('salon-code', code); $('#lpw').value = ''; tab = 'cust'; detail = null; loadAll();
+});
+$('#toAdmin').addEventListener('click', () => { $('#loginForm').hidden = true; $('#admin').hidden = false });
+$('#toLogin').addEventListener('click', () => { $('#start').hidden = true; $('#loginForm').hidden = false });
+$('#toStart').addEventListener('click', () => { $('#loginForm').hidden = true; $('#start').hidden = false });
+// 登録なしで始める：匿名ログイン → 自分専用のお店を自動で作る
+$('#startBtn').addEventListener('click', async () => {
+  if (busy) return; busy = true; $('#startBtn').disabled = true; $('#smsg').textContent = '準備しています…';
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { const { error } = await sb.auth.signInAnonymously(); if (error) throw error }
+    await staffAdmin({ action: 'start_trial' });
+    $('#smsg').textContent = ''; tab = 'cust'; detail = null; busy = false; await loadAll();
+  } catch (err) { $('#smsg').textContent = '始められませんでした。電波を確認して、もう一度押してください' }
+  busy = false; $('#startBtn').disabled = false;
+});
+$('#backLogin').addEventListener('click', () => { $('#admin').hidden = true; $('#loginForm').hidden = false });
+// お店の名前が英数字なら、お店コードを自動で入れる（手で直したらそれ以降は触らない）
+$('#ac').addEventListener('input', () => { $('#ac').dataset.touched = '1' });
+$('#an').addEventListener('input', () => {
+  if ($('#ac').dataset.touched) return;
+  $('#ac').value = $('#an').value.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+});
+$('#admin').addEventListener('submit', async e => {
+  e.preventDefault(); if (busy) return; busy = true;
+  const f = Object.fromEntries(new FormData(e.target));
+  $('#amsg').textContent = '作成しています…';
+  try {
+    const r = await fetch(SB_URL + '/functions/v1/salon-admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SB_KEY, 'x-admin-key': f.admin_key },
+      body: JSON.stringify({ action: 'create_salon', salon_code: f.salon_code.trim().toLowerCase(), salon_name: f.salon_name.trim(), owner_login_id: 'owner', owner_name: 'オーナー', owner_password: f.owner_password }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { $('#amsg').textContent = j.error || ('作れませんでした（' + r.status + '）'); }
+    else {
+      $('#lcode').value = f.salon_code.trim().toLowerCase(); $('#lid').value = ''; $('#lpw').value = '';
+      e.target.reset(); delete $('#ac').dataset.touched; $('#amsg').textContent = '';
+      $('#admin').hidden = true; $('#loginForm').hidden = false;
+      $('#lmsg').textContent = 'お店を作りました！パスワードを入れてログインしてください'; $('#lpw').focus();
+    }
+  } catch (err) { $('#amsg').textContent = '通信できませんでした'; }
+  busy = false;
+});
+async function staffAdmin(body) {
+  const { data: { session } } = await sb.auth.getSession();
+  const r = await fetch(SB_URL + '/functions/v1/salon-admin', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + session.access_token },
+    body: JSON.stringify(body),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'エラー（' + r.status + '）');
+  return j;
+}
+
+/* ===== 画面 ===== */
+const TRIAL_MONTHS = 6;
+const trialEnd = () => { const d = new Date(S.salon.created_at); d.setMonth(d.getMonth() + TRIAL_MONTHS); return d };
+const trialLeft = () => Math.ceil((trialEnd() - Date.now()) / 864e5);
+const mdj = d => (d.getMonth() + 1) + '月' + d.getDate() + '日';
+function render() {
+  if (!S.me) return;
+  const expired = trialLeft() <= 0 && !paid();
+  $('nav.tabs').hidden = expired;
+  if (expired && S.trial) {
+    $('#ttl').textContent = 'お店の登録'; $('#sub').textContent = S.salon.name;
+    $('#view').innerHTML = `<div class="carte trial"><h2 style="margin-top:0">いつもご利用ありがとうございます</h2>
+      <p>無料でお使いいただける期間（${TRIAL_MONTHS}か月）が終わりました。<b>お店を登録して有料プランにお申し込みいただく</b>と、これまでのお客様・来店記録・写真はそのまま使い続けられます。</p>
+      <button class="btn pri wide" id="regBtn">お店を登録する</button></div>`;
+    return;
+  }
+  if (expired) {
+    // 登録済みで、6か月たって有料プランでない：有料プランの案内だけ（ログアウト・アカウントの消去はできるように）
+    document.body.classList.remove('has-fab');
+    $('#ttl').textContent = '有料プラン'; $('#sub').textContent = S.salon.name + '・' + S.me.display_name;
+    $('#view').innerHTML = `<div class="carte trial"><h2 style="margin-top:0">いつもご利用ありがとうございます</h2>
+      <p>無料でお使いいただける期間（${TRIAL_MONTHS}か月）が終わりました。${S.me.role === 'owner' ? '<b>有料プランにお申し込みいただく</b>と、' : '<b>オーナーが有料プランにお申し込みする</b>と、'}これまでのお客様・来店記録・写真はそのまま使い続けられます。</p>
+      <button class="btn pri wide" id="planBtn">有料プランを見る</button></div>
+      <div class="row"><button class="btn sm" id="relogin">別のお店・アカウントでログイン</button><button class="btn sm danger" id="logout">ログアウト</button></div>
+      <p style="text-align:center;margin:18px 0 0"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
+      <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを消去する' : '自分のアカウントを消去する'}</button>`;
+    return;
+  }
+  document.querySelectorAll('nav.tabs button').forEach(b => { b.setAttribute('aria-selected', b.dataset.tab === tab); if (b.dataset.tab === 'sales') b.hidden = !can('view_sales') });
+  $('nav.tabs').style.gridTemplateColumns = `repeat(${can('view_sales') ? 4 : 3},minmax(0,1fr))`;
+  const v = $('#view');
+  if (tab === 'book') { $('#ttl').textContent = day === T ? '今日の予約' : jdate(day) + 'の予約'; v.innerHTML = bookView() }
+  else if (tab === 'cust') { $('#ttl').textContent = detail ? cust(detail).name + ' 様' : '顧客カルテ'; v.innerHTML = detail ? detailView() : custView() }
+  else if (tab === 'sales') { $('#ttl').textContent = '売上'; v.innerHTML = salesView() }
+  else { $('#ttl').textContent = '管理'; v.innerHTML = adminView() }
+  $('#sub').textContent = S.salon.name + '・' + S.me.display_name;
+  document.body.classList.toggle('has-fab', tab === 'cust' && !detail); // 右下のボタンがあるときは、お知らせを少し上に出す
+  if (!S.trial && !paid() && trialLeft() <= 30) v.insertAdjacentHTML('afterbegin', `<button class="trialbar" id="planBtn">無料でお使いいただけるのは${mdj(trialEnd())}まで（あと${trialLeft()}日）。<u>有料プランを見る</u></button>`);
+  if (S.trial && trialLeft() <= 30) v.insertAdjacentHTML('afterbegin', `<button class="trialbar" id="regBtn">登録なしで使えるのは${mdj(trialEnd())}まで（あと${trialLeft()}日）。<u>お店を登録する</u></button>`);
+}
+const stylists = () => S.staff.filter(s => s.active && s.is_stylist);
+const stylistSel = (name, sel) => `<select name="${name}" id="${name}"><option value="">（担当なし）</option>${stylists().map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${esc(s.display_name)}</option>`).join('')}${sel && !stylists().some(s => s.id === sel) ? `<option value="${sel}" selected>${esc(staffName(sel))}</option>` : ''}</select>`;
+
+function bookView() {
+  const [cy, cm] = calM.split('-').map(Number), first = new Date(cy, cm - 1, 1), dim = new Date(cy, cm, 0).getDate();
+  let g = [...WD].map(w => `<span class="w">${w}</span>`).join('') + '<span></span>'.repeat(first.getDay());
+  for (let i = 1; i <= dim; i++) {
+    const s = cy + '-' + pad(cm) + '-' + pad(i), n = S.bookings.filter(b => b.booked_on === s).length;
+    g += `<button data-day="${s}" aria-pressed="${s === day}" aria-label="${cm}月${i}日 予約${n}件" class="${n ? 'has' : ''} ${s < T ? 'past' : ''} ${s === T ? 'td' : ''}">${i}<i></i></button>`;
+  }
+  const list = S.bookings.filter(b => b.booked_on === day).sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const item = b => {
+    const c = cust(b.customer_id), end = new Date(b.booked_on + 'T' + hm(b.start_time)); end.setMinutes(end.getMinutes() + (+b.duration_min || 60));
+    return `<li><div class="t num">${hm(b.start_time)}<small>〜${pad(end.getHours())}:${pad(end.getMinutes())}</small></div>
+    <div><div class="who">${avatar(c, 'av sm')}<span>${esc(c.name)} 様</span> ${c.allergy ? '<span class="tag warn">アレルギー</span>' : ''}</div>
+    <div class="menu">${esc((b.menu_names || []).join('・'))}・<span class="num">${yen(b.price)}</span></div>
+    ${(b.items || []).length ? `<div class="menu">店販：${b.items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(b.items.reduce((t, x) => t + x.price * x.qty, 0))}</span>）</div>` : ''}
+    ${b.stylist_id ? `<div class="menu">担当：${esc(staffName(b.stylist_id))}${b.nominated ? ' <span class="tag">指名</span>' : ''}</div>` : ''}
+    </div><div class="row bkrow">${b.status === 'done' ? `<span class="tag done">${b.walk_in ? '予約なしで来店・カルテ記録済み' : '来店済み・カルテ記録済み'}</span>` : `<button class="btn sm" data-eb="${b.id}">変更</button>`}
+    <button class="btn sm" data-open="${b.customer_id}">カルテ</button>${b.status !== 'done' ? `<button class="btn sm danger" data-delb="${b.id}" style="margin-left:auto">取消</button>` : ''}</div></li>`;
+  };
+  const items = list.map(item).join('');
+  const sel = bview === 'tl' && list.find(b => b.id === tlSel);
+  const body = !list.length ? '<div class="empty">この日の予約はまだありません</div>'
+    : bview === 'tl' ? timeline(list) + (sel ? `<ul class="book">${item(sel)}</ul>` : '<p class="hint">予約をタップすると、変更・カルテ・取消ができます</p>')
+    : `<ul class="book" style="margin-top:0">${items}</ul>`;
+  return `<div class="cal"><div class="calh"><button data-cal="-1" aria-label="前の月">‹</button><b>${cy}年${cm}月</b><button data-cal="1" aria-label="次の月">›</button></div>
+  <div class="calg">${g}</div>${day !== T || calM !== T.slice(0, 7) ? '<button class="btn sm today" data-day="' + T + '">今日に戻る</button>' : ''}</div>
+  <div class="bhead"><h2>${jdate(day)} の予約 <span class="tag">${list.length}件</span></h2>
+  <div class="sorts seg" role="group" aria-label="表示の切り替え">${[['list', 'リスト'], ['tl', 'タイムライン']].map(([k, l]) => `<button data-bview="${k}" aria-pressed="${bview === k}">${l}</button>`).join('')}</div></div>
+  ${body}
+  <div class="row" style="margin-top:16px"><button class="btn pri wide" id="addB">＋ 予約を追加</button></div>`;
+}
+
+/* タイムライン：横が時間（30分ごと）、縦がスタッフ。重なる予約は同じスタッフの中で段を分ける */
+const toMin = t => +hm(t).slice(0, 2) * 60 + +hm(t).slice(3, 5);
+const TL_COLORS = 6;
+function timeline(list) {
+  const SLOT = 30, W = 58, NAME = 76, LANE = 46;
+  let s0 = 9 * 60, e0 = 19 * 60;
+  list.forEach(b => { const st = toMin(b.start_time), en = st + (+b.duration_min || 60); s0 = Math.min(s0, Math.floor(st / 60) * 60); e0 = Math.max(e0, Math.ceil(en / 60) * 60) });
+  const x = m => (m - s0) / SLOT * W, width = x(e0);
+  const ids = [...stylists().map(s => s.id), ...new Set(list.map(b => b.stylist_id || '').filter(id => id && !stylists().some(s => s.id === id)))];
+  if (list.some(b => !b.stylist_id)) ids.push('');
+  let head = ''; for (let m = s0; m < e0; m += SLOT) head += `<span class="num" style="left:${x(m)}px;width:${W}px">${Math.floor(m / 60)}:${pad(m % 60)}</span>`;
+  let grid = ''; for (let m = s0; m <= e0; m += SLOT) grid += `<i style="left:${x(m)}px" class="${m % 60 ? 'half' : ''}"></i>`;
+  const now = day === T ? (() => { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= s0 && m <= e0 ? `<b class="now" style="left:${x(m)}px"></b>` : '' })() : '';
+  const rows = ids.map(id => {
+    const bs = list.filter(b => (b.stylist_id || '') === id).sort((a, b) => a.start_time.localeCompare(b.start_time)), ends = [];
+    const blocks = bs.map(b => {
+      const st = toMin(b.start_time), en = st + (+b.duration_min || 60); let ln = ends.findIndex(e => e <= st); if (ln < 0) ln = ends.length; ends[ln] = en;
+      const c = cust(b.customer_id), col = [...b.customer_id].reduce((h, ch) => h + ch.charCodeAt(0), 0) % TL_COLORS;
+      return `<button class="tlb c${col} ${b.status === 'done' ? 'done' : ''} ${b.id === tlSel ? 'on' : ''}" data-tlsel="${b.id}" style="left:${x(st) + 1}px;width:${Math.max(x(en) - x(st) - 2, 24)}px;top:${ln * LANE + 4}px" aria-label="${esc(c.name)}様 ${hm(b.start_time)}から ${esc((b.menu_names || []).join('・'))}">${esc(c.name)}様 <small>${esc((b.menu_names || []).join('・'))}</small></button>`;
+    }).join('');
+    const h = Math.max(1, ends.length) * LANE + 8;
+    return `<div class="tlr" style="height:${h}px"><div class="tln">${esc(id ? staffName(id) : '担当なし')}</div><div class="tlt" style="width:${width}px">${grid}${blocks}${now}</div></div>`;
+  }).join('');
+  return `<div class="tlw"><div class="tl" style="width:${NAME + width}px"><div class="tlh"><div class="tln"></div><div class="tlt" style="width:${width}px">${head}</div></div>${rows}</div></div>`;
+}
+
+const ROWS = [['あ','あいうえおぁぃぅぇぉ'],['か','かきくけこがぎぐげご'],['さ','さしすせそざじずぜぞ'],['た','たちつてとだぢづでどっ'],['な','なにぬねの'],['は','はひふへほばびぶべぼぱぴぷぺぽ'],['ま','まみむめも'],['や','やゆよゃゅょ'],['ら','らりるれろ'],['わ','わをんゎ']];
+const rowOf = k => { let ch = (k || '').trim()[0] || ''; const c = ch.charCodeAt(0); if (c >= 0x30a1 && c <= 0x30f6) ch = String.fromCharCode(c - 0x60); return (ROWS.find(r => r[1].includes(ch)) || ['他'])[0] };
+const SORTS = [['kana', 'ふりがな順'], ['last', '最終来店日'], ['bday', '誕生日が近い順']];
+function nextBday(b) { if (!b) return null; const [, m, d] = b.split('-').map(Number); const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate()); let n = new Date(t0.getFullYear(), m - 1, d); if (n < t0) n = new Date(t0.getFullYear() + 1, m - 1, d); return { days: Math.round((n - t0) / 864e5), m, d } }
+function custView() {
+  const q0 = window._q || '', sk = window._sort || 'kana';
+  return `<input class="search" id="q" type="search" placeholder="名前・ふりがな・電話で検索" value="${esc(q0)}">
+  <div class="sorts" role="group" aria-label="並び替え">${SORTS.map(([k, l]) => `<button data-sort="${k}" aria-pressed="${sk === k}">${l}</button>`).join('')}</div>
+  <div class="kana" id="kana" ${sk === 'kana' ? '' : 'hidden'} role="group" aria-label="行で絞り込み">${[['', 'すべて'], ...ROWS.map(r => [r[0], r[0]])].map(([k, l]) => `<button data-row="${k}" aria-pressed="${(window._row || '') === k}">${l}</button>`).join('')}</div>
+  <div id="clist">${custList()}</div>
+  <div class="fab-space"></div><button class="btn pri fab" id="addC" aria-label="新しいお客様を登録">＋ 新しいお客様</button>`;
+}
+function custList() {
+  const q0 = (window._q || '').trim(), sk = window._sort || 'kana', kr = sk === 'kana' ? (window._row || '') : '';
+  const lv = c => lastVisit(c.id)?.visited_on || '';
+  const cmp = { kana: (a, b) => a.kana.localeCompare(b.kana, 'ja'), last: (a, b) => lv(b).localeCompare(lv(a)) || a.kana.localeCompare(b.kana, 'ja'), bday: (a, b) => (nextBday(a.birthday)?.days ?? 999) - (nextBday(b.birthday)?.days ?? 999) || a.kana.localeCompare(b.kana, 'ja') }[sk];
+  // 最終来店日・誕生日順では、まだ来店のない人（誕生日順は誕生日のない人も）を出さない
+  const shown = c => sk === 'kana' || (lastVisit(c.id) && (sk !== 'bday' || c.birthday));
+  const list = S.customers.filter(c => (!q0 || (c.name + c.kana + c.tel).includes(q0)) && (!kr || rowOf(c.kana) === kr) && shown(c)).sort(cmp);
+  const right = c => { if (sk === 'bday') { const n = nextBday(c.birthday); return n ? `誕生日 ${n.m}/${n.d}<br><b class="${n.days <= 30 ? 'soon' : ''}">${n.days === 0 ? '今日！' : 'あと' + n.days + '日'}</b>` : '誕生日 未登録' } const l = lastVisit(c.id); return l ? '前回 ' + jdate(l.visited_on) : '来店なし' };
+  let prev = '';
+  return `<ul class="list">${list.map(c => { const g = sk === 'kana' ? rowOf(c.kana) : '', head = g && g !== prev ? `<li class="gh">${g === '他' ? 'その他' : g + '行'}</li>` : ''; prev = g || prev;
+    return head + `<li><button data-open="${c.id}">${avatar(c)}<span><span class="nm">${esc(c.name)}</span><br><span class="kn">${esc(c.kana)}</span></span><span class="last">${right(c)}</span></button></li>` }).join('')}</ul>
+  ${list.length ? '' : `<div class="empty">${S.customers.length ? (kr ? kr + '行のお客様はいません' : q0 ? '見つかりませんでした' : sk === 'last' ? 'まだ来店記録のあるお客様がいません' : sk === 'bday' ? '来店記録と誕生日のあるお客様がいません' : '見つかりませんでした') : 'まだお客様がいません。「＋ 新しいお客様」から登録しましょう'}</div>`}`;
+}
+
+function detailView() {
+  const c = cust(detail), vs = S.visits.filter(v => v.customer_id === detail).sort((a, b) => vkey(b).localeCompare(vkey(a)));
+  const total = vs.reduce((s, v) => s + (+v.price || 0) + retail(v), 0);
+  const bd = c.birthday ? (() => { const [y, m, d] = c.birthday.split('-').map(Number), n = nextBday(c.birthday), age = today.getFullYear() - y - (new Date(today.getFullYear(), m - 1, d) > new Date(today.getFullYear(), today.getMonth(), today.getDate()) ? 1 : 0); return `${y}年${m}月${d}日（${age}歳）${n.days === 0 ? '<span class="tag warn">今日が誕生日</span>' : n.days <= 30 ? '<span class="tag warn">あと' + n.days + '日</span>' : ''}` })() : '—';
+  return `<button class="back" id="back">‹ 顧客一覧</button>
+  <div class="carte"><div class="face">${c.face_path ? `<button class="facebtn" data-face="1" aria-label="写真を拡大">${avatar(c, 'av big2')}</button>` : avatar(c, 'av big2')}<div><b style="font-size:19px">${esc(c.name)} 様</b><br><small style="color:var(--sub)">${esc(c.kana)}</small></div></div>
+  ${c.allergy ? `<span class="tag warn">アレルギー：${esc(c.allergy)}</span>` : ''}
+  <dl><dt>電話</dt><dd class="num">${esc(c.tel) || '—'}</dd><dt>誕生日</dt><dd>${bd}</dd>
+  <dt>髪質</dt><dd>${esc(c.hair) || '—'}</dd><dt>メモ</dt><dd>${esc(c.memo) || '—'}</dd>
+  <dt>来店回数</dt><dd><span class="num">${vs.length}</span> 回</dd><dt>累計</dt><dd class="num">${yen(total)}</dd></dl>
+  <div class="row"><button class="btn sm" id="editC">カルテを編集</button></div></div>
+  <button class="btn wide bookbtn" id="bookC" style="margin-top:16px">${CAL_ICON}予約を入れる</button>
+  <button class="btn pri wide" id="addV" style="margin-top:10px">＋ 施術を記録</button>
+  ${(() => {
+    // このお客様の、これからの予約（今日以降・まだ来店していないもの）
+    const up = S.bookings.filter(b => b.customer_id === c.id && b.status !== 'done' && b.booked_on >= T).sort((a, b) => (a.booked_on + a.start_time).localeCompare(b.booked_on + b.start_time));
+    if (!up.length) return '';
+    return `<h2 style="margin-top:32px">これからの予約 <span class="tag">${up.length}件</span></h2>` + up.map(b => {
+      const end = new Date(b.booked_on + 'T' + hm(b.start_time)); end.setMinutes(end.getMinutes() + (+b.duration_min || 60));
+      return `<div class="visit upb"><div><div class="d">${CAL_ICON}<span>${jdate(b.booked_on)} <span class="num">${hm(b.start_time)}〜${pad(end.getHours())}:${pad(end.getMinutes())}</span></span>${b.stylist_id ? `<span class="who2">担当 ${esc(staffName(b.stylist_id))}${b.nominated ? '（指名）' : ''}</span>` : ''}</div><b>${esc((b.menu_names || []).join('・')) || '（メニューなし）'}</b></div>
+      <div class="p num">${yen(b.price)}</div>${(b.items || []).length ? `<div class="m">店販：${b.items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(b.items.reduce((t, x) => t + x.price * x.qty, 0))}</span>）</div>` : ''}
+      <div class="row" style="grid-column:1/-1;margin:0"><button class="btn sm" data-eb="${b.id}">変更</button><button class="btn sm danger" data-delb="${b.id}" style="margin-left:auto">取消</button></div></div>`;
+    }).join('');
+  })()}
+  <h2 style="margin-top:32px">来店履歴</h2>
+  ${vs.map(v => { const ps = photos(v); return `<div class="visit"><div><div class="d">${jdate(v.visited_on)}${v.visited_at ? ' <span class="num">' + hm(v.visited_at) + '</span>' : ''}${v.stylist_id ? '・担当 ' + esc(staffName(v.stylist_id)) + (v.nominated ? '（指名）' : '') : ''}</div><b>${esc(menuStr(v))}</b></div>
+  <div class="p num">${yen(v.price)}</div>${(v.visit_items || []).length ? `<div class="m">店販：${v.visit_items.map(x => esc(x.name) + (x.qty > 1 ? ' ×' + x.qty : '')).join('、')}（<span class="num">${yen(retail(v))}</span>）</div>` : ''}${v.chem ? `<div class="m">薬剤：${esc(v.chem)}</div>` : ''}${v.memo ? `<div class="m">${esc(v.memo)}</div>` : ''}
+  ${ps.length ? `<div class="pics">${ps.map((p, i) => `<button data-pic="${v.id}:${i}" aria-label="写真${i + 1}を拡大"><img src="${img(p.path)}" alt=""></button>`).join('')}</div>` : ''}
+  <div class="row" style="grid-column:1/-1;margin:0"><button class="btn sm" data-ev="${v.id}">編集</button></div></div>` }).join('') || '<div class="empty">まだ記録がありません</div>'}`;
+}
+
+function salesRange() {
+  const [y, m] = month.split('-').map(Number);
+  if (smode === 'year') return { from: syear + '-01-01', to: syear + '-12-31', label: syear + '年', ms: Array.from({ length: 12 }, (_, i) => [syear, i + 1]) };
+  if (smode === 'custom') { let a = sfrom, b = sto; if (a > b) [a, b] = [b, a]; const ms = []; let d = new Date(+a.slice(0, 4), +a.slice(5, 7) - 1, 1); const e = new Date(+b.slice(0, 4), +b.slice(5, 7) - 1, 1); while (d <= e && ms.length < 36) { ms.push([d.getFullYear(), d.getMonth() + 1]); d = new Date(d.getFullYear(), d.getMonth() + 1, 1) } return { from: a, to: b, label: jdate(a) + ' 〜 ' + jdate(b), ms } }
+  const ms = []; for (let i = 5; i >= 0; i--) { const d = new Date(y, m - 1 - i, 1); ms.push([d.getFullYear(), d.getMonth() + 1]) }
+  return { from: month + '-01', to: month + '-' + pad(new Date(y, m, 0).getDate()), label: y + '年' + m + '月', ms };
+}
+const bars = (obj, cls = '', keepOrder = false) => { const e = keepOrder ? Object.entries(obj) : Object.entries(obj).sort((a, b) => b[1] - a[1]), mx = Math.max(1, ...e.map(x => x[1])); return e.map(([k, n]) => `<div class="bar"><span>${esc(k)}</span><i class="${cls}" style="width:${n / mx * 100}%"></i><span class="num">${yen(n)}</span></div>`).join('') };
+function salesView() {
+  const R = salesRange(), vs = S.visits.filter(v => v.visited_on >= R.from && v.visited_on <= R.to);
+  const ndays = Math.round((new Date(R.to) - new Date(R.from)) / 864e5) + 1;
+  const sofar = Math.max(1, Math.round((new Date(R.to < T ? R.to : T) - new Date(R.from)) / 864e5) + 1); // 1日平均は今日までの日数で割る
+  const tech = vs.reduce((s, v) => s + (+v.price || 0), 0), ret = vs.reduce((s, v) => s + retail(v), 0), total = tech + ret, people = new Set(vs.map(v => v.customer_id)).size;
+  const byMenu = {}; vs.forEach(v => { const ls = (v.visit_menus || []).length ? v.visit_menus : [{ menu_name: '（メニューなし）', list_price: +v.price }], t = ls.reduce((s, l) => s + l.list_price, 0), k = t ? (+v.price || 0) / t : 0; ls.forEach(l => byMenu[l.menu_name] = (byMenu[l.menu_name] || 0) + (t ? l.list_price * k : (+v.price || 0) / ls.length)) });
+  const byProd = {}; vs.forEach(v => (v.visit_items || []).forEach(x => byProd[x.name] = (byProd[x.name] || 0) + x.price * x.qty));
+  const bySt = {}; vs.forEach(v => { const k = v.stylist_id || ''; const o = bySt[k] = bySt[k] || { amt: 0, n: 0, nom: 0 }; o.amt += (+v.price || 0) + retail(v); o.n++; if (v.nominated) o.nom++ });
+  const stMax = Math.max(1, ...Object.values(bySt).map(o => o.amt));
+  const multiY = new Set(R.ms.map(x => x[0])).size > 1;
+  const months = {}; R.ms.forEach(([yy, mm]) => { const k = yy + '-' + pad(mm); months[(multiY ? String(yy).slice(2) + '/' : '') + mm + '月'] = S.visits.filter(v => v.visited_on.startsWith(k) && (smode !== 'custom' || (v.visited_on >= R.from && v.visited_on <= R.to))).reduce((s, v) => s + (+v.price || 0) + retail(v), 0) });
+  const nav = smode === 'month' ? `<div class="month"><button class="btn sm" data-mon="-1">‹ 前月</button><b>${R.label}</b><button class="btn sm" data-mon="1">翌月 ›</button></div>`
+    : smode === 'year' ? `<div class="month"><button class="btn sm" data-yr="-1">‹ 前年</button><b>${R.label}</b><button class="btn sm" data-yr="1">翌年 ›</button></div>`
+    : `<div class="two rng"><div><label for="sf">開始日</label><input id="sf" type="date" value="${sfrom}"></div><div><label for="st">終了日</label><input id="st" type="date" value="${sto}"></div></div>
+      <div class="sorts" style="margin:8px 0 12px">${[['7', '直近7日'], ['30', '直近30日'], ['90', '直近3か月'], ['fy', '今年1月〜']].map(([k, l]) => `<button data-pre="${k}" aria-pressed="false">${l}</button>`).join('')}</div>`;
+  return `<div class="sorts" style="margin:0 0 12px" role="group" aria-label="表示範囲">${[['month', '月'], ['year', '年'], ['custom', '期間を指定']].map(([k, l]) => `<button data-smode="${k}" aria-pressed="${smode === k}">${l}</button>`).join('')}</div>${nav}
+  <div class="big"><div class="l">${smode === 'month' ? '月の売上' : smode === 'year' ? '年間の売上' : esc(R.label) + '（' + ndays + '日間）の売上'}（施術＋店販）</div><div class="v num">${yen(total)}</div>
+  <div class="kpis"><div><span class="l">施術売上</span><b class="num">${yen(tech)}</b></div><div><span class="l">店販売上</span><b class="num">${yen(ret)}</b></div><div><span class="l">来店件数</span><b>${vs.length}件</b></div><div><span class="l">客単価</span><b class="num">${yen(vs.length ? total / vs.length : 0)}</b></div>
+  <div><span class="l">来店人数</span><b>${people}人</b></div><div><span class="l">1日平均</span><b class="num">${yen(total / sofar)}</b></div></div></div>
+  <h2>スタッフ別</h2><div class="bars">${Object.entries(bySt).sort((a, b) => b[1].amt - a[1].amt).map(([k, o]) => `<div class="bar st"><span>${esc(k ? staffName(k) : '担当なし')}<small>${o.n}件・指名${o.nom}</small></span><i style="width:${o.amt / stMax * 100}%"></i><span class="num">${yen(o.amt)}</span></div>`).join('') || '<div class="empty">この期間の記録はありません</div>'}</div>
+  <h2>メニュー別</h2><div class="bars">${bars(byMenu) || '<div class="empty">この期間の記録はありません</div>'}</div>
+  <h2>店販 商品別</h2><div class="bars">${bars(byProd) || '<div class="empty">この期間の店販はありません</div>'}</div>
+  <h2>${smode === 'month' ? '過去6か月' : '月別の推移'}</h2><div class="bars">${bars(months, 'dim', true)}</div>`;
+}
+
+function adminView() {
+  const em = can('edit_master');
+  const sorting = em && menuSorting;
+  const ml = S.menus.map((m, i) => `<li><span><b>${esc(m.name)}</b><br><small>${m.duration_min}分</small></span><span class="num">${yen(m.price)}</span>${sorting
+    ? `<span class="mv"><button class="btn sm" data-mmv="${m.id}:-1" aria-label="${esc(m.name)}を上へ" ${i ? '' : 'disabled'}>↑</button><button class="btn sm" data-mmv="${m.id}:1" aria-label="${esc(m.name)}を下へ" ${i < S.menus.length - 1 ? '' : 'disabled'}>↓</button></span>`
+    : em ? `<button class="btn sm" data-em="${m.id}">編集</button>` : '<span></span>'}</li>`).join('');
+  const psorting = em && prodSorting;
+  const mvBtns = (key, list, x, i) => `<span class="mv"><button class="btn sm" data-${key}="${x.id}:-1" aria-label="${esc(x.name || x.display_name)}を上へ" ${i ? '' : 'disabled'}>↑</button><button class="btn sm" data-${key}="${x.id}:1" aria-label="${esc(x.name || x.display_name)}を下へ" ${i < list.length - 1 ? '' : 'disabled'}>↓</button></span>`;
+  const pl = S.products.map((p, i) => `<li><span><b>${esc(p.name)}</b><br><small class="${p.stock <= 2 ? 'low' : ''}">在庫 ${p.stock}${p.stock <= 2 ? '（残りわずか）' : ''}</small></span><span class="num">${yen(p.price)}</span>${psorting ? mvBtns('pmv', S.products, p, i) : em ? `<button class="btn sm" data-ep="${p.id}">編集</button>` : '<span></span>'}</li>`).join('');
+  const PL = { view_sales: '売上', edit_master: 'メニュー・店販', delete_customers: '顧客削除', manage_staff: 'スタッフ管理' };
+  // スタッフの並び替えはオーナーだけ（オーナーの行を動かせるのはオーナーだけのため）
+  const ssorting = S.me.role === 'owner' && staffSorting;
+  const sl = S.staff.map((s, i) => `<li><span><b>${esc(s.display_name)}</b>${s.role === 'owner' ? ' <span class="tag">オーナー</span>' : ''}${!s.active ? ' <span class="tag warn">停止中</span>' : ''}<br><small>ID：${esc(s.login_id)}${s.role !== 'owner' ? '・' + (Object.keys(PL).filter(k => s['can_' + k]).map(k => PL[k]).join('・') || '基本のみ') : ''}</small></span><span></span>${ssorting ? mvBtns('smv', S.staff, s, i) : can('manage_staff') && (s.role !== 'owner' || S.me.role === 'owner') ? `<button class="btn sm" data-es="${s.id}">設定</button>` : '<span></span>'}</li>`).join('');
+  const head = (title, n, btns) => `<div class="sech"><h2>${title}${n != null ? ` <span class="tag">${n}</span>` : ''}</h2><div class="row">${btns}</div></div>`;
+  return `<section class="sec">${head('サロンメニュー', S.menus.length, (em ? `<button class="btn sm${sorting ? ' pri' : ''}" id="menuSort">${sorting ? '完了' : '並び替え'}</button>` : '') + (em && !sorting ? '<button class="btn sm add" id="addM">＋ 追加</button>' : ''))}
+  <ul class="adm">${ml || '<li class="empty">メニューがありません</li>'}</ul>
+  ${sorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。予約や施術記録のメニューもこの順番で並びます。</p>' : ''}</section>
+  <section class="sec">${head('店販商品', S.products.length, (em ? `<button class="btn sm${psorting ? ' pri' : ''}" id="prodSort">${psorting ? '完了' : '並び替え'}</button>` : '') + (em && !psorting ? '<button class="btn sm add" id="addP">＋ 追加</button>' : ''))}
+  <ul class="adm">${pl || '<li class="empty">商品がありません</li>'}</ul>
+  ${psorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。予約や施術記録の店販もこの順番で並びます。</p>' : ''}
+  ${em ? '' : '<p class="hint">メニュー・店販の編集はオーナーか権限のある人ができます</p>'}</section>
+  <section class="sec">${head('スタッフ', S.staff.length, (S.me.role === 'owner' ? `<button class="btn sm${ssorting ? ' pri' : ''}" id="staffSort">${ssorting ? '完了' : '並び替え'}</button>` : '') + (can('manage_staff') && !ssorting ? '<button class="btn sm add" id="addS">＋ 追加</button>' : ''))}
+  <ul class="adm">${sl}</ul>${ssorting ? '<p class="hint">↑↓ で順番を入れかえると、すぐに保存されます。担当スタイリストの選択肢や、予約のタイムラインもこの順番で並びます。</p>' : ''}</section>
+  <section class="sec">${head('アカウント', null, '')}
+  ${S.trial ? `<div class="carte trial"><b>お試し中（登録なし）</b>
+    <p>${mdj(trialEnd())}まで登録なしで使えます。お店コードとパスワードを登録すると、<b>スタッフの追加</b>や<b>別のスマホ・パソコン</b>からも使えるようになります。データはそのまま引き継がれます。</p>
+    <button class="btn pri wide" id="regBtn">お店を登録する</button></div>` : ''}
+  <dl class="acc"><dt>お店</dt><dd>${esc(S.salon.name)}</dd>${S.trial ? '' : `<dt>お店コード</dt><dd class="num">${esc(S.salon.code)}</dd>`}<dt>あなた</dt><dd>${esc(S.me.display_name)}${S.trial ? '' : `（ID：${esc(S.me.login_id)}）`}</dd>${S.trial ? '' : `<dt>プラン</dt><dd>${planLabel()}</dd>`}</dl>
+  ${S.trial ? '' : paid() ? '<button class="btn wide" id="planBtn" style="margin:8px 0 4px">有料プランの確認</button>' : '<button class="btn pri wide" id="planBtn" style="margin:8px 0 4px">有料プランを見る</button>'}
+  <div class="row">${S.me.role === 'owner' ? '<button class="btn sm" id="editSalon">お店の名前を変更</button>' : ''}${S.trial ? '' : '<button class="btn sm" id="myPw">パスワードを変更</button>'}<button class="btn sm" id="reload">最新に更新</button></div>
+  <div class="row"><button class="btn sm" id="relogin">${S.trial ? 'ログイン（登録済みのお店）' : '別のお店・アカウントでログイン'}</button><button class="btn sm danger" id="logout">ログアウト</button></div></section>
+  <p style="text-align:center;margin:18px 0 0"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:16px">利用規約</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
+  <button class="link danger delink" id="delAcc">${S.me.role === 'owner' ? 'お店とアカウントを消去する' : '自分のアカウントを消去する'}</button>`;
+}
+
+/* ===== シート（入力画面） ===== */
+function open(html, onSave, saveLabel = '保存') {
+  const f = $('#form');
+  f.innerHTML = html + `<div class="row" style="margin-top:18px"><button class="btn" type="button" id="cancel">キャンセル</button><button class="btn pri" type="submit" style="flex:1">${saveLabel}</button></div>`;
+  f.onsubmit = async e => {
+    e.preventDefault(); if (busy) return; busy = true; const btn = f.querySelector('[type=submit]'); btn.disabled = true; btn.textContent = '保存中…';
+    try { const r = await onSave(new FormData(f)); if (r !== false) { close(); render() } }
+    catch (err) { if (!err?.shown) fail(err, err?.message) }
+    finally { busy = false; btn.disabled = false; btn.textContent = saveLabel }
+  };
+  $('#cancel').onclick = close; $('#sheet').classList.add('open'); f.scrollTop = 0;
+}
+function close() { $('#sheet').classList.remove('open') }
+$('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') close() });
+$('#form').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !e.isComposing) e.preventDefault() });
+const userErr = m => { const e = new Error(m); toast(m); e.shown = true; return e };
+
+// 誕生日は「年・月・日」の3つの選択（iPhone では下からホイールが出て「完了」で閉じられる。カレンダーの小窓は閉じにくいため）
+function bdaySel(v) {
+  const [y, m, d] = (v || '').split('-').map(Number), ty = new Date().getFullYear();
+  const opt = (val, label, sel) => `<option value="${val}" ${sel ? 'selected' : ''}>${label}</option>`;
+  const ys = [opt('', '年', !y)]; for (let i = ty; i >= 1920; i--) ys.push(opt(i, i + '年', i === y));
+  const ms = [opt('', '月', !m)]; for (let i = 1; i <= 12; i++) ms.push(opt(i, i + '月', i === m));
+  const ds = [opt('', '日', !d)]; for (let i = 1; i <= 31; i++) ds.push(opt(i, i + '日', i === d));
+  return `<div class="bday"><select id="f7" name="by" aria-label="誕生日の年">${ys.join('')}</select><select name="bm" aria-label="誕生日の月">${ms.join('')}</select><select name="bd" aria-label="誕生日の日">${ds.join('')}</select></div>`;
+}
+// 3つとも選ばれていれば「YYYY-MM-DD」、1つも選ばれていなければ未登録。途中まで・ない日付は知らせる
+function bdayOf(fd) {
+  const y = +fd.get('by'), m = +fd.get('bm'), d = +fd.get('bd');
+  if (!y && !m && !d) return null;
+  if (!y || !m || !d) throw userErr('誕生日は「年・月・日」をすべて選んでください（わからなければすべて空に）');
+  const dt = new Date(y, m - 1, d);
+  if (dt.getMonth() !== m - 1) throw userErr(m + '月' + d + '日はありません');
+  if (dt > new Date()) throw userErr('誕生日が今日より先になっています');
+  return y + '-' + pad(m) + '-' + pad(d);
+}
+function custForm(c) {
+  c = c || {};
+  open(`<h3>${c.id ? 'カルテを編集' : '新しいお客様'}</h3>
+  <label for="f8">顔写真（1枚）</label><div class="facein"><span id="fprev">${avatar(c, 'av big2')}</span>
+  <div style="flex:1"><input id="f8" name="face" type="file" accept="image/*">${c.face_path ? '<label class="chk"><input type="checkbox" name="noface" value="1"> 写真を外す</label>' : ''}</div></div>
+  <label for="f1">お名前 *</label><input id="f1" name="name" required value="${esc(c.name)}">
+  <label for="f2">ふりがな</label><input id="f2" name="kana" value="${esc(c.kana)}">
+  <label for="f3">電話番号</label><input id="f3" name="tel" type="tel" value="${esc(c.tel)}">
+  <label for="f7">誕生日</label>${bdaySel(c.birthday)}
+  <label for="f4">髪質</label><input id="f4" name="hair" placeholder="例：細め・クセあり" value="${esc(c.hair)}">
+  <label for="f5">アレルギー・注意点</label><input id="f5" name="allergy" value="${esc(c.allergy)}">
+  <label for="f6">メモ</label><textarea id="f6" name="memo" rows="5" class="tall">${esc(c.memo)}</textarea>`, async fd => {
+    const o = { name: fd.get('name').trim(), kana: fd.get('kana').trim(), tel: fd.get('tel').trim(), birthday: bdayOf(fd), hair: fd.get('hair'), allergy: fd.get('allergy'), memo: fd.get('memo') };
+    const id = c.id || uuid(), file = fd.get('face'), old = c.face_path;
+    if (file && file.size) { const b = await shrink(file, 300, true); if (b) o.face_path = await upload(b, `${S.salon.id}/faces/${id}-${Date.now()}.jpg`) }
+    else if (fd.get('noface')) o.face_path = null;
+    if (c.id) { const row = await q(sb.from('customers').update(o).eq('id', c.id).select().single()); Object.assign(c, row) }
+    else { const row = await q(sb.from('customers').insert({ id, salon_id: S.salon.id, created_by: S.me.id, ...o }).select().single()); S.customers.push(row); detail = row.id; tab = 'cust' }
+    if (old && 'face_path' in o && o.face_path !== old) sb.storage.from(BUCKET).remove([old]);
+    toast('保存しました');
+  });
+  if (c.id && can('delete_customers')) addDelete('このお客様を削除する', delCust);
+  $('#f8').addEventListener('change', e => { const f = e.target.files[0]; if (f) $('#fprev').innerHTML = `<span class="av big2"><img src="${URL.createObjectURL(f)}" alt=""></span>` });
+}
+
+// メニューは名前ではなく「登録したメニューそのもの（id）」で選ぶ（例：カット4500円とカット4000円を分けるため）
+// 同じ名前のメニューがあるときだけ、選択肢に金額も出す。消したメニューなどは 'n:名前' で表す
+const dupName = n => S.menus.filter(m => m.active && m.name === n).length > 1;
+const menuLabel = m => esc(m.name) + (dupName(m.name) ? `（${yen(m.price)}）` : '');
+const menuOf = v => S.menus.find(m => m.id === v) || (String(v || '').startsWith('n:') ? (S.menus.find(m => m.active && m.name === v.slice(2)) || { id: v, name: v.slice(2), price: 0, duration_min: 60 }) : { id: v, name: '', price: 0, duration_min: 60 });
+const menuOpts = sel => { const act = S.menus.filter(m => m.active); let h = act.map(m => `<option value="${m.id}" ${m.id === sel ? 'selected' : ''}>${menuLabel(m)}</option>`).join(''); if (sel && !act.some(m => m.id === sel)) h += `<option value="${esc(sel)}" selected>${esc(menuOf(sel).name)}</option>`; return h };
+// 予約に入っているメニューを、選択肢の値（id）にする（前の予約は名前しかないので名前から探す）
+const bookingMenuVals = b => (b.menu_names || []).map((n, i) => { const id = (b.menu_ids || [])[i]; if (id && S.menus.some(m => m.id === id)) return id; const m = S.menus.find(x => x.active && x.name === n); return m ? m.id : 'n:' + n });
+function bookForm(cid, b) {
+  b = b || {};
+  if (!S.customers.length) return toast('先にお客様を登録してください');
+  open(`<h3>${b.id ? '予約を変更' : '予約を追加'}</h3>
+  <label for="b1q">お客様 *</label><input type="hidden" id="b1" name="cid" value="${esc(b.customer_id || cid || '')}"><div id="b1pick"></div>
+  <div class="two"><div><label for="b2">日付</label><input id="b2" name="date" type="date" value="${b.booked_on || day}" required></div><div><label for="b3">時間</label><input id="b3" name="time" type="time" value="${hm(b.start_time) || '10:00'}" step="300" required></div></div>
+  <label>メニュー</label><div id="bmrows">${(bookingMenuVals(b).length ? bookingMenuVals(b) : [undefined]).map(bmrow).join('')}</div>
+  <button class="btn sm" type="button" id="addBm" style="margin-top:8px">＋ メニューを追加</button><p class="hint" id="bmsum"></p>
+  ${S.products.length ? `<label>店販（買う予定の商品）</label><div id="bprows">${(b.items || []).map(x => prow(x.product_id, x.qty)).join('')}</div>
+  <button class="btn sm" type="button" id="addBp" style="margin-top:8px">＋ 店販を追加</button><p class="hint" id="bpsum"></p>` : ''}
+  <div class="two"><div><label for="stylist">担当スタイリスト</label>${stylistSel('stylist', b.stylist_id || (S.me.is_stylist ? S.me.id : ''))}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${b.nominated ? 'checked' : ''}> 指名あり</label></div></div>`, async fd => {
+    if (!fd.get('cid')) { $('#b1q')?.focus(); throw userErr('お客様を選んでください') }
+    const ms = fd.getAll('menu').filter(Boolean).map(menuOf);
+    const its = {}; document.querySelectorAll('#bprows .prw').forEach(rw => { const id = rw.querySelector('select').value, n = +rw.querySelector('input').value || 0; if (id && n > 0) its[id] = (its[id] || 0) + n });
+    const items = Object.entries(its).map(([pid, n]) => { const p = S.products.find(x => x.id === pid); return { product_id: pid, name: p.name, price: +p.price, qty: n } });
+    const o = { items, customer_id: fd.get('cid'), booked_on: fd.get('date'), start_time: fd.get('time'), menu_names: ms.map(m => m.name), menu_ids: ms.map(m => S.menus.some(x => x.id === m.id) ? m.id : ''), price: ms.reduce((t, m) => t + (+m.price || 0), 0), duration_min: ms.reduce((t, m) => t + (+m.duration_min || 0), 0) || 60, stylist_id: fd.get('stylist') || null, nominated: !!fd.get('nominated') };
+    if (S.bookings.some(x => x.id !== b.id && x.booked_on === o.booked_on && hm(x.start_time) === o.start_time && (!o.stylist_id || x.stylist_id === o.stylist_id))) toast('同じ時間に予約があります（保存はしました）');
+    if (b.id) { const row = await q(sb.from('bookings').update(o).eq('id', b.id).select().single()); Object.assign(b, row) }
+    else { const row = await q(sb.from('bookings').insert({ salon_id: S.salon.id, created_by: S.me.id, ...o }).select().single()); S.bookings.push(row) }
+    day = o.booked_on; calM = day.slice(0, 7); tab = 'book'; detail = null; toast(b.id ? '予約を変更しました' : '予約を入れました');
+  });
+  custPicker('b1', b.id);
+  // メニューを複数入れる：合計の金額と時間を出す
+  const box = $('#bmrows');
+  const fix = () => { const xs = box.querySelectorAll('.mx'); xs.forEach(x => x.hidden = xs.length < 2);
+    box.querySelectorAll('.msel').forEach(w => { w.querySelector('.mp').textContent = yen(menuOf(w.querySelector('select').value).price) });
+    const ms = [...box.querySelectorAll('select')].map(x => menuOf(x.value)); const min = ms.reduce((t, m) => t + (+m.duration_min || 0), 0);
+    $('#bmsum').textContent = ms.length > 1 ? `合計 ${yen(ms.reduce((t, m) => t + (+m.price || 0), 0))}・${Math.floor(min / 60) ? Math.floor(min / 60) + '時間' : ''}${min % 60 ? min % 60 + '分' : ''}` : '' };
+  box.addEventListener('change', fix);
+  box.addEventListener('click', e => { if (e.target.classList.contains('mx')) { e.target.parentElement.remove(); fix() } });
+  $('#addBm').addEventListener('click', () => { box.insertAdjacentHTML('beforeend', bmrow()); fix(); const ss = box.querySelectorAll('select'); ss[ss.length - 1].focus() });
+  fix();
+  // 店販
+  const pbox = $('#bprows');
+  if (pbox) {
+    const psum = () => { let t = 0; pbox.querySelectorAll('.prw').forEach(rw => { const pr = S.products.find(p => p.id === rw.querySelector('select').value); if (pr) t += pr.price * (+rw.querySelector('input').value || 0) }); $('#bpsum').textContent = t ? '店販 ' + yen(t) : '' };
+    pbox.addEventListener('input', psum); pbox.addEventListener('change', psum);
+    pbox.addEventListener('click', e => { if (e.target.classList.contains('px')) { e.target.parentElement.remove(); psum() } });
+    $('#addBp').addEventListener('click', () => { pbox.insertAdjacentHTML('beforeend', prow('', 1)); psum() });
+    psum();
+  }
+}
+const bmrow = n => `<div class="mrow"><div class="msel"><select name="menu" aria-label="メニュー">${menuOpts(n)}</select><span class="mp num"></span></div><button type="button" class="mx" aria-label="このメニューを外す">×</button></div>`;
+
+/* お客様を探して選ぶ（名前・ふりがな・電話の一部で絞り込み。空のときは最近来店した順） */
+const hira = t => String(t || '').replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+const digits = t => String(t || '').replace(/\D/g, '');
+// これからの予約（今日以降・来店済みでないもの）。編集中の予約は除く
+const nextBooking = (cid, except) => S.bookings.filter(x => x.customer_id === cid && x.id !== except && x.status !== 'done' && x.booked_on >= T).sort((a, b) => (a.booked_on + a.start_time).localeCompare(b.booked_on + b.start_time))[0];
+const CAL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+const bookBadge = nb => nb ? `<span class="bkb">${CAL_ICON}予約あり ${jdate(nb.booked_on)} <span class="num">${hm(nb.start_time)}</span></span>` : '';
+// 来店周期から「そろそろ来店しそうなお客様」を予想する
+//  周期＝そのお客様の来店の間隔の真ん中の値（1回しか来ていない人はお店全体の真ん中の値。7日未満の間隔は数えない）
+//  目安の日＝前回の来店日＋周期。目安の日の前後14日以内で、予約がない人を、目安の日に近い順に6人（今日より先の日付の来店は数えない）
+const dayNo = d => Math.round(new Date(d + 'T00:00') / 864e5);
+const median = a => { const x = a.slice().sort((p, q) => p - q); return x.length ? x[Math.floor(x.length / 2)] : null };
+function duePredictions(except) {
+  const tN = dayNo(T), all = [];
+  const per = S.customers.map(c => {
+    const ds = [...new Set(S.visits.filter(v => v.customer_id === c.id && v.visited_on <= T).map(v => v.visited_on))].sort();
+    const gaps = ds.slice(1).map((d, i) => dayNo(d) - dayNo(ds[i])).filter(g => g >= 7); all.push(...gaps);
+    return { c, ds, gaps };
+  });
+  const shop = median(all) || 45;
+  return per.filter(p => p.ds.length && !nextBooking(p.c.id, except)).map(p => {
+    const cyc = p.gaps.length ? median(p.gaps) : shop;
+    return { c: p.c, cyc, guess: !p.gaps.length, diff: dayNo(p.ds[p.ds.length - 1]) + cyc - tN };
+  }).filter(x => Math.abs(x.diff) <= 14).sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff) || a.diff - b.diff).slice(0, 6);
+}
+function custPicker(id, except) {
+  const box = $('#' + id + 'pick'), hidden = $('#' + id);
+  const row = (c, pr) => { const l = lastVisit(c.id); return `<button type="button" class="pk-row" data-pick="${c.id}">${avatar(c)}<span><span class="nm">${esc(c.name)}</span><br><span class="kn">${esc(c.kana)}${c.tel ? '・' + esc(c.tel) : ''}</span>${bookBadge(nextBooking(c.id, except))}</span><span class="last">${pr ? `<b class="${pr.diff <= 0 ? 'soon' : ''}">${pr.diff > 0 ? 'あと' + pr.diff + '日' : pr.diff === 0 ? '今日が目安' : pr.diff * -1 + '日すぎ'}</b><br>${pr.guess ? 'お店の平均' : '約'}${pr.cyc}日ごと` : l ? '前回 ' + jdate(l.visited_on) : '来店なし'}</span></button>` };
+  const results = q => {
+    q = q.trim();
+    if (!q) {
+      const pred = duePredictions(except);
+      // 当てはまる人がいなければ何も出さない
+      return pred.length ? '<p class="hint pk-h">来店周期から、そろそろ来店しそうなお客様</p>' + pred.map(x => row(x.c, x)).join('') : '';
+    }
+    const hq = hira(q).replace(/\s/g, ''), dq = digits(q);
+    const hit = S.customers.filter(c => hira(c.name + c.kana).replace(/\s/g, '').includes(hq) || (dq.length >= 3 && digits(c.tel).includes(dq)))
+      .sort((a, b) => a.kana.localeCompare(b.kana, 'ja'));
+    if (!hit.length) return '<p class="hint">見つかりませんでした</p>';
+    return hit.slice(0, 8).map(c => row(c)).join('') + (hit.length > 8 ? `<p class="hint">ほかに${hit.length - 8}人います。もう少し入力して絞り込んでください</p>` : '');
+  };
+  const draw = () => {
+    const c = hidden.value && S.customers.find(x => x.id === hidden.value);
+    if (c) { box.innerHTML = `<div class="pk-sel">${avatar(c)}<span><span class="nm">${esc(c.name)} 様</span><br><span class="kn">${esc(c.kana)}</span>${bookBadge(nextBooking(c.id, except))}</span><button type="button" class="btn sm" data-repick="1">変更</button></div>`; return }
+    box.innerHTML = `<input id="${id}q" type="search" autocomplete="off" placeholder="名前・ふりがな・電話で検索"><div class="pk-list" id="${id}res">${results('')}</div>`;
+    const qi = $('#' + id + 'q'); qi.oninput = () => { $('#' + id + 'res').innerHTML = results(qi.value) };
+  };
+  box.onclick = e => { const p = e.target.closest('[data-pick]'); if (p) { hidden.value = p.dataset.pick; draw() } else if (e.target.closest('[data-repick]')) { hidden.value = ''; draw(); $('#' + id + 'q').focus() } };
+  draw();
+}
+
+const prow = (pid, q0) => `<div class="prw"><select name="pid" aria-label="店販商品">${pid ? '' : '<option value="" selected disabled>商品を選ぶ</option>'}${S.products.filter(p => p.active || p.id === pid).map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${esc(p.name)}（${yen(p.price)}・在庫${p.stock}）</option>`).join('')}</select><input name="pq" type="number" inputmode="numeric" min="1" value="${q0 || 1}" aria-label="数"><button type="button" class="mx px" aria-label="この商品を外す">×</button></div>`;
+const mrow = (opts, sel) => `<div class="mrow"><select name="m" aria-label="メニュー">${opts.map((m, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${esc(m.name)}（${yen(m.price)}）</option>`).join('')}</select><button type="button" class="mx" aria-label="このメニューを外す">×</button></div>`;
+// その日のまだ来店していない予約（いちばん早い時間のもの）
+const openBooking = (cid, date) => S.bookings.filter(x => x.customer_id === cid && x.booked_on === date && x.status !== 'done').sort((a, c) => a.start_time.localeCompare(c.start_time))[0];
+function visitForm(cid, b, ev) {
+  // カルテから記録するときも、今日の予約があればつなげる（メニュー・金額・担当を入れておき、保存で予約を来店済みにする）
+  // 「今日」は開いたときの日付で決める（アプリを開いたまま日付が変わっても、その日の予約を見つけられるように）
+  const td = ymd(new Date());
+  const auto = !ev && !b; if (auto) b = openBooking(cid, td);
+  // 選択肢はメニューそのもの。同じ名前でも金額がちがえば別の行
+  const opts = S.menus.filter(m => m.active).map(m => ({ id: m.id, name: m.name, price: +m.price, dur: +m.duration_min || 60 }));
+  const pick = (name, price, id) => { let i = id ? opts.findIndex(o => o.id === id) : -1;
+    if (i < 0 && price != null) i = opts.findIndex(o => o.name === name && o.price === price);
+    if (i < 0) i = opts.findIndex(o => o.name === name);
+    if (i < 0) { opts.push({ id: '', name, price: +price || 0, dur: 60 }); i = opts.length - 1 } return i };
+  const startIdx = ev ? (ev.visit_menus || []).slice().sort((a, c) => a.sort - c.sort).map(l => pick(l.menu_name, +l.list_price))
+    : b ? (b.menu_names || []).map((n, i) => pick(n, null, (b.menu_ids || [])[i])) : [];
+  if (!opts.length) opts.push({ id: '', name: 'カット', price: 0, dur: 60 });
+  if (!startIdx.length) startIdx.push(0);
+  let keep = ev ? photos(ev).slice() : [];
+  const myStylist = ev ? ev.stylist_id : b ? b.stylist_id : (S.me.is_stylist ? S.me.id : '');
+  open(`<h3>${ev ? '来店履歴を編集' : '施術を記録'}</h3>${!ev && b ? `<p class="hint bklink">${CAL_ICON}${jdate(b.booked_on)} ${hm(b.start_time)} の予約とつなげて記録します。保存すると、予約は「来店済み」になります。</p>` : ''}
+  <div class="two"><div><label for="v1">日付</label><input id="v1" name="date" type="date" value="${ev ? ev.visited_on : b ? b.booked_on : td}"></div>
+  <div><label for="v1t">時間</label><input id="v1t" name="time" type="time" step="300" value="${ev ? hm(ev.visited_at) : b ? hm(b.start_time) : nowT()}"></div></div>
+  <div class="two"><div><label for="vst">担当スタイリスト</label>${stylistSel('vst', myStylist)}</div><div><label>&nbsp;</label><label class="chk"><input type="checkbox" name="nominated" value="1" ${(ev ? ev.nominated : b?.nominated) ? 'checked' : ''}> 指名あり</label></div></div>
+  <label>メニュー</label><div id="mrows">${startIdx.map(i => mrow(opts, i)).join('')}</div>
+  <button class="btn sm" type="button" id="addMr" style="margin-top:8px">＋ メニューを追加</button>
+  <label for="v3">金額（円）</label><input id="v3" name="price" type="number" inputmode="numeric" min="0" step="10" value="${ev ? ev.price : b ? b.price : opts[0].price}">
+  <p class="hint" id="vsum"></p>
+  ${S.products.length ? `<label>店販</label><div id="prows">${(ev ? ev.visit_items || [] : b?.items || []).filter(x => !x.product_id || S.products.some(p => p.id === x.product_id)).map(x => prow(x.product_id, x.qty)).join('')}</div>
+  <button class="btn sm" type="button" id="addPr" style="margin-top:8px">＋ 店販を追加</button><p class="hint" id="psum"></p>` : ''}
+  <label for="v4">使った薬剤</label><textarea id="v4" name="chem" rows="5" class="tall" placeholder="例：&#10;根元 6Lv ナチュラル＋6% 1:1&#10;毛先 8Lv アッシュ＋3% 1:1.5&#10;放置 20分">${esc(ev?.chem)}</textarea>
+  <label for="v5">メモ</label><textarea id="v5" name="memo" rows="5" class="tall" placeholder="次回の希望など">${esc(ev?.memo)}</textarea>
+  <label for="v6">写真（最大${MAXP}枚・まとめて選べます）</label>${ev ? '<div class="pv ed" id="pk"></div>' : ''}<input id="v6" name="photo" type="file" accept="image/*" multiple>
+  <p class="hint">ビフォー・アフター・前後左右など。1枚ずつ小さく圧縮して保存します</p><div class="pv" id="pv"></div><p class="hint warnt" id="pvw"></p>`, async fd => {
+    const sel = fd.getAll('m').filter(i => i !== '').map(i => opts[+i]).filter(Boolean);
+    if (!sel.length) throw userErr('メニューを1つ以上選んでください');
+    const items = {}; document.querySelectorAll('#prows .prw').forEach(rw => { const id = rw.querySelector('select').value, n = +rw.querySelector('input').value || 0; if (id && n > 0) items[id] = (items[id] || 0) + n });
+    const o = { visited_on: fd.get('date'), visited_at: fd.get('time') || null, price: +fd.get('price') || 0, chem: fd.get('chem'), memo: fd.get('memo'), stylist_id: fd.get('vst') || null, nominated: !!fd.get('nominated') };
+    const vid = ev ? ev.id : uuid();
+    let row;
+    if (ev) row = await q(sb.from('visits').update(o).eq('id', vid).select().single());
+    else row = await q(sb.from('visits').insert({ id: vid, salon_id: S.salon.id, customer_id: cid, created_by: S.me.id, ...o }).select().single());
+    // メニュー（入れ替え）
+    if (ev) await q(sb.from('visit_menus').delete().eq('visit_id', vid));
+    row.visit_menus = await q(sb.from('visit_menus').insert(sel.map((m, i) => ({ salon_id: S.salon.id, visit_id: vid, menu_name: m.name, list_price: m.price, sort: i }))).select());
+    // 店販（入れ替え：在庫はデータベースが自動で戻して・減らす）
+    if (ev && (ev.visit_items || []).length) await q(sb.from('visit_items').delete().eq('visit_id', vid));
+    const irows = Object.entries(items).map(([pid, n]) => { const p = S.products.find(x => x.id === pid); return { salon_id: S.salon.id, visit_id: vid, product_id: pid, name: p.name, price: p.price, qty: n } });
+    row.visit_items = irows.length ? await q(sb.from('visit_items').insert(irows).select()) : [];
+    // 写真
+    const removed = ev ? photos(ev).filter(p => !keep.includes(p)) : [];
+    if (removed.length) { await q(sb.from('visit_photos').delete().in('id', removed.map(p => p.id))); sb.storage.from(BUCKET).remove(removed.map(p => p.path)) }
+    const files = fd.getAll('photo').filter(f => f && f.size).slice(0, Math.max(0, MAXP - keep.length));
+    const added = [];
+    for (const [i, f] of files.entries()) { const bl = await shrink(f, 1280); if (!bl) continue; const path = await upload(bl, `${S.salon.id}/visits/${vid}/${uuid()}.jpg`); added.push({ salon_id: S.salon.id, visit_id: vid, path, sort: keep.length + i }) }
+    row.visit_photos = keep.concat(added.length ? await q(sb.from('visit_photos').insert(added).select()) : []);
+    // 在庫の最新値
+    const pids = [...new Set([...Object.keys(items), ...(ev?.visit_items || []).map(x => x.product_id).filter(Boolean)])];
+    if (pids.length) { const ps = await q(sb.from('products').select('id, stock').in('id', pids)); ps.forEach(p => { const x = S.products.find(y => y.id === p.id); if (x) x.stock = p.stock }) }
+    if (ev) Object.assign(ev, row); else S.visits.push(row);
+    // 日付を変えて保存したときは、その日の予約につなげ直す
+    const link = ev ? null : !auto ? b : (b && b.booked_on === o.visited_on ? b : openBooking(cid, o.visited_on));
+    if (link) { const br = await q(sb.from('bookings').update({ status: 'done', visit_id: vid }).eq('id', link.id).select().single()); Object.assign(link, br) }
+    // 予約なしで来店した人も、記録した日時・メニュー・担当で予約の画面に残す（あとから振り返れるように）
+    const walk = { booked_on: o.visited_on, start_time: o.visited_at || nowT(), menu_names: sel.map(m => m.name), menu_ids: sel.map(m => m.id || ''), price: o.price,
+      duration_min: sel.reduce((t, m) => t + (m.dur || 60), 0) || 60, stylist_id: o.stylist_id, nominated: o.nominated,
+      items: (row.visit_items || []).map(x => ({ product_id: x.product_id, name: x.name, price: x.price, qty: x.qty })) };
+    const mine = ev ? S.bookings.find(x => x.visit_id === vid && x.walk_in) : null;
+    if (mine) Object.assign(mine, await q(sb.from('bookings').update(walk).eq('id', mine.id).select().single()));
+    else if (!ev && !link) S.bookings.push(await q(sb.from('bookings').insert({ salon_id: S.salon.id, customer_id: cid, created_by: S.me.id, status: 'done', visit_id: vid, walk_in: true, ...walk }).select().single()));
+    toast(ev ? '来店履歴を更新しました' : 'カルテに記録しました' + (added.length ? '（写真' + added.length + '枚）' : ''));
+  });
+  let touched = !!ev;
+  const sum = () => [...document.querySelectorAll('#mrows select')].reduce((s, i) => s + (i.value === '' ? 0 : opts[+i.value]?.price || 0), 0);
+  const fixX = () => { const xs = document.querySelectorAll('#mrows .mx'); xs.forEach(x => x.hidden = xs.length < 2) }; fixX();
+  const upd = () => { const t = sum(); if (!touched) $('#v3').value = t; const p = +$('#v3').value || 0; $('#vsum').textContent = 'メニュー合計 ' + yen(t) + (p !== t ? '（' + (p < t ? '値引き ' + yen(t - p) : '加算 ' + yen(p - t)) + '）' : '') };
+  if ($('#prows')) {
+    const ps = () => { let t = 0; document.querySelectorAll('#prows .prw').forEach(rw => { const pr = S.products.find(p => p.id === rw.querySelector('select').value); if (pr) t += pr.price * (+rw.querySelector('input').value || 0) }); $('#psum').textContent = t ? '店販合計 ' + yen(t) + '（施術の金額とは別に集計）' : '' };
+    $('#prows').addEventListener('input', ps); $('#prows').addEventListener('change', ps);
+    $('#prows').addEventListener('click', e => { if (e.target.classList.contains('px')) { e.target.parentElement.remove(); ps() } });
+    $('#addPr').addEventListener('click', () => $('#prows').insertAdjacentHTML('beforeend', prow('', 1))); ps();
+  }
+  $('#mrows').addEventListener('change', () => { touched = false; upd() });
+  $('#mrows').addEventListener('click', e => { if (e.target.classList.contains('mx')) { e.target.parentElement.remove(); fixX(); touched = false; upd() } });
+  $('#addMr').addEventListener('click', () => { $('#mrows').insertAdjacentHTML('beforeend', mrow(opts, -1)); const ss = document.querySelectorAll('#mrows select'); ss[ss.length - 1].selectedIndex = -1; fixX(); upd() });
+  $('#v3').addEventListener('input', () => { touched = true; upd() });
+  upd();
+  const room = () => Math.max(0, MAXP - keep.length);
+  // 選びすぎたときの説明（1回の来店につき MAXP 枚まで）
+  const photoMsg = (n, had) => {
+    const r = MAXP - had;
+    if (n <= r) return '';
+    if (r <= 0) return `この来店にはもう${had}枚あるので、追加できません。先に写真を外してください`;
+    return (had ? `すでに${had}枚あるので、追加できるのはあと${r}枚です。` : `1回の来店で保存できるのは${MAXP}枚までです。`) + `選んだ${n}枚のうち、最初の${r}枚だけ保存します（${n - r}枚は保存されません）`;
+  };
+  const drawK = () => { if (!ev) return; $('#pk').innerHTML = keep.map((p, i) => `<div class="pk"><img src="${img(p.path)}" alt=""><button type="button" data-k="${i}" aria-label="この写真を外す">×</button></div>`).join(''); $('#v6').hidden = room() <= 0; $('#pvw').textContent = room() <= 0 ? '写真は上限の' + MAXP + '枚です' : '' };
+  if (ev) addDelete('この来店履歴を削除する', () => delVisit(ev.id));
+  if (ev) { drawK(); $('#pk').addEventListener('click', e => { const k = e.target.dataset.k; if (k !== undefined) { keep.splice(+k, 1); drawK(); $('#v6').dispatchEvent(new Event('change')) } }) }
+  $('#v6').addEventListener('change', e => { const fs = [...e.target.files]; $('#pv').innerHTML = fs.slice(0, room()).map(f => `<img src="${URL.createObjectURL(f)}" alt="">`).join(''); $('#pvw').textContent = photoMsg(fs.length, keep.length) });
+}
+
+function menuForm(m) {
+  m = m || {};
+  open(`<h3>${m.id ? 'メニューを編集' : 'メニューを追加'}</h3>
+  <label for="m1">メニュー名 *</label><input id="m1" name="name" required value="${esc(m.name)}">
+  <div class="two"><div><label for="m2">金額（円・税込）</label><input id="m2" name="price" type="number" inputmode="numeric" min="0" step="10" required value="${m.price ?? ''}"></div>
+  <div><label for="m3">所要時間（分）</label><input id="m3" name="dur" type="number" inputmode="numeric" min="5" step="5" required value="${m.duration_min ?? 60}"></div></div>
+  ${m.id ? '<button class="btn danger wide" type="button" id="delM" style="margin-top:16px">このメニューを削除</button>' : ''}`, async fd => {
+    const o = { name: fd.get('name').trim(), price: +fd.get('price') || 0, duration_min: +fd.get('dur') || 60 };
+    if (S.menus.some(x => x.id !== m.id && x.active !== false && x.name === o.name && +x.price === o.price && +x.duration_min === o.duration_min)) throw userErr('同じ名前・金額・時間のメニューがすでにあります');
+    if (m.id) Object.assign(m, await q(sb.from('menus').update(o).eq('id', m.id).select().single()));
+    else S.menus.push(await q(sb.from('menus').insert({ salon_id: S.salon.id, sort: S.menus.length, ...o }).select().single()));
+    toast('保存しました');
+  });
+  if (m.id) $('#delM').onclick = async () => { try { await q(sb.from('menus').delete().eq('id', m.id)); S.menus = S.menus.filter(x => x !== m); close(); render(); toast('メニューを削除しました（過去のカルテはそのまま残ります）') } catch (e) {} };
+}
+function prodForm(p) {
+  p = p || {};
+  open(`<h3>${p.id ? '店販商品を編集' : '店販商品を追加'}</h3>
+  <label for="p1">商品名 *</label><input id="p1" name="name" required value="${esc(p.name)}">
+  <div class="two"><div><label for="p2">金額（円・税込）</label><input id="p2" name="price" type="number" inputmode="numeric" min="0" step="10" required value="${p.price ?? ''}"></div>
+  <div><label for="p3">在庫数</label><input id="p3" name="stock" type="number" inputmode="numeric" value="${p.stock ?? 0}"></div></div>
+  ${p.id ? '<button class="btn danger wide" type="button" id="delP" style="margin-top:16px">この商品を削除</button>' : ''}`, async fd => {
+    const o = { name: fd.get('name').trim(), price: +fd.get('price') || 0, stock: +fd.get('stock') || 0 };
+    if (p.id) Object.assign(p, await q(sb.from('products').update(o).eq('id', p.id).select().single()));
+    else S.products.push(await q(sb.from('products').insert({ salon_id: S.salon.id, sort: S.products.length, ...o }).select().single()));
+    toast('保存しました');
+  });
+  if (p.id) $('#delP').onclick = async () => { try { await q(sb.from('products').delete().eq('id', p.id)); S.products = S.products.filter(x => x !== p); close(); render(); toast('商品を削除しました（過去のカルテはそのまま残ります）') } catch (e) {} };
+}
+
+const PERMS = [['can_view_sales', '売上を見る'], ['can_edit_master', 'メニュー・店販を編集'], ['can_delete_customers', '顧客を削除'], ['can_manage_staff', 'スタッフを管理']];
+function staffForm(s) {
+  const isNew = !s; s = s || { is_stylist: true };
+  const permBoxes = s.role === 'owner' ? '<p class="hint">オーナーはすべての操作ができます</p>' : PERMS.map(([k, l]) => `<label class="chk"><input type="checkbox" name="${k}" value="1" ${s[k] ? 'checked' : ''} ${S.me.role !== 'owner' && !S.me[k] ? 'disabled' : ''}> ${l}</label>`).join('');
+  open(`<h3>${isNew ? 'スタッフを追加' : 'スタッフの設定'}</h3>
+  <label for="s1">名前 *</label><input id="s1" name="display_name" required value="${esc(s.display_name)}">
+  <label for="s2">スタッフID（ログイン用）*</label><input id="s2" name="login_id" ${isNew ? '' : 'readonly'} required autocapitalize="off" autocomplete="off" placeholder="例：sato" value="${esc(s.login_id)}">
+  <p class="hint">半角英小文字・数字・._- で2〜30文字</p>
+  ${isNew ? '<label for="s3">最初のパスワード（8文字以上）*</label><input id="s3" name="password" type="text" minlength="8" required autocomplete="new-password">' : ''}
+  <label class="chk" style="margin-top:14px"><input type="checkbox" name="is_stylist" value="1" ${s.is_stylist ? 'checked' : ''}> 施術する（担当スタイリストに出す）</label>
+  <label>できること（基本：カルテ・予約・施術記録）</label>${permBoxes}
+  ${!isNew && s.id !== S.me.id ? `<div class="row" style="margin-top:16px"><button class="btn sm" type="button" id="spw">パスワードを再設定</button><button class="btn sm ${s.active ? 'danger' : ''}" type="button" id="sact">${s.active ? '利用を止める' : '利用を再開'}</button></div>` : ''}`, async fd => {
+    const perms = {}; PERMS.forEach(([k]) => perms[k] = !!fd.get(k));
+    if (isNew) {
+      const r = await staffAdmin({ action: 'create_staff', login_id: fd.get('login_id').trim().toLowerCase(), display_name: fd.get('display_name').trim(), password: fd.get('password'), is_stylist: !!fd.get('is_stylist'), ...perms }).catch(e => { throw userErr(e.message) });
+      await loadAll(); toast(r.staff.display_name + 'さんを追加しました。お店コード「' + S.salon.code + '」・ID・パスワードを伝えてください');
+    } else {
+      const o = { display_name: fd.get('display_name').trim(), is_stylist: !!fd.get('is_stylist') };
+      if (s.role !== 'owner') PERMS.forEach(([k]) => { if (S.me.role === 'owner' || S.me[k]) o[k] = perms[k] });
+      Object.assign(s, await q(sb.from('staff').update(o).eq('id', s.id).select().single()));
+      if (s.id === S.me.id) Object.assign(S.me, s);
+      toast('保存しました');
+    }
+  });
+  if ($('#spw')) $('#spw').onclick = () => { close(); open(`<h3>${esc(s.display_name)}さんのパスワードを再設定</h3><label for="np">新しいパスワード（8文字以上）</label><input id="np" name="pw" type="text" minlength="8" required autocomplete="new-password">`, async fd => { await staffAdmin({ action: 'set_password', staff_id: s.id, password: fd.get('pw') }).catch(e => { throw userErr(e.message) }); toast('パスワードを変更しました。本人に伝えてください') }, '変更する') };
+  if ($('#sact')) $('#sact').onclick = async () => { try { await staffAdmin({ action: 'set_active', staff_id: s.id, active: !s.active }); s.active = !s.active; close(); render(); toast(s.active ? '利用を再開しました' : '利用を止めました（ログインできなくなります）') } catch (e) { toast(e.message) } };
+}
+
+/* ===== 写真の拡大 ===== */
+let lbList = [], lbI = 0, lbDel = null;
+function lb(list, i, onDel) { lbList = list; lbI = i; lbDel = onDel; drawLb(); $('#lb').classList.add('open') }
+function drawLb() { if (!lbList.length) { $('#lb').classList.remove('open'); return } lbI = (lbI + lbList.length) % lbList.length; $('#lbImg').src = img(lbList[lbI]); $('#lbCnt').textContent = (lbI + 1) + ' / ' + lbList.length; $('#lb [data-lb=del]').hidden = !lbDel }
+$('#lb').addEventListener('click', async e => {
+  const a = e.target.closest('button')?.dataset.lb;
+  if (a === 'prev') { lbI--; drawLb() } else if (a === 'next') { lbI++; drawLb() }
+  else if (a === 'del' && lbDel) { await lbDel(lbI); $('#lb').classList.remove('open'); render() }
+  else if (a === 'close' || e.target.id === 'lb') $('#lb').classList.remove('open');
+});
+
+/* ===== 操作 ===== */
+document.querySelector('nav.tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; tab = b.dataset.tab; detail = null; render(); scrollTo(0, 0) });
+$('#view').addEventListener('change', e => { if (e.target.id === 'sf' && e.target.value) { sfrom = e.target.value; render() } else if (e.target.id === 'st' && e.target.value) { sto = e.target.value; render() } });
+$('#view').addEventListener('input', e => { if (e.target.id === 'q') { window._q = e.target.value; $('#clist').innerHTML = custList() } });
+$('#view').addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return; const d = t.dataset;
+  try {
+    if (d.row !== undefined) { window._row = d.row; document.querySelectorAll('[data-row]').forEach(b => b.setAttribute('aria-pressed', b.dataset.row === d.row)); $('#clist').innerHTML = custList() }
+    else if (d.sort) { window._sort = d.sort; $('#kana').hidden = d.sort !== 'kana'; document.querySelectorAll('[data-sort]').forEach(b => b.setAttribute('aria-pressed', b.dataset.sort === d.sort)); $('#clist').innerHTML = custList() }
+    else if (d.day) { day = d.day; calM = day.slice(0, 7); render() }
+    else if (d.cal) { const [y, m] = calM.split('-').map(Number), n = new Date(y, m - 1 + (+d.cal), 1); calM = n.getFullYear() + '-' + pad(n.getMonth() + 1); render() }
+    else if (d.smode) { smode = d.smode; render() }
+    else if (d.bview) { bview = d.bview; lsSet('bview', bview); render() }
+    else if (d.tlsel) { tlSel = tlSel === d.tlsel ? null : d.tlsel; const sx = $('.tlw')?.scrollLeft; render(); if ($('.tlw')) $('.tlw').scrollLeft = sx }
+    else if (d.yr) { syear += +d.yr; render() }
+    else if (d.pre) { sfrom = d.pre === 'fy' ? today.getFullYear() + '-01-01' : ymd(addDays(today, 1 - (+d.pre))); sto = T; render() }
+    else if (d.mon) { const [y, m] = month.split('-').map(Number), n = new Date(y, m - 1 + (+d.mon), 1); month = n.getFullYear() + '-' + pad(n.getMonth() + 1); render() }
+    else if (d.open) { tab = 'cust'; detail = d.open; render(); scrollTo(0, 0) }
+    else if (d.done) { const b = S.bookings.find(x => x.id === d.done); visitForm(b.customer_id, b) }
+    else if (d.eb) bookForm(null, S.bookings.find(x => x.id === d.eb));
+    else if (d.ev) { const v = S.visits.find(x => x.id === d.ev); visitForm(v.customer_id, null, v) }
+    else if (d.pic) { const [vid, i] = d.pic.split(':'); const v = S.visits.find(x => x.id === vid); const ps = photos(v); lb(ps.map(p => p.path), +i, async k => { const p = ps[k]; await q(sb.from('visit_photos').delete().eq('id', p.id)); sb.storage.from(BUCKET).remove([p.path]); v.visit_photos = v.visit_photos.filter(x => x.id !== p.id); toast('写真を削除しました') }) }
+    else if (d.face) { const c = cust(detail); lb([c.face_path], 0, async () => { const old = c.face_path; await q(sb.from('customers').update({ face_path: null }).eq('id', c.id)); c.face_path = null; sb.storage.from(BUCKET).remove([old]); toast('顔写真を外しました') }) }
+    else if (d.delb) { const b = S.bookings.find(x => x.id === d.delb); await q(sb.from('bookings').update({ status: 'cancelled' }).eq('id', b.id)); S.bookings = S.bookings.filter(x => x !== b); render(); toast('予約を取り消しました', async () => { await q(sb.from('bookings').update({ status: 'booked' }).eq('id', b.id)); b.status = 'booked'; S.bookings.push(b) }) }
+
+    else if (d.em) menuForm(S.menus.find(x => x.id === d.em));
+    else if (['menuSort', 'prodSort', 'staffSort'].includes(t.id)) {
+      const [list, on] = t.id === 'menuSort' ? [S.menus, menuSorting] : t.id === 'prodSort' ? [S.products, prodSorting] : [S.staff, staffSorting];
+      if (!on && list.length < 2) { toast('2つ以上あると並び替えできます'); return }
+      if (t.id === 'menuSort') menuSorting = !menuSorting; else if (t.id === 'prodSort') prodSorting = !prodSorting; else staffSorting = !staffSorting;
+      render();
+    }
+    else if (d.mmv || d.pmv || d.smv) {
+      // 順番を入れかえて、変わったものだけ保存する（メニュー：menus、店販：products、スタッフ：staff）
+      const [list, table] = d.mmv ? [S.menus, 'menus'] : d.pmv ? [S.products, 'products'] : [S.staff, 'staff'];
+      const [id, dir] = (d.mmv || d.pmv || d.smv).split(':'), i = list.findIndex(m => m.id === id), j = i + (+dir);
+      if (i < 0 || j < 0 || j >= list.length) return;
+      [list[i], list[j]] = [list[j], list[i]]; render();
+      const changed = list.map((m, k) => [m, k]).filter(([m, k]) => m.sort !== k);
+      await Promise.all(changed.map(([m, k]) => q(sb.from(table).update({ sort: k }).eq('id', m.id), '並び順を保存できませんでした').then(() => { m.sort = k })));
+    }
+    else if (d.ep) prodForm(S.products.find(x => x.id === d.ep));
+    else if (d.es) staffForm(S.staff.find(x => x.id === d.es));
+    else if (t.id === 'addM') menuForm();
+    else if (t.id === 'addP') prodForm();
+    else if (t.id === 'addS') S.trial ? regForm('スタッフを追加するには、先にお店の登録が必要です（1分で終わります）') : !paid() ? planForm('スタッフを追加するには、有料プランのお申し込みが必要です') : staffForm();
+    else if (t.id === 'planBtn') planForm();
+    else if (t.id === 'regBtn') regForm();
+    else if (t.id === 'delAcc') delAccForm();
+    else if (t.id === 'addB') bookForm();
+    else if (t.id === 'addC') custForm();
+    else if (t.id === 'back') { detail = null; render() }
+    else if (t.id === 'editC') custForm(cust(detail));
+    else if (t.id === 'bookC') bookForm(detail);
+    else if (t.id === 'addV') visitForm(detail);
+
+    else if (t.id === 'editSalon') open(`<h3>お店の名前</h3><label for="sn">お店の名前</label><input id="sn" name="name" required value="${esc(S.salon.name)}">`, async fd => { Object.assign(S.salon, await q(sb.from('salons').update({ name: fd.get('name').trim() }).eq('id', S.salon.id).select().single())); toast('保存しました') });
+    else if (t.id === 'myPw') open(`<h3>パスワードを変更</h3><label for="mp">新しいパスワード（8文字以上）</label><input id="mp" name="pw" type="password" minlength="8" required autocomplete="new-password"><label for="mp2">もう一度</label><input id="mp2" name="pw2" type="password" minlength="8" required autocomplete="new-password">`, async fd => { if (fd.get('pw') !== fd.get('pw2')) throw userErr('2つのパスワードが違います'); const { error } = await sb.auth.updateUser({ password: fd.get('pw') }); if (error) throw userErr('変更できませんでした'); toast('パスワードを変更しました') }, '変更する');
+    else if (t.id === 'reload') { await loadAll(); toast('最新の状態にしました') }
+    else if (t.id === 'logout') leave(S.trial ? 'start' : 'login');
+    else if (t.id === 'relogin') leave('login');
+  } catch (err) { /* 失敗はトーストで表示済み */ }
+});
+// アカウント削除（ストアの決まりで、アプリの中から消せる必要がある）
+// ログアウトして、はじめる画面（start）かログイン画面（login）へ。
+// お試し中は、登録しないと二度とそのお店に入れないので、先に確かめる
+async function leave(to) {
+  const go = async () => {
+    close(); Object.assign(S, { me: null }); await sb.auth.signOut();
+    showLogin(); $('#start').hidden = to !== 'start'; $('#loginForm').hidden = to !== 'login';
+    if (to === 'login') { $('#lid').value = ''; $('#lpw').value = ''; $('#lcode').focus() }
+  };
+  if (!S.trial) return go();
+  open(`<h3>${to === 'login' ? 'ログイン' : 'ログアウト'}する前に</h3>
+  <p><b>このお店はまだ登録していません。</b>このままログアウトすると、今のお店（お客様 ${S.customers.length}人・来店記録 ${S.visits.length}件）には<b>二度と入れなくなります</b>。</p>
+  <p class="hint">続けて使う場合は、先に「お店を登録する」をしてください。データはそのまま引き継がれます。</p>
+  <div class="row" style="margin-top:12px"><button class="btn pri wide" type="button" id="lvReg">先にお店を登録する</button></div>`, async () => { await go(); return false }, 'それでもログアウト');
+  $('#form [type=submit]').classList.add('dangerbtn');
+  $('#lvReg').onclick = () => { close(); regForm() };
+}
+function delAccForm() {
+  const owner = S.me.role === 'owner';
+  open(`<h3>${owner ? 'お店とアカウントを消去' : '自分のアカウントを消去'}</h3>
+  ${owner ? `<p><b>「${esc(S.salon.name)}」のすべてのデータが消えます。元に戻せません。</b></p>
+  <ul class="hint" style="padding-left:1.2em;margin:6px 0 10px"><li>お客様のカルテ・来店履歴・写真</li><li>予約・売上の記録</li><li>メニュー・店販商品</li><li>スタッフ全員のアカウント（だれもログインできなくなります）</li></ul>
+  ${paid() ? `<p class="carte trial" style="font-size:14px"><b>有料プランの自動更新は、お店を消しても止まりません。</b>${S.salon.plan_store === 'app_store' ? 'iPhone の「設定」→ 一番上の名前 →「サブスクリプション」から、先に解約してください。' : 'お申し込みのときに届いたメールから、先に解約してください。'}</p>` : ''}`
+  : `<p>あなた（${esc(S.me.display_name)}）のログインが消え、このアプリに入れなくなります。お店のデータ（お客様・来店記録など）は消えずに残ります。</p>`}
+  <label for="dc">確認のため「消去」と入力してください</label><input id="dc" name="confirm" autocomplete="off" required placeholder="消去">`, async fd => {
+    if (fd.get('confirm').trim() !== '消去') throw userErr('「消去」と入力してください');
+    await staffAdmin({ action: 'delete_account', confirm: '消去' }).catch(e => { throw userErr(e.message) });
+    if (owner) lsSet('salon-code', '');
+    close(); Object.assign(S, { me: null }); await sb.auth.signOut();
+    showLogin(); $('#start').hidden = !owner; $('#loginForm').hidden = owner;
+    $(owner ? '#smsg' : '#lmsg').textContent = owner ? 'お店とアカウントを消去しました。ご利用ありがとうございました' : 'アカウントを消去しました';
+    return false;
+  }, '消去する');
+  $('#form [type=submit]').classList.add('dangerbtn');
+}
+/* ===== 有料プラン（RevenueCat） ===== */
+// iPhone アプリ：Apple の課金（RevenueCat の部品 window.RCPurchases。アプリの中にだけ入っている。build.mjs が入れる）
+// Web：RevenueCat の Web Purchase Link（お店のIDつきの申し込みページ）でカード払い
+// どちらも RevenueCat の「お客様ID」はお店のID。どちらで払っても、サーバーが salons.plan_until に期限を書くので両方で使える。
+// ※ iPhone アプリの中では、Web の申し込み・値段は案内しない（Apple の決まり）
+const PAY = {
+  iosKey: 'appl_nAkBrtdcePLinNRqCUQfjsmerZj', // RevenueCat の Apple 用の公開キー（公開してよいもの）
+  webLink: 'https://pay.rev.cat/wlszzzqfjmgsxngb/', // RevenueCat の Web Purchase Link（本番用。うしろにお店のIDをつける）
+  webLinkSandbox: 'https://pay.rev.cat/sandbox/iioniuxwwqfhjjqx/', // お試し用の Web Purchase Link（PAY.debug のときだけ使う）
+  eula: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
+  appleSubs: 'https://apps.apple.com/account/subscriptions',
+  debug: true, // 原因調べ用：RevenueCat の記録を有料プランの画面に出す（App Store に出す前に false にする）
+  timeoutMs: 45000, // Apple から値段が返ってこないとき、この時間で「読み込めませんでした」にする（RevenueCat は Apple を30秒ほど待つことがあるので、それより長く）
+  ...(window.__pay || {}), // テストで差しかえる
+};
+let planSynced = null, rcUser = null, rcReady = null;
+const rcLog = []; // RevenueCat の部品の記録（原因調べ用。PAY.debug のときだけ集める）
+const rcLogHtml = () => PAY.debug && rcLog.length ? `<details open style="margin:6px 0"><summary class="hint" style="font-size:11px">記録（原因調べ用）</summary><pre style="font-size:10px;line-height:1.35;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto;background:var(--card);padding:8px;border-radius:8px;margin:4px 0">${esc(rcLog.slice(-25).join('\n'))}</pre></details>` : '';
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ng) => setTimeout(() => ng(new Error('timeout')), ms))]);
+// 原因調べ・お試しの間（PAY.debug）は、お試し用の申し込みページを使う
+const webLink = () => (PAY.debug && PAY.webLinkSandbox) ? PAY.webLinkSandbox : PAY.webLink;
+const isApp = () => !!window.Capacitor?.isNativePlatform?.();
+const paid = () => !!S.salon?.plan_until && new Date(S.salon.plan_until).getTime() > Date.now();
+const ymdJ = d => d.getFullYear() >= 9999 ? '期限なし' : d.getFullYear() + '年' + mdj(d);
+const planLabel = () => paid() ? `有料プラン（${ymdJ(new Date(S.salon.plan_until))}まで${S.salon.plan_until.startsWith('9999') ? '' : '・自動更新'}）`
+  : trialLeft() <= 0 ? '無料期間は終わりました' : `無料期間（${ymdJ(trialEnd())}まで）`;
+async function syncPlan() {
+  const r = await staffAdmin({ action: 'sync_plan' });
+  Object.assign(S.salon, { plan_until: r.plan_until, plan_store: r.plan_store });
+  S.planMgmt = r.management_url || null;
+  return r;
+}
+// RevenueCat の部品を、このお店のIDで使えるようにする（iPhone アプリだけ）
+// ※ 部品（window.RCPurchases）そのものを async 関数から返したり await したりしないこと。
+//    部品はどんな名前（then も）にも反応するので、「終わっていない作業」と思われて永久に待ってしまう。
+//    ここでは使えるかどうか（true/false）だけを返し、部品は window.RCPurchases から直接使う。
+async function rc() {
+  const P = window.RCPurchases;
+  if (!P || !PAY.iosKey || window.Capacitor?.getPlatform?.() !== 'ios') return false;
+  // 準備（configure）は1回だけ。途中で時間切れになっても、もう一度呼ぶと同じ準備の終わりを待つ
+  if (!rcReady) { const id = S.salon.id; rcReady = P.configure({ apiKey: PAY.iosKey, appUserID: id }).then(async () => {
+      rcUser = id;
+      if (PAY.debug) {
+        // 記録を集める（ここで部品そのものを返したり await したりしない。setLogHandler は呼ぶだけ）
+        try { await P.setLogLevel({ level: 'DEBUG' }) } catch (e) {}
+        try { const r = P.setLogHandler(l => { if (l) { rcLog.push(`${new Date().toTimeString().slice(0, 8)} ${l.logLevel || ''} ${l.message || ''}`); if (rcLog.length > 80) rcLog.shift() } }); if (r && typeof r.catch === 'function') r.catch(() => {}) } catch (e) {}
+      }
+    }).catch(e => { rcReady = null; throw e }) }
+  await rcReady;
+  if (rcUser !== S.salon.id) { await P.logIn({ appUserID: S.salon.id }); rcUser = S.salon.id }
+  return true;
+}
+// 申し込む前の人に見せる説明（「6か月」は無料期間のこと。申し込んだ人には出さない：満期と勘ちがいされるため）
+const PLAN_FEATURES = `<ul class="hint" style="padding-left:1.2em;margin:6px 0 12px">
+  <li>無料期間（使いはじめてから${TRIAL_MONTHS}か月）が終わったあとも、すべての機能を続けて使えます</li>
+  <li>スタッフを追加して、スタッフそれぞれのスマホ・パソコンからも使えます（人数の制限なし）</li></ul>`;
+// 申し込んだ人に見せる説明
+const PLAN_FEATURES_PAID = `<ul class="hint" style="padding-left:1.2em;margin:6px 0 12px">
+  <li>すべての機能が使えます</li>
+  <li>スタッフを追加して、スタッフそれぞれのスマホ・パソコンからも使えます（人数の制限なし）</li></ul>`;
+async function planForm(why) {
+  const owner = S.me.role === 'owner', app = isApp();
+  const legal = app
+    ? `<p class="hint" style="margin-top:14px"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:14px">利用規約</a><a class="link" href="${PAY.eula}" target="_blank" rel="noopener" style="margin-right:14px">使用許諾契約（EULA）</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>`
+    : `<p class="hint" style="margin-top:14px"><a class="link" href="terms.html" target="_blank" rel="noopener" style="margin-right:14px">利用規約</a><a class="link" href="tokushoho.html" target="_blank" rel="noopener" style="margin-right:14px">特定商取引法に基づく表記</a><a class="link" href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>`;
+  let body;
+  if (paid()) {
+    const st = S.salon.plan_store, appStore = st === 'app_store';
+    const manage = appStore
+      ? (app ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${PAY.appleSubs}" target="_blank" rel="noopener">ご契約の確認・解約（App Store）</a>`
+             : '<p class="hint">iPhone の App Store でお申し込み中です。ご契約の確認・解約は、iPhone の「設定」→ 一番上の名前 →「サブスクリプション」から行えます。</p>')
+      : (!app && S.planMgmt ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${esc(S.planMgmt)}" target="_blank" rel="noopener">お支払いの管理（カードの変更・解約）</a>`
+             : '<p class="hint">ご契約の確認・解約は、お申し込みのときに届いたメールから行えます。</p>');
+    const pu = new Date(S.salon.plan_until), forever = pu.getFullYear() >= 9999;
+    body = `<p><b>有料プランをご利用中です。</b></p><dl class="acc"><dt>ご利用期間</dt><dd>${forever ? '期限なし' : `${ymdJ(pu)}まで<br><span class="hint">（解約しない限り、自動で更新されます）</span>`}</dd></dl>${PLAN_FEATURES_PAID}${owner ? manage : ''}`;
+  } else if (!owner) {
+    body = `${PLAN_FEATURES}<p>有料プランのお申し込みは、<b>オーナー</b>が行います。オーナーに伝えてください。</p>`;
+  } else if (S.trial) {
+    body = `${PLAN_FEATURES}<p>有料プランにお申し込みいただく前に、<b>お店の登録</b>が必要です（1分で終わります）。データはそのまま引き継がれます。</p><button class="btn pri wide" type="button" id="plReg">お店を登録する</button>`;
+  } else if (app) {
+    body = `${PLAN_FEATURES}<div id="plPkgs"><p class="hint">読み込んでいます…</p></div>
+    <p class="hint">お支払いはお使いの Apple アカウントに請求されます。期間が終わる24時間前までに解約しない限り、同じ期間・同じ金額で自動で更新されます。解約は、iPhone の「設定」→ 一番上の名前 →「サブスクリプション」からいつでもできます。</p>
+    <button class="link" type="button" id="plRestore">購入を復元する</button>
+    <p class="hint" style="margin-top:0">機種変更やアプリの入れ直しのあと、前にお申し込みした有料プランが反映されていないときに押してください。</p>${legal}`;
+  } else {
+    body = `${PLAN_FEATURES}<ul class="plans"><li><b>月額プラン</b><span class="num">600円</span><small>／月（税込）</small></li><li><b>年額プラン</b><span class="num">6,000円</span><small>／年（税込）</small></li></ul>
+    ${webLink() ? `<a class="btn pri wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" id="plWeb" href="${esc(webLink() + encodeURIComponent(S.salon.id))}" target="_blank" rel="noopener">申し込む（クレジットカード）</a>
+    <p class="hint">別のタブでお申し込みのページが開きます。お支払いが終わったら、この画面に戻って「お支払いを確認する」を押してください。いつでも解約でき、解約しても期間の終わりまで使えます。</p>
+    <button class="btn wide" type="button" id="plCheck" style="margin-top:10px">お支払いを確認する</button>` : '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'}${legal}`;
+  }
+  open(`<h3>有料プラン</h3>${why ? `<p class="hint">${esc(why)}</p>` : ''}${body}`, async () => { close(); return false }, '閉じる');
+  $('#cancel').remove(); $('#form [type=submit]').classList.remove('pri');
+  const done = async () => { await loadAll(); close(); toast('有料プランのお申し込みが確認できました。ありがとうございます') };
+  if ($('#plReg')) $('#plReg').onclick = () => { close(); regForm() };
+  if ($('#plCheck')) $('#plCheck').onclick = async () => {
+    const b = $('#plCheck'); if (b.disabled) return; b.disabled = true; b.textContent = '確認しています…';
+    try { await syncPlan(); if (paid()) return await done(); toast('まだお支払いが確認できません。少し待ってからもう一度押してください') }
+    catch (e) { toast(e.message || '確認できませんでした') }
+    b.disabled = false; b.textContent = 'お支払いを確認する';
+  };
+  if ($('#plPkgs')) {
+    const box = $('#plPkgs');
+    let step = '';
+    const loadPkgs = async () => {
+    box.innerHTML = '<p class="hint">読み込んでいます…（30秒ほどかかることがあります）</p>';
+    try {
+      step = '準備'; const ok = await withTimeout(rc(), PAY.timeoutMs); const P = window.RCPurchases;
+      if (!ok) { box.innerHTML = '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'; return }
+      step = '値段の読み込み'; const pkgs = (await withTimeout(P.getOfferings(), PAY.timeoutMs))?.current?.availablePackages || [];
+      if (!pkgs.length) throw new Error('no packages');
+      const label = k => ({ MONTHLY: ['月額プラン', '月'], ANNUAL: ['年額プラン', '年'] })[k.packageType] || [k.product.title, ''];
+      box.innerHTML = pkgs.map((k, i) => { const [n, per] = label(k); return `<button class="btn wide planbtn" type="button" data-pk="${i}"><b>${esc(n)}</b><span class="num">${esc(k.product.priceString)}</span>${per ? `<small>／${per}</small>` : ''}</button>` }).join('');
+      box.querySelectorAll('[data-pk]').forEach(b => b.onclick = async () => {
+        if (busy) return; busy = true; box.querySelectorAll('button').forEach(x => x.disabled = true);
+        try {
+          let err = null, syncErr = null;
+          try { await P.purchasePackage({ aPackage: pkgs[+b.dataset.pk] }) } catch (e) { err = e }
+          // 結果がどうであれ、サーバーに確かめてもらう（Apple 側で払えていれば、ここで反映される）
+          try { await syncPlan() } catch (e) { syncErr = e }
+          if (paid()) return await done();
+          const cancelled = !!(err?.userCancelled || String(err?.code) === '1');
+          const why = err ? [err.code, err.message].filter(Boolean).join(' ').slice(0, 160) : syncErr ? String(syncErr.message || '').slice(0, 160) : '';
+          const msg = cancelled ? 'お申し込みは完了していません（途中でやめた扱いになりました）。'
+            : err ? 'お申し込みできませんでした。もう一度お試しください。'
+            : 'お申し込みを受け付けました。反映まで少し時間がかかることがあります。少し待ってから「最新に更新」を押してください。';
+          toast(msg);
+          let m = $('#plMsg'); if (!m) { box.insertAdjacentHTML('afterend', '<div id="plMsg"></div>'); m = $('#plMsg') }
+          m.innerHTML = `<p class="hint" style="color:var(--acc)">${esc(msg)}</p>${why ? `<p class="hint" style="font-size:11px;opacity:.8">理由：${esc(why)}</p>` : ''}${rcLogHtml()}`;
+        } finally { busy = false; box.querySelectorAll('button').forEach(x => x.disabled = false) }
+      });
+    } catch (e) {
+      // 原因を調べられるように、返ってきた理由を小さく出す（時間切れ・商品なし・設定のまちがいなど）
+      // 原因をしぼるための情報：止まった手順と、アプリの中に課金の部品（Purchases）が登録されているか
+      const cap = window.Capacitor, plug = cap?.isPluginAvailable ? (cap.isPluginAvailable('Purchases') ? 'あり' : 'なし') : '不明';
+      const why = e?.message === 'timeout' ? `時間切れ（${step}・部品${plug}）` : e?.message === 'no packages' ? '商品が見つかりません' : [e?.code, e?.message].filter(Boolean).join(' ').slice(0, 160);
+      box.innerHTML = `<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度お試しください。</p>${why ? `<p class="hint" style="font-size:11px;opacity:.8">理由：${esc(why)}</p>` : ''}${rcLogHtml()}<button class="btn wide" type="button" id="plRetry" style="margin:6px 0 8px">もう一度読み込む</button>`;
+      $('#plRetry').onclick = loadPkgs;
+    }
+    };
+    loadPkgs();
+  }
+  if ($('#plRestore')) $('#plRestore').onclick = async () => {
+    if (busy) return; busy = true;
+    try { if (!(await withTimeout(rc(), PAY.timeoutMs))) throw 0; const P = window.RCPurchases; await withTimeout(P.restorePurchases(), PAY.timeoutMs * 2); await syncPlan(); if (paid()) await done(); else toast('復元できるお申し込みが見つかりませんでした') }
+    catch (e) { toast('復元できませんでした。もう一度お試しください') }
+    finally { busy = false }
+  };
+}
+function regForm(why) {
+  const auto = /[a-z0-9]/i.test(S.salon.name) ? S.salon.name.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) : '';
+  open(`<h3>お店を登録する</h3>${why ? `<p class="hint">${esc(why)}</p>` : ''}
+  <p class="hint">これまでのデータはそのまま使えます。次からは「お店コード」と「パスワード」でログインします。</p>
+  <label for="r1">お店の名前</label><input id="r1" name="name" required value="${esc(S.salon.name === 'マイサロン' ? '' : S.salon.name)}" placeholder="例：STAYGOLD">
+  <label for="r2">お店コード（ログイン用・英小文字と数字）</label><input id="r2" name="code" required autocapitalize="off" pattern="[a-z0-9\\-]{3,30}" value="${esc(auto)}" placeholder="例：staygold">
+  <label for="r3">パスワード（8文字以上）</label><input id="r3" name="pw" type="password" minlength="8" required autocomplete="new-password">`, async fd => {
+    const code = fd.get('code').trim().toLowerCase();
+    const r = await staffAdmin({ action: 'register', salon_name: fd.get('name').trim(), salon_code: code, password: fd.get('pw') }).catch(e => { throw userErr(e.message) });
+    await sb.auth.refreshSession(); lsSet('salon-code', r.salon_code); await loadAll();
+    toast(`登録しました！次からは お店コード「${r.salon_code}」とパスワードでログインできます`);
+  }, '登録する');
+  const n = $('#r1'), c = $('#r2'); n.oninput = () => { if (c.dataset.touched) return; c.value = n.value.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) }; c.oninput = () => { c.dataset.touched = '1' };
+}
+function delVisit(id) { confirmBox('この来店履歴を削除しますか？写真も消えます。', async () => { const v = S.visits.find(x => x.id === id); const lb = S.bookings.filter(x => x.visit_id === v.id); for (const x of lb) await q(x.walk_in ? sb.from('bookings').delete().eq('id', x.id) : sb.from('bookings').update({ status: 'booked', visit_id: null }).eq('id', x.id)); await q(sb.from('visits').delete().eq('id', v.id)); const ps = photos(v).map(p => p.path); if (ps.length) sb.storage.from(BUCKET).remove(ps); S.visits = S.visits.filter(x => x !== v); await loadAll(); toast('来店履歴を削除しました') }) }
+function delCust() { const c = cust(detail); confirmBox(`${c.name} 様のカルテと来店履歴・写真をすべて削除しますか？元に戻せません。`, async () => { const paths = [c.face_path, ...S.visits.filter(v => v.customer_id === c.id).flatMap(v => photos(v).map(p => p.path))].filter(Boolean); await q(sb.from('customers').delete().eq('id', c.id)); if (paths.length) sb.storage.from(BUCKET).remove(paths); detail = null; await loadAll(); toast('削除しました') }) }
+// 入力シートの一番下に、目立たない削除ボタンを足す
+function addDelete(label, fn) { $('#form').insertAdjacentHTML('beforeend', `<button type="button" class="link danger delink" id="delIn">${label}</button>`); $('#delIn').onclick = fn }
+function confirmBox(msg, ok) { open(`<h3>確認</h3><p>${esc(msg)}</p>`, async () => { await ok(); }, '削除する'); const b = $('#form [type=submit]'); b.classList.add('dangerbtn') }
+
+/* ===== 戻る（左端から右へスワイプ・ブラウザの戻る） ===== */
+// 写真の拡大 → 入力シート → カルテ詳細 の順に、いちばん上にあるものを閉じる
+function goBack() {
+  if ($('#lb').classList.contains('open')) { $('#lb').classList.remove('open'); return true }
+  if ($('#sheet').classList.contains('open')) { close(); return true }
+  if (S.me && detail) { detail = null; render(); scrollTo(0, 0); return true }
+  return false;
+}
+// ブラウザの「戻る」（Safariのスワイプ・Androidの戻るボタン）でアプリから出てしまわないよう、
+// 1つ分の履歴を常に積んでおき、戻られたら画面の中で1つ戻ってから積み直す
+try { history.replaceState({ root: 1 }, ''); history.pushState({ guard: 1 }, '') } catch (e) {}
+addEventListener('popstate', () => { goBack(); try { history.pushState({ guard: 1 }, '') } catch (e) {} });
+// ホーム画面から開いたiPhoneなど、ブラウザのスワイプがないときは自分でスワイプを受け取る
+if (navigator.standalone === true || window.__swipe || window.Capacitor?.getPlatform?.() === 'ios') {
+  let sx = null, sy = 0, dx = 0; const sw = $('#swb');
+  addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX <= 24 && e.touches.length === 1 ? t.clientX : null; sy = t.clientY; dx = 0 }, { passive: true });
+  addEventListener('touchmove', e => {
+    if (sx === null) return; const t = e.touches[0]; dx = t.clientX - sx;
+    if (Math.abs(t.clientY - sy) > 60 && dx < 30) { sx = null; sw.classList.remove('on'); return }
+    sw.classList.add('on'); sw.style.transform = `translateX(${Math.min(Math.max(dx, 0), 90) - 40}px)`; sw.classList.toggle('go', dx > 70);
+  }, { passive: true });
+  addEventListener('touchend', () => { if (sx !== null && dx > 70) goBack(); sx = null; sw.classList.remove('on', 'go'); sw.style.transform = '' });
+}
+
+// アプリ（iPhone・Android）では「別の画面で開く」リンクを、アプリの中でそのまま開く
+if (window.Capacitor?.isNativePlatform?.()) document.addEventListener('click', e => { const a = e.target.closest('a[target="_blank"]'); if (a) { e.preventDefault(); location.href = a.getAttribute('href') } });
+
+/* ===== 起動 ===== */
+sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') showLogin() });
+sb.auth.getSession().then(({ data }) => data.session ? loadAll() : showLogin());
+}
+
+</script>
+</body>
+</html>
