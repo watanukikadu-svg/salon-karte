@@ -96,6 +96,7 @@
   - 11/28：**TestFlight（ビルド37）でお試しの支払いが成功**（STAYGOLD のお店。salons.plan_until・plan_store=app_store が入り、画面も有料プランに変わった）。TestFlight の月額は1日で1か月分が過ぎる。
     - 途中で「支払い画面が出ずにすぐ『やめた』（SKErrorDomain 2 / SKInternalErrorDomain 13）」になったが、**iPhone の再起動で直った**（アプリの不具合ではなかった）。同じことを言われたら、まず再起動をすすめる
     - そのとき試しに StoreKit 1 にしたが、元の既定（StoreKit 2）に戻した。**出す前にもう一度 TestFlight で支払いを確かめる**
+  - 11/28：Apple のスモールビジネスプログラム（手数料15%）に申し込んだ（関連する開発者アカウントは「なし」）。結果はメールで届く
   - サブスクリプションの審査用スクリーンショット：`store/make_iap_screenshot.py` → `store/iap/paywall.png`
   - tokushoho.html の運営責任者は「綿貫和也」（11/26 決定）
   - 出す前にやること：**PAY.debug を false にする（原因調べ用の記録を消す）**、PAY.webLink を入れる、App Store Connect の商品・App のプライバシー（購入履歴）、利用規約・プライバシーポリシーの改定日をそろえる、PLAN_ENFORCE=1、main に入れる
