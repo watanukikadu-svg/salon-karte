@@ -1,0 +1,55 @@
+ProcessProductPackaging "" /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/App.app.xcent (in target 'App' from project 'App')
+    cd /Users/runner/work/salon-karte/salon-karte/ios/App
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "GR7873YXR5.com.watanukikadu.salonkarte";
+    "beta-reports-active" = 1;
+    "com.apple.developer.team-identifier" = GR7873YXR5;
+    "get-task-allow" = 0;
+}
+    
+--
+ProcessProductPackaging /Users/runner/Library/Developer/Xcode/UserData/Provisioning\ Profiles/b98e66bc-1e99-460c-8aff-0d20c9a25dbd.mobileprovision /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/embedded.mobileprovision (in target 'App' from project 'App')
+    cd /Users/runner/work/salon-karte/salon-karte/ios/App
+    builtin-productPackagingUtility /Users/runner/Library/Developer/Xcode/UserData/Provisioning\ Profiles/b98e66bc-1e99-460c-8aff-0d20c9a25dbd.mobileprovision -o /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/embedded.mobileprovision
+
+ProcessProductPackagingDER /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/App.app.xcent /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/App.app.xcent.der (in target 'App' from project 'App')
+    cd /Users/runner/work/salon-karte/salon-karte/ios/App
+    /usr/bin/derq query -f xml -i /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/App.app.xcent -o /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/App.app.xcent.der --raw
+
+MkDir /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/assetcatalog_output/unthinned (in target 'App' from project 'App')
+    cd /Users/runner/work/salon-karte/salon-karte/ios/App
+    /bin/mkdir -p /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/assetcatalog_output/unthinned
+
+MkDir /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/assetcatalog_output/thinned (in target 'App' from project 'App')
+--
+CodeSign /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/Frameworks/Cordova.framework (in target 'App' from project 'App')
+    cd /Users/runner/work/salon-karte/salon-karte/ios/App
+    
+    Signing Identity:     "Apple Distribution: KAZUYA WATANUKI (GR7873YXR5)"
+    Provisioning Profile: "com.watanukikadu.salonkarte AppStore 1795888604"
+                          (b98e66bc-1e99-460c-8aff-0d20c9a25dbd)
+    
+    /usr/bin/codesign --force --sign 5C7137023966949A8AA8B817AD2C8878660FB918 --preserve-metadata\=identifier,entitlements,flags --generate-entitlement-der /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/Frameworks/Cordova.framework
+
+CodeSign /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/Frameworks/Capacitor.framework (in target 'App' from project 'App')
+    cd /Users/runner/work/salon-karte/salon-karte/ios/App
+    
+    Signing Identity:     "Apple Distribution: KAZUYA WATANUKI (GR7873YXR5)"
+    Provisioning Profile: "com.watanukikadu.salonkarte AppStore 1795888604"
+                          (b98e66bc-1e99-460c-8aff-0d20c9a25dbd)
+    
+    /usr/bin/codesign --force --sign 5C7137023966949A8AA8B817AD2C8878660FB918 --preserve-metadata\=identifier,entitlements,flags --generate-entitlement-der /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/Frameworks/Capacitor.framework
+
+--
+CodeSign /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app (in target 'App' from project 'App')
+    cd /Users/runner/work/salon-karte/salon-karte/ios/App
+    
+    Signing Identity:     "Apple Distribution: KAZUYA WATANUKI (GR7873YXR5)"
+    Provisioning Profile: "com.watanukikadu.salonkarte AppStore 1795888604"
+                          (b98e66bc-1e99-460c-8aff-0d20c9a25dbd)
+    
+    /usr/bin/codesign --force --sign 5C7137023966949A8AA8B817AD2C8878660FB918 --entitlements /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/App.app.xcent --generate-entitlement-der /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app
+

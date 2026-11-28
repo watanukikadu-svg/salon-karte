@@ -1,0 +1,411 @@
+Xcode 26.6
+Build version 17F113
+バージョン: ��ビルド番号: 40
+[17:56:38]: [33mGet started using a Gemfile for fastlane https://docs.fastlane.tools/getting-started/ios/setup/#use-a-gemfile[0m
+[17:56:38]: fastlane 2.242.0 (Ruby 3.4.13, gem)
+[17:56:39]: Sending anonymous analytics information
+[17:56:39]: Learn more at https://docs.fastlane.tools/#metrics
+[17:56:39]: No personal or sensitive data is sent.
+[17:56:39]: You can disable this by adding `opt_out_usage` at the top of your Fastfile
+[17:56:39]: [32m------------------------------[0m
+[17:56:39]: [32m--- Step: default_platform ---[0m
+[17:56:39]: [32m------------------------------[0m
+[17:56:39]: [32mDriving the lane 'ios release' 🚀[0m
+[17:56:39]: [32m---------------------------------------[0m
+[17:56:39]: [32m--- Step: app_store_connect_api_key ---[0m
+[17:56:39]: [32m---------------------------------------[0m
+[17:56:39]: [32m----------------------[0m
+[17:56:39]: [32m--- Step: setup_ci ---[0m
+[17:56:39]: [32m----------------------[0m
+[17:56:39]: Creating temporary keychain: "fastlane_tmp_keychain".
+[17:56:39]: [33mFound keychain '/Users/runner/Library/Keychains/fastlane_tmp_keychain-db' in list-keychains, adding to search list skipped[0m
+[17:56:39]: Enabling match readonly mode.
+[17:56:40]: 今ある配布用証明書：
+[17:56:40]: [32m------------------------------[0m
+[17:56:40]: [32m--- Step: get_certificates ---[0m
+[17:56:40]: [32m------------------------------[0m
+
++------------------------------------------------------------------------------------+
+|                              [32mSummary for cert 2.242.0[0m                              |
++-------------------------+----------------------------------------------------------+
+| api_key                 | API_KEY_REDACTED                                         |
+| team_id                 | GR7873YXR5                                               |
+| keychain_path           | /Users/runner/Library/Keychains/fastlane_tmp_keychain-db |
+| development             | false                                                    |
+| force                   | false                                                    |
+| generate_apple_certs    | true                                                     |
+| skip_set_partition_list | false                                                    |
+| platform                | ios                                                      |
++-------------------------+----------------------------------------------------------+
+
+[17:56:40]: Creating authorization token for App Store Connect API
+[17:56:40]: [33mCouldn't find an existing certificate... creating a new one[0m
+[17:56:41]: Setting key partition list... (this can take a minute if there are a lot of keys installed)
+[17:56:41]: Setting key partition list... (this can take a minute if there are a lot of keys installed)
+[17:56:41]: [32mSuccessfully generated PW5V7N4SBQ which was imported to the local machine.[0m
+[17:56:41]: Verifying the certificate is properly installed locally...
+[17:56:42]: [32mSuccessfully installed certificate PW5V7N4SBQ[0m
+[17:56:42]: [32mUse signing certificate 'PW5V7N4SBQ' from now on![0m
+[17:56:43]: [32m--------------------------------------[0m
+[17:56:43]: [32m--- Step: get_provisioning_profile ---[0m
+[17:56:43]: [32m--------------------------------------[0m
+
++-------------------------------------------------------------------+
+|                     [32mSummary for sigh 2.242.0[0m                      |
++-------------------------------------+-----------------------------+
+| api_key                             | API_KEY_REDACTED            |
+| app_identifier                      | com.watanukikadu.salonkarte |
+| team_id                             | GR7873YXR5                  |
+| force                               | true                        |
+| adhoc                               | false                       |
+| developer_id                        | false                       |
+| development                         | false                       |
+| skip_install                        | false                       |
+| include_mac_in_profiles             | false                       |
+| offline_profile                     | false                       |
+| ignore_profiles_with_different_name | false                       |
+| cert_id                             | PW5V7N4SBQ                  |
+| skip_fetch_profiles                 | false                       |
+| include_all_certificates            | false                       |
+| skip_certificate_verification       | false                       |
+| platform                            | ios                         |
+| readonly                            | false                       |
+| fail_on_name_taken                  | false                       |
++-------------------------------------+-----------------------------+
+
+[17:56:43]: Creating authorization token for App Store Connect API
+[17:56:43]: Fetching profiles...
+[17:56:43]: Provisioning Profile cert_id : 'GX8T4PSJUA' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'QYG28WUH44' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'YNU2DU46MQ' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '7M99FLHL92' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'H29385KKS9' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'QG597DL755' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '58TDCF4DR3' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '6X3A4454A8' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'H9Z4NDP9M8' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '37U7W88UD3' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '83JT68L8U4' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '4W5YGY5543' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '2QRTSDFS25' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '3FAP7978BB' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '5L7D474TDB' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'XHB3NN98KY' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'F6Q678UY7C' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'SPT3J9Z75M' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'DMNR2DHB48' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'HGVSXJBDZT' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'FR93H77DAJ' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'Y9597T8KLR' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'VVNCKN3HXN' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'YHR95YVB6G' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '7BS76V4QW2' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'Y825FUY67Y' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '38WH9Z6525' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '232RZ59VAG' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'W3WR4N3YKY' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'C5J644PG6Z' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : '2BSAVWVAPA' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'P5KSKQVS23' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'GFV8855C59' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'N2RSUUT6D9' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'QZAFPMJR29' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Provisioning Profile cert_id : 'Z64DPXJ9RU' does not match given cert_id : 'PW5V7N4SBQ', skipping this one...
+[17:56:43]: Verifying certificates...
+[17:56:43]: [33mNo existing profiles found, that match the certificates you have installed locally! Creating a new provisioning profile for you[0m
+[17:56:44]: [31mThe name 'com.watanukikadu.salonkarte AppStore' is already taken, using another one.[0m
+[17:56:44]: [33mCreating new provisioning profile for 'com.watanukikadu.salonkarte' with name 'com.watanukikadu.salonkarte AppStore 1795888604' for 'ios' platform[0m
+[17:56:45]: [33mDownloading provisioning profile...[0m
+[17:56:45]: [32mSuccessfully downloaded provisioning profile...[0m
+[17:56:45]: Installing provisioning profile...
+[32m/Users/runner/work/salon-karte/salon-karte/AppStore_com.watanukikadu.salonkarte.mobileprovision[0m
+[17:56:45]: Setting Provisioning Profile type to 'app-store'
+[17:56:45]: [32m------------------------------------------[0m
+[17:56:45]: [32m--- Step: update_code_signing_settings ---[0m
+[17:56:45]: [32m------------------------------------------[0m
+
++-------------------------------------------------------------------------+
+|                    [32mSummary for code signing settings[0m                    |
++-----------------------+-------------------------------------------------+
+| path                  | ios/App/App.xcodeproj                           |
+| targets               | ["App"]                                         |
+| use_automatic_signing | false                                           |
+| team_id               | GR7873YXR5                                      |
+| code_sign_identity    | Apple Distribution                              |
+| profile_name          | com.watanukikadu.salonkarte AppStore 1795888604 |
+| bundle_identifier     | com.watanukikadu.salonkarte                     |
++-----------------------+-------------------------------------------------+
+
+[17:56:45]: Updating the Automatic Codesigning flag to disabled for the given project '/Users/runner/work/salon-karte/salon-karte/ios/App/App.xcodeproj/project.pbxproj'
+[17:56:45]: [33mSet Team id to: GR7873YXR5 for target: App for build configuration: Debug[0m
+[17:56:45]: [33mSet Code Sign identity to: Apple Distribution for target: App for build configuration: Debug[0m
+[17:56:45]: [33mSet Provisioning Profile name to: com.watanukikadu.salonkarte AppStore 1795888604 for target: App for build configuration: Debug[0m
+[17:56:45]: [33mSet Bundle identifier to: com.watanukikadu.salonkarte for target: App for build configuration: Debug[0m
+[17:56:45]: [33mSet Team id to: GR7873YXR5 for target: App for build configuration: Release[0m
+[17:56:45]: [33mSet Code Sign identity to: Apple Distribution for target: App for build configuration: Release[0m
+[17:56:45]: [33mSet Provisioning Profile name to: com.watanukikadu.salonkarte AppStore 1795888604 for target: App for build configuration: Release[0m
+[17:56:45]: [33mSet Bundle identifier to: com.watanukikadu.salonkarte for target: App for build configuration: Release[0m
+[17:56:45]: [32mSuccessfully updated project settings to use Code Sign Style = 'Manual'[0m
+[17:56:45]: [32mModified Targets:[0m
+[17:56:45]: [32m	 * App[0m
+[17:56:45]: [32mModified Build Configurations:[0m
+[17:56:45]: [32m	 * Debug[0m
+[17:56:45]: [32m	 * Release[0m
+[17:56:45]: [32m-----------------------[0m
+[17:56:45]: [32m--- Step: build_app ---[0m
+[17:56:45]: [32m-----------------------[0m
+[17:56:45]: [33mResolving Swift Package Manager dependencies...[0m
+[17:56:45]: [36m$ xcodebuild -resolvePackageDependencies -scheme App -project ios/App/App.xcodeproj -configuration Release -destination generic/platform\=iOS[0m
+[17:56:47]: ▸ [35mCommand line invocation:[0m
+[17:56:47]: ▸ [35m    /Applications/Xcode_26.6.app/Contents/Developer/usr/bin/xcodebuild -resolvePackageDependencies -scheme App -project ios/App/App.xcodeproj -configuration Release -destination generic/platform=iOS[0m
+[17:56:54]: ▸ [35mResolve Package Graph[0m
+[17:57:09]: ▸ [35mFetching from https://github.com/RevenueCat/purchases-hybrid-common.git[0m
+[17:57:10]: ▸ [35mFetching from https://github.com/ionic-team/capacitor-swift-pm.git[0m
+[17:57:11]: ▸ [35mFetching from https://github.com/RevenueCat/purchases-ios-spm[0m
+[17:57:18]: ▸ [35mCreating working copy of package ‘purchases-hybrid-common’[0m
+[17:57:18]: ▸ [35mChecking out 20.10.0 of package ‘purchases-hybrid-common’[0m
+[17:57:18]: ▸ [35mCreating working copy of package ‘purchases-ios-spm’[0m
+[17:57:18]: ▸ [35mChecking out 5.103.1 of package ‘purchases-ios-spm’[0m
+[17:57:20]: ▸ [35mCreating working copy of package ‘capacitor-swift-pm’[0m
+[17:57:20]: ▸ [35mChecking out 8.5.3 of package ‘capacitor-swift-pm’[0m
+[17:57:24]: ▸ [35mResolved source packages:[0m
+[17:57:24]: ▸ [35m  CapApp-SPM: /Users/runner/work/salon-karte/salon-karte/ios/App/CapApp-SPM @ local[0m
+[17:57:24]: ▸ [35m  capacitor-swift-pm: https://github.com/ionic-team/capacitor-swift-pm.git @ 8.5.3[0m
+[17:57:24]: ▸ [35m  RevenuecatPurchasesCapacitor: /Users/runner/work/salon-karte/salon-karte/node_modules/@revenuecat/purchases-capacitor @ local[0m
+[17:57:24]: ▸ [35m  RevenueCat: https://github.com/RevenueCat/purchases-ios-spm @ 5.103.1[0m
+[17:57:24]: ▸ [35m  PurchasesHybridCommon: https://github.com/RevenueCat/purchases-hybrid-common.git @ 20.10.0[0m
+[17:57:24]: ▸ [35mresolved source packages: CapApp-SPM, capacitor-swift-pm, RevenuecatPurchasesCapacitor, RevenueCat, PurchasesHybridCommon[0m
+[17:57:24]: [36m$ xcodebuild -showBuildSettings -scheme App -project ios/App/App.xcodeproj -configuration Release -destination generic/platform\=iOS 2>&1[0m
+[17:57:28]: [33mCommand timed out after 3 seconds on try 1 of 4, trying again with a 6 second timeout...[0m
+[17:57:31]: Detected provisioning profile mapping: {"com.watanukikadu.salonkarte": "com.watanukikadu.salonkarte AppStore 1795888604"}
+
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+|                                                             [32mSummary for gym 2.242.0[0m                                                              |
++-----------------------------------------------------------------+--------------------------------------------------------------------------------+
+| project                                                         | ios/App/App.xcodeproj                                                          |
+| scheme                                                          | App                                                                            |
+| configuration                                                   | Release                                                                        |
+| destination                                                     | generic/platform=iOS                                                           |
+| export_method                                                   | app-store                                                                      |
+| export_options.provisioningProfiles.com.watanukikadu.salonkarte | com.watanukikadu.salonkarte AppStore 1795888604                                |
+| export_options.signingStyle                                     | manual                                                                         |
+| xcargs                                                          | MARKETING_VERSION=1.1.0 CURRENT_PROJECT_VERSION=40 DEVELOPMENT_TEAM=GR7873YXR5 |
+| output_directory                                                | build                                                                          |
+| output_name                                                     | App                                                                            |
+| buildlog_path                                                   | build/logs                                                                     |
+| clean                                                           | false                                                                          |
+| silent                                                          | false                                                                          |
+| skip_package_ipa                                                | false                                                                          |
+| skip_package_pkg                                                | false                                                                          |
+| build_path                                                      | /Users/runner/Library/Developer/Xcode/Archives/2026-11-28                      |
+| result_bundle                                                   | false                                                                          |
+| xcodebuild_formatter                                            | xcbeautify                                                                     |
+| build_timing_summary                                            | false                                                                          |
+| skip_profile_detection                                          | false                                                                          |
+| xcodebuild_command                                              | xcodebuild                                                                     |
+| skip_package_dependencies_resolution                            | false                                                                          |
+| disallow_xcodebuild_settings_lookup                             | false                                                                          |
+| disable_package_automatic_updates                               | false                                                                          |
+| skip_package_repository_fetches                                 | false                                                                          |
+| use_system_scm                                                  | false                                                                          |
+| generate_appstore_info                                          | false                                                                          |
+| xcode_path                                                      | /Applications/Xcode_26.6.0.app                                                 |
++-----------------------------------------------------------------+--------------------------------------------------------------------------------+
+
+[17:57:31]: [36m$ set -o pipefail && xcodebuild -scheme App -project ios/App/App.xcodeproj -configuration Release -destination generic/platform\=iOS -archivePath /Users/runner/Library/Developer/Xcode/Archives/2026-11-28/App\ 2026-11-28\ 17.57.31.xcarchive MARKETING_VERSION=1.1.0 CURRENT_PROJECT_VERSION=40 DEVELOPMENT_TEAM=GR7873YXR5 archive | tee /Users/runner/work/salon-karte/salon-karte/build/logs/App-App.log | xcbeautify[0m
+[17:57:31]: ▸ [35m----- xcbeautify -----[0m
+[17:57:31]: ▸ [35mVersion: 3.2.1[0m
+[17:57:31]: ▸ [35m----------------------[0m
+[17:57:32]: ▸ [35m[36;1mResolving Package Graph[0m
+[17:57:33]: ▸ [35m[32;1mResolved source packages[0m
+[17:57:33]: ▸ [35m[36;1mcapacitor-swift-pm[0m - [1mhttps://github.com/ionic-team/capacitor-swift-pm.git[0m @ [32m8.5.3[0m
+[17:57:33]: ▸ [35m[36;1mRevenueCat[0m - [1mhttps://github.com/RevenueCat/purchases-ios-spm[0m @ [32m5.103.1[0m
+[17:57:33]: ▸ [35m[36;1mPurchasesHybridCommon[0m - [1mhttps://github.com/RevenueCat/purchases-hybrid-common.git[0m @ [32m20.10.0[0m
+[17:57:35]: ▸ [35m[36;1mnote: [0mBuilding targets in dependency order[0m
+[17:57:35]: ▸ [35m[36;1mnote: [0mTarget dependency graph (12 targets)[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat_RevenueCat[0m] [1mWrite Auxiliary File[0m empty-RevenueCat_RevenueCat.plist[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat_RevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat_RevenueCat.DependencyStaticMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat_RevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat_RevenueCat.DependencyMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat.modulemap[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat.DependencyStaticMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat.DependencyMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat_const_extract_protocols.json[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat.SwiftFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat.SwiftConstValuesFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat.LinkFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m RevenueCat-OutputFileMap.json[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mWrite Auxiliary File[0m resource_bundle_accessor.swift[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat[0m] [1mCopy[0m RevenueCat.modulemap -> RevenueCat.modulemap[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mWrite Auxiliary File[0m PurchasesHybridCommon.modulemap[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mWrite Auxiliary File[0m PurchasesHybridCommon.DependencyStaticMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mWrite Auxiliary File[0m PurchasesHybridCommon.DependencyMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mWrite Auxiliary File[0m PurchasesHybridCommon_const_extract_protocols.json[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mWrite Auxiliary File[0m PurchasesHybridCommon.SwiftFileList[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mWrite Auxiliary File[0m PurchasesHybridCommon.SwiftConstValuesFileList[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mWrite Auxiliary File[0m PurchasesHybridCommon.LinkFileList[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mWrite Auxiliary File[0m PurchasesHybridCommon-OutputFileMap.json[0m
+[17:57:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mCopy[0m PurchasesHybridCommon.modulemap -> PurchasesHybridCommon.modulemap[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat_RevenueCat[0m] [1mProcessing[0m empty-RevenueCat_RevenueCat.plist[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat_RevenueCat[0m] [1mCopying[0m PrivacyInfo.xcprivacy[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat_RevenueCat[0m] [1mRegisterExecutionPolicyException[0m RevenueCat_RevenueCat.bundle[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mWrite Auxiliary File[0m RevenuecatPurchasesCapacitor.modulemap[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mWrite Auxiliary File[0m RevenuecatPurchasesCapacitor.DependencyStaticMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mWrite Auxiliary File[0m RevenuecatPurchasesCapacitor.DependencyMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mWrite Auxiliary File[0m RevenuecatPurchasesCapacitor_const_extract_protocols.json[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mWrite Auxiliary File[0m RevenuecatPurchasesCapacitor.SwiftFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mWrite Auxiliary File[0m RevenuecatPurchasesCapacitor.SwiftConstValuesFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mWrite Auxiliary File[0m RevenuecatPurchasesCapacitor.LinkFileList[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mWrite Auxiliary File[0m RevenuecatPurchasesCapacitor-OutputFileMap.json[0m
+[17:57:43]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mCopy[0m RevenuecatPurchasesCapacitor.modulemap -> RevenuecatPurchasesCapacitor.modulemap[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mWrite Auxiliary File[0m CapApp-SPM_const_extract_protocols.json[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mWrite Auxiliary File[0m CapApp-SPM.SwiftFileList[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mWrite Auxiliary File[0m CapApp-SPM.SwiftConstValuesFileList[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mWrite Auxiliary File[0m CapApp-SPM.LinkFileList[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mWrite Auxiliary File[0m CapApp-SPM-OutputFileMap.json[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mWrite Auxiliary File[0m CapApp-SPM.modulemap[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mWrite Auxiliary File[0m CapApp-SPM.DependencyStaticMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mWrite Auxiliary File[0m CapApp-SPM.DependencyMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mCapApp-SPM[0m] [1mCopy[0m CapApp-SPM.modulemap -> CapApp-SPM.modulemap[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App_const_extract_protocols.json[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App.SwiftFileList[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App.SwiftConstValuesFileList[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App.LinkFileList[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App-OutputFileMap.json[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m Entitlements.plist[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App.hmap[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App.DependencyStaticMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App.DependencyMetadataFileList[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App-project-headers.hmap[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App-own-target-headers.hmap[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App-generated-files.hmap[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App-all-target-headers.hmap[0m
+[17:57:43]: ▸ [35m[[36mApp[0m] [1mWrite Auxiliary File[0m App-all-non-framework-target-headers.hmap[0m
+[17:57:43]: ▸ [35m[[36mRevenueCat_RevenueCat[0m] [1mTouching[0m RevenueCat_RevenueCat.bundle[0m
+[18:00:32]: ▸ [35m[[36mRevenueCat[0m] [1mCopy[0m arm64-apple-ios.swiftmodule -> RevenueCat.swiftmodule[0m
+[18:00:32]: ▸ [35m[[36mRevenueCat[0m] [1mCopy[0m arm64-apple-ios.swiftdoc -> RevenueCat.swiftdoc[0m
+[18:00:32]: ▸ [35m[[36mRevenueCat[0m] [1mCopy[0m arm64-apple-ios.abi.json -> RevenueCat.abi.json[0m
+[18:00:32]: ▸ [35m[[36mRevenueCat[0m] [1mLinking[0m RevenueCat.o[0m
+[18:00:34]: ▸ [35m[[36mRevenueCat[0m] [1mExtract App Intents Metadata[0m
+[18:00:34]: ▸ [35m[[36mRevenueCat[0m] [1mRegisterExecutionPolicyException[0m RevenueCat.o[0m
+[18:00:41]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mCopy[0m arm64-apple-ios.swiftmodule -> PurchasesHybridCommon.swiftmodule[0m
+[18:00:41]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mCopy[0m arm64-apple-ios.swiftdoc -> PurchasesHybridCommon.swiftdoc[0m
+[18:00:41]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mCopy[0m arm64-apple-ios.abi.json -> PurchasesHybridCommon.abi.json[0m
+[18:00:41]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mLinking[0m PurchasesHybridCommon.o[0m
+[18:00:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mExtract App Intents Metadata[0m
+[18:00:43]: ▸ [35m[[36mPurchasesHybridCommon[0m] [1mRegisterExecutionPolicyException[0m PurchasesHybridCommon.o[0m
+[18:00:47]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mCopy[0m arm64-apple-ios.swiftdoc -> RevenuecatPurchasesCapacitor.swiftdoc[0m
+[18:00:47]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mCopy[0m arm64-apple-ios.swiftmodule -> RevenuecatPurchasesCapacitor.swiftmodule[0m
+[18:00:47]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mCopy[0m arm64-apple-ios.abi.json -> RevenuecatPurchasesCapacitor.abi.json[0m
+[18:00:47]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mLinking[0m RevenuecatPurchasesCapacitor.o[0m
+[18:00:47]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mExtract App Intents Metadata[0m
+[18:00:47]: ▸ [35m[[36mCapApp-SPM[0m] [1mCompiling[0m CapApp-SPM.swift[0m
+[18:00:47]: ▸ [35m[[36mRevenuecatPurchasesCapacitor[0m] [1mRegisterExecutionPolicyException[0m RevenuecatPurchasesCapacitor.o[0m
+[18:00:47]: ▸ [35m[[36mCapApp-SPM[0m] [1mCopy[0m arm64-apple-ios.swiftdoc -> CapApp_SPM.swiftdoc[0m
+[18:00:47]: ▸ [35m[[36mCapApp-SPM[0m] [1mCopy[0m arm64-apple-ios.swiftmodule -> CapApp_SPM.swiftmodule[0m
+[18:00:47]: ▸ [35m[[36mCapApp-SPM[0m] [1mCopy[0m arm64-apple-ios.abi.json -> CapApp_SPM.abi.json[0m
+[18:00:47]: ▸ [35m[[36mCapApp-SPM[0m] [1mLinking[0m CapApp-SPM.o[0m
+[18:00:47]: ▸ [35m[[36mApp[0m] [1mGenerate Asset Symbols[0m Assets.xcassets[0m
+[18:01:04]: ▸ [35m[[36mCapApp-SPM[0m] [1mExtract App Intents Metadata[0m
+[18:01:04]: ▸ [35m[[36mCapApp-SPM[0m] [1mRegisterExecutionPolicyException[0m CapApp-SPM.o[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mCopying[0m public[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mCopying[0m config.xml[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mCopying[0m capacitor.config.json[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mCopy[0m RevenueCat_RevenueCat.bundle -> RevenueCat_RevenueCat.bundle[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mCopy[0m Cordova.framework -> Cordova.framework[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mCopy[0m Capacitor.framework -> Capacitor.framework[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mCompiling[0m Main.storyboard[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mCompiling[0m LaunchScreen.storyboard[0m
+[18:01:04]: ▸ [35m[1mSigning[0m Cordova.framework (in target 'App' from project 'App')[0m
+[18:01:04]: ▸ [35m[1mSigning[0m Capacitor.framework (in target 'App' from project 'App')[0m
+[18:01:04]: ▸ [35m[36;1mnote: [0mEmplaced /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/AppIcon60x60@2x.png (in target 'App' from project 'App')[0m
+[18:01:04]: ▸ [35m[36;1mnote: [0mEmplaced /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/Assets.car (in target 'App' from project 'App')[0m
+[18:01:04]: ▸ [35m[36;1mnote: [0mEmplaced /Users/runner/Library/Developer/Xcode/DerivedData/App-amdskpvrmuucfdatolspjikacmat/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/AppIcon76x76@2x~ipad.png (in target 'App' from project 'App')[0m
+[18:01:04]: ▸ [35m[[36mApp[0m] [1mProcessing[0m Info.plist[0m
+[18:01:05]: ▸ [35m[[36mApp[0m] [1mCopy[0m arm64-apple-ios.swiftdoc -> App.swiftdoc[0m
+[18:01:05]: ▸ [35m[[36mApp[0m] [1mCopy[0m arm64-apple-ios.swiftmodule -> App.swiftmodule[0m
+[18:01:05]: ▸ [35m[[36mApp[0m] [1mCopy[0m arm64-apple-ios.abi.json -> App.abi.json[0m
+[18:01:05]: ▸ [35m[[36mApp[0m] [1mLinking[0m App[0m
+[18:01:05]: ▸ [35m[[36mApp[0m] [1mExtract App Intents Metadata[0m
+[18:01:05]: ▸ [35m[[36mApp[0m] [1mGenerating[0m App.app.dSYM[0m
+[18:01:07]: ▸ [35m[1mSigning[0m App.app (in target 'App' from project 'App')[0m
+[18:01:07]: ▸ [35m[[36mApp[0m] [1mRegisterExecutionPolicyException[0m App.app[0m
+[18:01:07]: ▸ [35m[[36mApp[0m] [1mValidate[0m App.app[0m
+[18:01:07]: ▸ [35m[[36mApp[0m] [1mTouching[0m App.app[0m
+[18:01:07]: ▸ [35m[32;1mArchive Succeeded[0m
+[18:01:07]: [33mGenerated plist file with the following values:[0m
+[18:01:07]: ▸ [35m-----------------------------------------[0m
+[18:01:07]: ▸ [35m{[0m
+[18:01:07]: ▸ [35m  "provisioningProfiles": {[0m
+[18:01:07]: ▸ [35m    "com.watanukikadu.salonkarte": "com.watanukikadu.salonkarte AppStore 1795888604"[0m
+[18:01:07]: ▸ [35m  },[0m
+[18:01:07]: ▸ [35m  "signingStyle": "manual",[0m
+[18:01:07]: ▸ [35m  "method": "app-store"[0m
+[18:01:07]: ▸ [35m}[0m
+[18:01:07]: ▸ [35m-----------------------------------------[0m
+[18:01:07]: [36m$ /usr/bin/xcrun /opt/homebrew/lib/ruby/gems/3.4.0/gems/fastlane-2.242.0/gym/lib/assets/wrap_xcodebuild/xcbuild-safe.sh -exportArchive -exportOptionsPlist /var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/gym_config20261128-1320-t21zr1.plist -archivePath /Users/runner/Library/Developer/Xcode/Archives/2026-11-28/App\ 2026-11-28\ 17.57.31.xcarchive -exportPath /var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/gym_output20261128-1320-hhw5ef MARKETING_VERSION=1.1.0 CURRENT_PROJECT_VERSION=40 DEVELOPMENT_TEAM=GR7873YXR5 [0m
+[18:01:12]: Compressing 3 dSYM(s)
+[18:01:12]: [36m$ cd /Users/runner/Library/Developer/Xcode/Archives/2026-11-28/App\ 2026-11-28\ 17.57.31.xcarchive/dSYMs && zip -r /Users/runner/work/salon-karte/salon-karte/build/App.app.dSYM.zip *.dSYM[0m
+[18:01:12]: ▸ [35m  adding: App.app.dSYM/ (stored 0%)[0m
+[18:01:12]: ▸ [35m  adding: App.app.dSYM/Contents/ (stored 0%)[0m
+[18:01:12]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/ (stored 0%)[0m
+[18:01:12]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/Relocations/ (stored 0%)[0m
+[18:01:12]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/Relocations/aarch64/ (stored 0%)[0m
+[18:01:12]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/Relocations/aarch64/App.yml (deflated 89%)[0m
+[18:01:12]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/DWARF/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/DWARF/App (deflated 72%)[0m
+[18:01:14]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/Swift/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/Swift/aarch64/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: App.app.dSYM/Contents/Resources/Swift/aarch64/Capacitor.swiftinterface (deflated 85%)[0m
+[18:01:14]: ▸ [35m  adding: App.app.dSYM/Contents/Info.plist (deflated 52%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/Contents/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/Contents/Resources/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/Contents/Resources/Relocations/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/Contents/Resources/Relocations/aarch64/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/Contents/Resources/Relocations/aarch64/Capacitor.yml (deflated 86%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/Contents/Resources/DWARF/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/Contents/Resources/DWARF/Capacitor (deflated 64%)[0m
+[18:01:14]: ▸ [35m  adding: Capacitor.framework.dSYM/Contents/Info.plist (deflated 52%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/Contents/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/Contents/Resources/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/Contents/Resources/Relocations/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/Contents/Resources/Relocations/aarch64/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/Contents/Resources/Relocations/aarch64/Cordova.yml (deflated 85%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/Contents/Resources/DWARF/ (stored 0%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/Contents/Resources/DWARF/Cordova (deflated 60%)[0m
+[18:01:14]: ▸ [35m  adding: Cordova.framework.dSYM/Contents/Info.plist (deflated 52%)[0m
+
+[18:01:14]: [32mSuccessfully exported and compressed dSYM file[0m
+[18:01:14]: [32mSuccessfully exported and signed the ipa file:[0m
+[18:01:14]: /Users/runner/work/salon-karte/salon-karte/build/App.ipa
+[18:01:15]: [32m----------------------------------[0m
+[18:01:15]: [32m--- Step: upload_to_testflight ---[0m
+[18:01:15]: [32m----------------------------------[0m
+[18:01:15]: Creating authorization token for App Store Connect API
+[18:01:16]: [32mReady to upload new build to TestFlight (App: 6838323418)...[0m
+[18:01:16]: Going to upload updated app to App Store Connect
+[18:01:16]: [32mThis might take a few minutes. Please don't interrupt the script.[0m
+[18:03:03]: [32m--------------------------------------------------------------------[0m
+[18:03:03]: [32mSuccessfully uploaded package to App Store Connect. It might take a few minutes until it's visible online.[0m
+[18:03:03]: [32m--------------------------------------------------------------------[0m
+[18:03:03]: [32mSuccessfully uploaded the new binary to App Store Connect[0m
+[18:03:03]: [33m`skip_waiting_for_build_processing` used and no `changelog` supplied - skipping waiting for build processing[0m
+[18:03:03]: 証明書を取り消しました（PW5V7N4SBQ）
+
++---------------------------------------------------+
+|                 [32mfastlane summary[0m                  |
++------+------------------------------+-------------+
+| Step | Action                       | Time (in s) |
++------+------------------------------+-------------+
+| 1    | default_platform             | 0           |
+| 2    | app_store_connect_api_key    | 0           |
+| 3    | setup_ci                     | 0           |
+| 4    | get_certificates             | 2           |
+| 5    | get_provisioning_profile     | 2           |
+| 6    | update_code_signing_settings | 0           |
+| 7    | build_app                    | 269         |
+| 8    | upload_to_testflight         | 108         |
++------+------------------------------+-------------+
+
+[18:03:03]: [32mfastlane.tools just saved you 6 minutes! 🎉[0m
