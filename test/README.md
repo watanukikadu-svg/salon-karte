@@ -38,6 +38,7 @@ python3 test/walk_in.py       # 1つだけ
 | photo_limit.py / photo_limit_existing.py | 写真は9枚まで・お知らせの文 |
 | sort_menus.py / sort_products_staff.py / sort_single.py | 並び替え |
 | admin_layout.py | 管理タブの枠（明るい・暗い） |
+| no_double_tap_zoom.py | 2回すばやくたたいても画面が拡大されない（写真の拡大画面の「前」「次」など） |
 | swipe_back.py | 左端からのスワイプ・ブラウザの戻る |
 | legal_links.py | 利用規約・プライバシーポリシーへのリンク |
 | screenshots.py | 見本データを入れて主な画面の写真をとる（確かめるだけ） |

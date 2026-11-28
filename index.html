@@ -26,7 +26,7 @@
 --sub:light-dark(#5b6d70,#9db1b4);--line:light-dark(#dfe7e8,#26393d);--line2:light-dark(#bccacc,#3f585d);--deep:light-dark(#16343a,#0a1517);
 --deepInk:#f2f7f7;--sel:light-dark(#16343a,#2c5961);--acc:#e0566a;--accSoft:light-dark(#fde8eb,#3a1f25);--ok:light-dark(#2f7d63,#6fcaa8)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
-*{box-sizing:border-box;min-width:0}
+*{box-sizing:border-box;min-width:0;touch-action:manipulation} /* 2回すばやくたたいても拡大しない（2本指の拡大はできる） */
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
 .num{font-family:Outfit,"Zen Kaku Gothic New",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
 header{position:sticky;top:0;z-index:5;background:var(--deep);color:var(--deepInk);padding:calc(14px + env(safe-area-inset-top)) max(4vw,16px) 12px}
