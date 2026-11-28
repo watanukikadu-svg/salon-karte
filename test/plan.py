@@ -96,6 +96,13 @@ with sync_playwright() as p:
     check('課金中に消去：解約の案内', '自動更新は、お店を消しても止まりません' in pg.inner_text('#form'))
     check('エラーなし(5)', not errs, errs); b.close()
 
+    # 5b) Web で申し込んだお店：開き直しても「お支払いの管理」ボタンが出る（サーバーから住所をもらう）
+    b, pg, errs, calls = setup(p, f"window.__planUntil='{FUTURE}';window.__planStore='rc_billing';", sync={'ok': True, 'plan_until': FUTURE, 'plan_store': 'rc_billing', 'management_url': 'https://billing.example/manage'})
+    pg.click('nav.tabs button[data-tab=admin]'); pg.click('#planBtn'); pg.wait_for_timeout(500)
+    a = pg.locator('#plManage a')
+    check('Web で申し込んだ人：お支払いの管理ボタン', a.count() == 1 and a.get_attribute('href') == 'https://billing.example/manage', pg.inner_text('#form').replace('\n',' ')[-80:])
+    check('エラーなし(5b)', not errs, errs); b.close()
+
     # 6) 期限が過ぎた記録があれば、読み込みのあと RevenueCat に確かめ直す（自動更新されているかも）
     b, pg, errs, calls = setup(p, EXPIRED + "window.__planUntil='2020-01-01T00:00:00Z';", sync={'ok': True, 'plan_until': FUTURE, 'plan_store': 'app_store'})
     pg.wait_for_timeout(500)

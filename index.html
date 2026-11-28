@@ -1189,11 +1189,12 @@ async function planForm(why) {
   let body;
   if (paid()) {
     const st = S.salon.plan_store, appStore = st === 'app_store';
-    const manage = appStore
+    const manageHtml = () => appStore
       ? (app ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${PAY.appleSubs}" target="_blank" rel="noopener">ご契約の確認・解約（App Store）</a>`
              : '<p class="hint">iPhone の App Store でお申し込み中です。ご契約の確認・解約は、iPhone の「設定」→ 一番上の名前 →「サブスクリプション」から行えます。</p>')
       : (!app && S.planMgmt ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${esc(S.planMgmt)}" target="_blank" rel="noopener">お支払いの管理（カードの変更・解約）</a>`
              : '<p class="hint">ご契約の確認・解約は、お申し込みのときに届いたメールから行えます。</p>');
+    const manage = `<div id="plManage">${manageHtml()}</div>`;
     const pu = new Date(S.salon.plan_until), forever = pu.getFullYear() >= 9999;
     body = `<p><b>有料プランをご利用中です。</b></p><dl class="acc"><dt>ご利用期間</dt><dd>${forever ? '期限なし' : `${ymdJ(pu)}まで<br><span class="hint">（解約しない限り、自動で更新されます）</span>`}</dd></dl>${PLAN_FEATURES_PAID}${owner ? manage : ''}`;
   } else if (!owner) {
@@ -1215,6 +1216,12 @@ async function planForm(why) {
   $('#cancel').remove(); $('#form [type=submit]').classList.remove('pri');
   const done = async () => { await loadAll(); close(); toast('有料プランのお申し込みが確認できました。ありがとうございます') };
   if ($('#plReg')) $('#plReg').onclick = () => { close(); regForm() };
+  // Web で申し込んだお店：お支払いの管理ページの住所はサーバー（RevenueCat）から毎回もらう（開き直してもボタンが出るように）
+  if (paid() && owner && !app && S.salon.plan_store !== 'app_store' && !S.planMgmt && $('#plManage')) {
+    syncPlan().then(() => {
+      const m = $('#plManage'); if (m && S.planMgmt) m.innerHTML = `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${esc(S.planMgmt)}" target="_blank" rel="noopener">お支払いの管理（カードの変更・解約）</a>`;
+    }).catch(() => {});
+  }
   if ($('#plCheck')) $('#plCheck').onclick = async () => {
     const b = $('#plCheck'); if (b.disabled) return; b.disabled = true; b.textContent = '確認しています…';
     try { await syncPlan(); if (paid()) return await done(); toast('まだお支払いが確認できません。少し待ってからもう一度押してください') }
