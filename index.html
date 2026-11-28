@@ -1170,8 +1170,13 @@ async function rc() {
   if (rcUser !== S.salon.id) { await P.logIn({ appUserID: S.salon.id }); rcUser = S.salon.id }
   return true;
 }
+// 申し込む前の人に見せる説明（「6か月」は無料期間のこと。申し込んだ人には出さない：満期と勘ちがいされるため）
 const PLAN_FEATURES = `<ul class="hint" style="padding-left:1.2em;margin:6px 0 12px">
-  <li>${TRIAL_MONTHS}か月をすぎても、これまでどおりすべての機能が使えます</li>
+  <li>無料期間（使いはじめてから${TRIAL_MONTHS}か月）が終わったあとも、すべての機能を続けて使えます</li>
+  <li>スタッフを追加して、スタッフそれぞれのスマホ・パソコンからも使えます（人数の制限なし）</li></ul>`;
+// 申し込んだ人に見せる説明
+const PLAN_FEATURES_PAID = `<ul class="hint" style="padding-left:1.2em;margin:6px 0 12px">
+  <li>すべての機能が使えます</li>
   <li>スタッフを追加して、スタッフそれぞれのスマホ・パソコンからも使えます（人数の制限なし）</li></ul>`;
 async function planForm(why) {
   const owner = S.me.role === 'owner', app = isApp();
@@ -1186,7 +1191,8 @@ async function planForm(why) {
              : '<p class="hint">iPhone の App Store でお申し込み中です。ご契約の確認・解約は、iPhone の「設定」→ 一番上の名前 →「サブスクリプション」から行えます。</p>')
       : (!app && S.planMgmt ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${esc(S.planMgmt)}" target="_blank" rel="noopener">お支払いの管理（カードの変更・解約）</a>`
              : '<p class="hint">ご契約の確認・解約は、お申し込みのときに届いたメールから行えます。</p>');
-    body = `<p><b>有料プランをご利用中です。</b></p><dl class="acc"><dt>期限</dt><dd>${planLabel().replace(/^有料プラン（|）$/g, '')}</dd></dl>${PLAN_FEATURES}${owner ? manage : ''}`;
+    const pu = new Date(S.salon.plan_until), forever = pu.getFullYear() >= 9999;
+    body = `<p><b>有料プランをご利用中です。</b></p><dl class="acc"><dt>ご利用期間</dt><dd>${forever ? '期限なし' : `${ymdJ(pu)}まで<br><span class="hint">（解約しない限り、自動で更新されます）</span>`}</dd></dl>${PLAN_FEATURES_PAID}${owner ? manage : ''}`;
   } else if (!owner) {
     body = `${PLAN_FEATURES}<p>有料プランのお申し込みは、<b>オーナー</b>が行います。オーナーに伝えてください。</p>`;
   } else if (S.trial) {
@@ -1197,7 +1203,7 @@ async function planForm(why) {
     <button class="link" type="button" id="plRestore">購入を復元する</button>
     <p class="hint" style="margin-top:0">機種変更やアプリの入れ直しのあと、前にお申し込みした有料プランが反映されていないときに押してください。</p>${legal}`;
   } else {
-    body = `${PLAN_FEATURES}<ul class="plans"><li><b>月額プラン</b><span class="num">500円</span><small>／月（税込）</small></li><li><b>年額プラン</b><span class="num">5,000円</span><small>／年（税込）</small></li></ul>
+    body = `${PLAN_FEATURES}<ul class="plans"><li><b>月額プラン</b><span class="num">600円</span><small>／月（税込）</small></li><li><b>年額プラン</b><span class="num">6,000円</span><small>／年（税込）</small></li></ul>
     ${PAY.webLink ? `<a class="btn pri wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" id="plWeb" href="${esc(PAY.webLink + S.salon.id)}" target="_blank" rel="noopener">申し込む（クレジットカード）</a>
     <p class="hint">別のタブでお申し込みのページが開きます。お支払いが終わったら、この画面に戻って「お支払いを確認する」を押してください。いつでも解約でき、解約しても期間の終わりまで使えます。</p>
     <button class="btn wide" type="button" id="plCheck" style="margin-top:10px">お支払いを確認する</button>` : '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'}${legal}`;

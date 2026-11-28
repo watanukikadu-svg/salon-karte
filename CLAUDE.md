@@ -82,7 +82,7 @@
 - 長く使われていないお試し店の掃除、お試し6か月の期限をサーバー側でも守る
 - ほかの端末の変更をすぐ画面に出す（リアルタイム更新）
 - 予約から見込める売上の表示
-- **課金（1.1.0。ブランチ claude/upbeat-ride-hdgmuc で作成中。main にはまだ入れていない）**：値段 iPhone（Apple）月600円／年6000円、Web（カード）月500円／年5000円。人数で値段は変えない。iPhone アプリの中で Web の申し込み・値段は案内しない（Apple の決まり）
+- **課金（1.1.0。ブランチ claude/upbeat-ride-hdgmuc で作成中。main にはまだ入れていない）**：値段 iPhone（Apple）月600円／年6000円、Web（カード）も月600円／年6000円（11/28 に500円から変更。手数料を考えて同じ値段にそろえた）。人数で値段は変えない。iPhone アプリの中で Web の申し込み・値段は案内しない（Apple の決まり）
   - しくみ：RevenueCat。お客様ID＝お店のID（salons.id）、権利（entitlement）の名前は `pro`。iPhone は `@revenuecat/purchases-capacitor`（build.mjs が esbuild で www/purchases.js にまとめ、window.RCPurchases で使う。Web 版には入らない）。Web は RevenueCat の Web Purchase Link（Stripe）に、お店のIDをつけて開く
   - 払ったかどうか：`salons.plan_until`（期限）・`plan_store`・`plan_checked_at`（migrations/salons_plan.sql。アプリからは書きかえられない）。Edge Function の `sync_plan`（RevenueCat の V1 API に聞いて書く）と webhook（body に event）で更新
   - 画面：使いはじめて6か月（salons.created_at から）すぎて未払い → 「有料プラン」の画面だけ（ログアウト・消去はできる）。スタッフ追加も未払いなら有料プランの案内。管理タブのアカウント欄に「プラン」と「有料プラン」ボタン。申し込みはオーナーだけ
