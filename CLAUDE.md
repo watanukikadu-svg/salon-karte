@@ -25,7 +25,7 @@
     - 直したら Supabase の MCP（deploy_edge_function）で、ファイルの中身を丸ごと送ってデプロイする
   - あとから足したデータベースの変更は `supabase/migrations/` に控えがある（どれも本番に適用済み）
   - Supabase の設定で「Allow anonymous sign-ins」をオンにしてある（お試しに必要）
-  - Supabase は今は無料プラン。本番でお客様のデータを預かる前に有料（バックアップあり）にするよう伝えてある
+  - Supabase は **11/29 に Pro（有料）にした**（毎日のバックアップ7日分・止まらない・Spend cap はオン）。同じ組織に別のプロジェクト model-match-mvp もある（2つ目はサーバー代が追加でかかることがあると伝えた）
 
 ## アプリ（iPhone・Android）
 - Capacitor で `index.html` を包んでいる。`npm run build`（`scripts/build.mjs`）で `www/` を作り、`npx cap sync` で ios/ android/ に入れる。`www/` は git に入れない。
@@ -78,7 +78,6 @@
 
 ## これから（ユーザーと話したが、まだやっていないこと）
 - App Store への申請：2026年11月24日にビルド28（1.0.0）で出したが「2.1 情報が足りない」で戻された。iPhone で撮った画面の録画と、5つの質問の答え（`fastlane/review_information/notes.txt` に書いた）を求められた。11月25日に、録画とメモをつけて出し直した。11月27日に審査に通り、**11月28日に App Store で公開した（1.0.0）**。App Store のページ：https://apps.apple.com/jp/app/id6838323418（アプリの番号 6838323418）
-- Supabase を有料プランにする（本番で使う前）
 - 長く使われていないお試し店の掃除、お試し6か月の期限をサーバー側でも守る
 - ほかの端末の変更をすぐ画面に出す（リアルタイム更新）
 - 予約から見込める売上の表示
