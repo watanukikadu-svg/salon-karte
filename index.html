@@ -1128,7 +1128,8 @@ function delAccForm() {
 // ※ iPhone アプリの中では、Web の申し込み・値段は案内しない（Apple の決まり）
 const PAY = {
   iosKey: 'appl_nAkBrtdcePLinNRqCUQfjsmerZj', // RevenueCat の Apple 用の公開キー（公開してよいもの）
-  webLink: '', // RevenueCat の Web Purchase Link（https://pay.rev.cat/… の形。うしろにお店のIDをつける）
+  webLink: 'https://pay.rev.cat/wlszzzqfjmgsxngb/', // RevenueCat の Web Purchase Link（本番用。うしろにお店のIDをつける）
+  webLinkSandbox: '', // お試し用の Web Purchase Link（PAY.debug のときだけ使う）
   eula: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
   appleSubs: 'https://apps.apple.com/account/subscriptions',
   debug: true, // 原因調べ用：RevenueCat の記録を有料プランの画面に出す（App Store に出す前に false にする）
@@ -1139,6 +1140,8 @@ let planSynced = null, rcUser = null, rcReady = null;
 const rcLog = []; // RevenueCat の部品の記録（原因調べ用。PAY.debug のときだけ集める）
 const rcLogHtml = () => PAY.debug && rcLog.length ? `<details open style="margin:6px 0"><summary class="hint" style="font-size:11px">記録（原因調べ用）</summary><pre style="font-size:10px;line-height:1.35;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto;background:var(--card);padding:8px;border-radius:8px;margin:4px 0">${esc(rcLog.slice(-25).join('\n'))}</pre></details>` : '';
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ng) => setTimeout(() => ng(new Error('timeout')), ms))]);
+// 原因調べ・お試しの間（PAY.debug）は、お試し用の申し込みページを使う
+const webLink = () => (PAY.debug && PAY.webLinkSandbox) ? PAY.webLinkSandbox : PAY.webLink;
 const isApp = () => !!window.Capacitor?.isNativePlatform?.();
 const paid = () => !!S.salon?.plan_until && new Date(S.salon.plan_until).getTime() > Date.now();
 const ymdJ = d => d.getFullYear() >= 9999 ? '期限なし' : d.getFullYear() + '年' + mdj(d);
@@ -1204,7 +1207,7 @@ async function planForm(why) {
     <p class="hint" style="margin-top:0">機種変更やアプリの入れ直しのあと、前にお申し込みした有料プランが反映されていないときに押してください。</p>${legal}`;
   } else {
     body = `${PLAN_FEATURES}<ul class="plans"><li><b>月額プラン</b><span class="num">600円</span><small>／月（税込）</small></li><li><b>年額プラン</b><span class="num">6,000円</span><small>／年（税込）</small></li></ul>
-    ${PAY.webLink ? `<a class="btn pri wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" id="plWeb" href="${esc(PAY.webLink + S.salon.id)}" target="_blank" rel="noopener">申し込む（クレジットカード）</a>
+    ${webLink() ? `<a class="btn pri wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" id="plWeb" href="${esc(webLink() + encodeURIComponent(S.salon.id))}" target="_blank" rel="noopener">申し込む（クレジットカード）</a>
     <p class="hint">別のタブでお申し込みのページが開きます。お支払いが終わったら、この画面に戻って「お支払いを確認する」を押してください。いつでも解約でき、解約しても期間の終わりまで使えます。</p>
     <button class="btn wide" type="button" id="plCheck" style="margin-top:10px">お支払いを確認する</button>` : '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'}${legal}`;
   }

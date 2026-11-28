@@ -60,7 +60,7 @@ with sync_playwright() as p:
     check('エラーなし(1)', not errs, errs); b.close()
 
     # 2) Web：準備中（リンク未設定）
-    b, pg, errs, calls = setup(p)
+    b, pg, errs, calls = setup(p, "window.__pay={webLink:''};")
     pg.click('nav.tabs button[data-tab=admin]'); pg.click('#planBtn'); pg.wait_for_timeout(200)
     check('リンク未設定なら準備中', '準備中' in pg.inner_text('#form') and pg.locator('#plWeb').count() == 0)
     check('エラーなし(2)', not errs, errs); b.close()
