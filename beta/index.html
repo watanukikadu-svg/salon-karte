@@ -1130,6 +1130,11 @@ const PAY = {
   iosKey: 'appl_nAkBrtdcePLinNRqCUQfjsmerZj', // RevenueCat の Apple 用の公開キー（公開してよいもの）
   webLink: 'https://pay.rev.cat/wlszzzqfjmgsxngb/', // RevenueCat の Web Purchase Link（本番用。うしろにお店のIDをつける）
   webLinkSandbox: 'https://pay.rev.cat/sandbox/iioniuxwwqfhjjqx/', // お試し用の Web Purchase Link（PAY.debug のときだけ使う）
+  // Web は RevenueCat の Web 用の部品（purchases-js）で、美容室カルテの画面の上で日本語の申し込み画面を出す
+  // （Web Purchase Link は言葉を日本語に決められないため。部品が読めないときだけ Web Purchase Link を使う）
+  webKey: 'rcb_SukZuwqVaPDxmGbVOigDEKfiXfsO',        // RevenueCat Billing の公開キー（本番）
+  webKeySandbox: 'rcb_sb_kTdcdWFhGwNNoQxrrLgSqjjIg', // お試し用（PAY.debug のときだけ使う）
+  webSdk: 'https://cdn.jsdelivr.net/npm/@revenuecat/purchases-js@1.74.0/dist/Purchases.umd.js',
   eula: 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
   appleSubs: 'https://apps.apple.com/account/subscriptions',
   debug: true, // 原因調べ用：RevenueCat の記録を有料プランの画面に出す（App Store に出す前に false にする）
@@ -1141,6 +1146,20 @@ const rcLog = []; // RevenueCat の部品の記録（原因調べ用。PAY.debug
 const rcLogHtml = () => PAY.debug && rcLog.length ? `<details open style="margin:6px 0"><summary class="hint" style="font-size:11px">記録（原因調べ用）</summary><pre style="font-size:10px;line-height:1.35;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto;background:var(--card);padding:8px;border-radius:8px;margin:4px 0">${esc(rcLog.slice(-25).join('\n'))}</pre></details>` : '';
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ng) => setTimeout(() => ng(new Error('timeout')), ms))]);
 // 原因調べ・お試しの間（PAY.debug）は、お試し用の申し込みページを使う
+const webKey = () => (PAY.debug && PAY.webKeySandbox) ? PAY.webKeySandbox : PAY.webKey;
+let webRc = null, webRcUser = null, webSdkLoading = null;
+// Web 用の部品を読んで、このお店のIDで準備する。部品そのものは返さず、webRc に入れておく（返すと then の問題が起きることがあるため）
+async function webRcReady() {
+  if (!webSdkLoading) webSdkLoading = new Promise((ok, ng) => {
+    if (window.Purchases?.Purchases) return ok();
+    const sc = document.createElement('script'); sc.src = PAY.webSdk; sc.onload = () => ok(); sc.onerror = () => { webSdkLoading = null; ng(new Error('部品を読み込めませんでした')) };
+    document.head.appendChild(sc);
+  });
+  await webSdkLoading;
+  const P = window.Purchases?.Purchases; if (!P) throw new Error('部品を読み込めませんでした');
+  if (!webRc || webRcUser !== S.salon.id) { webRc = P.configure({ apiKey: webKey(), appUserId: S.salon.id }); webRcUser = S.salon.id }
+  return true;
+}
 const webLink = () => (PAY.debug && PAY.webLinkSandbox) ? PAY.webLinkSandbox : PAY.webLink;
 const isApp = () => !!window.Capacitor?.isNativePlatform?.();
 const paid = () => !!S.salon?.plan_until && new Date(S.salon.plan_until).getTime() > Date.now();
@@ -1207,7 +1226,10 @@ async function planForm(why) {
     <button class="link" type="button" id="plRestore">購入を復元する</button>
     <p class="hint" style="margin-top:0">機種変更やアプリの入れ直しのあと、前にお申し込みした有料プランが反映されていないときに押してください。</p>${legal}`;
   } else {
-    body = `${PLAN_FEATURES}<ul class="plans"><li><b>月額プラン</b><span class="num">600円</span><small>／月（税込）</small></li><li><b>年額プラン</b><span class="num">6,000円</span><small>／年（税込）</small></li></ul>
+    body = webKey() ? `${PLAN_FEATURES}<div id="plWebPkgs"><p class="hint">読み込んでいます…</p></div>
+    <p class="hint">クレジットカードでお支払いいただけます。期間が終わると、同じ期間・同じ金額で自動で更新されます。いつでも解約でき、解約しても期間の終わりまで使えます。</p>
+    <button class="link" type="button" id="plCheck">別の端末でお申し込みが済んでいる場合は、こちらを押してください</button>${legal}`
+    : `${PLAN_FEATURES}<ul class="plans"><li><b>月額プラン</b><span class="num">600円</span><small>／月（税込）</small></li><li><b>年額プラン</b><span class="num">6,000円</span><small>／年（税込）</small></li></ul>
     ${webLink() ? `<a class="btn pri wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" id="plWeb" href="${esc(webLink() + encodeURIComponent(S.salon.id))}" target="_blank" rel="noopener">申し込む（クレジットカード）</a>
     <p class="hint">別のタブでお申し込みのページが開きます。お支払いが終わったら、この画面に戻って「お支払いを確認する」を押してください。いつでも解約でき、解約しても期間の終わりまで使えます。</p>
     <button class="btn wide" type="button" id="plCheck" style="margin-top:10px">お支払いを確認する</button>` : '<p class="hint">お申し込みの準備中です。もうしばらくお待ちください。</p>'}${legal}`;
@@ -1223,11 +1245,38 @@ async function planForm(why) {
     }).catch(() => {});
   }
   if ($('#plCheck')) $('#plCheck').onclick = async () => {
-    const b = $('#plCheck'); if (b.disabled) return; b.disabled = true; b.textContent = '確認しています…';
+    const b = $('#plCheck'), label = b.textContent; if (b.disabled) return; b.disabled = true; b.textContent = '確認しています…';
     try { await syncPlan(); if (paid()) return await done(); toast('まだお支払いが確認できません。少し待ってからもう一度押してください') }
     catch (e) { toast(e.message || '確認できませんでした') }
-    b.disabled = false; b.textContent = 'お支払いを確認する';
+    b.disabled = false; b.textContent = label;
   };
+  // Web：部品で月額・年額を出し、押すと日本語の申し込み画面を出す
+  if ($('#plWebPkgs')) {
+    const box = $('#plWebPkgs');
+    const fallback = why => { box.innerHTML = `${webLink() ? `<a class="btn pri wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" id="plWeb" href="${esc(webLink() + encodeURIComponent(S.salon.id))}" target="_blank" rel="noopener">申し込む（クレジットカード）</a><p class="hint">別のタブでお申し込みのページが開きます。お支払いが終わったら、この画面に戻って下の「こちら」を押してください。</p>` : '<p class="hint">プランを読み込めませんでした。電波を確認して、もう一度開いてください。</p>'}${why ? `<p class="hint" style="font-size:11px;opacity:.8">理由：${esc(why)}</p>` : ''}` };
+    (async () => {
+      try {
+        await withTimeout(webRcReady(), PAY.timeoutMs);
+        const pkgs = (await withTimeout(webRc.getOfferings(), PAY.timeoutMs))?.current?.availablePackages || [];
+        if (!pkgs.length) throw new Error('商品が見つかりません');
+        const label = k => ({ MONTHLY: ['月額プラン', '月'], ANNUAL: ['年額プラン', '年'] })[k.packageType] || [k.webBillingProduct?.title || k.identifier, ''];
+        const price = k => (k.webBillingProduct || k.rcBillingProduct)?.currentPrice?.formattedPrice || '';
+        box.innerHTML = pkgs.map((k, i) => { const [n, per] = label(k); return `<button class="btn wide planbtn" type="button" data-wpk="${i}"><b>${esc(n)}</b><span class="num">${esc(price(k))}</span>${per ? `<small>／${per}（税込）</small>` : ''}</button>` }).join('');
+        box.querySelectorAll('[data-wpk]').forEach(b => b.onclick = async () => {
+          if (busy) return; busy = true;
+          close(); // 申し込み画面（部品が出す）が見えるように、こちらのシートは閉じる
+          try {
+            await webRc.purchase({ rcPackage: pkgs[+b.dataset.wpk], selectedLocale: 'ja', defaultLocale: 'ja' });
+            try { await syncPlan() } catch (e) { /* 下でお知らせ */ }
+            if (paid()) { await loadAll(); toast('有料プランのお申し込みが確認できました。ありがとうございます') }
+            else toast('お申し込みを受け付けました。反映まで少し時間がかかることがあります。少し待ってから「最新に更新」を押してください');
+          } catch (e) {
+            if (e?.errorCode !== 1) toast('お申し込みできませんでした' + (e?.message ? '（' + String(e.message).slice(0, 80) + '）' : ''));
+          } finally { busy = false }
+        });
+      } catch (e) { fallback(e?.message === 'timeout' ? '時間切れ' : e?.message) }
+    })();
+  }
   if ($('#plPkgs')) {
     const box = $('#plPkgs');
     let step = '';
