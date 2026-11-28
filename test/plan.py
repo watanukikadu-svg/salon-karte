@@ -38,7 +38,7 @@ window.__rc=[];window.RCPurchases=(o=>new Proxy(o,{get:(t,k)=>k in t?t[k]:(()=>P
 
 with sync_playwright() as p:
     # 1) Web：無料期間中・課金なし → 管理タブにプラン、スタッフ追加で有料プランの案内
-    b, pg, errs, calls = setup(p, "window.__pay={webLink:'https://pay.rev.cat/abc/'};", sync={'ok': True, 'plan_until': FUTURE, 'plan_store': 'rc_billing', 'management_url': 'https://billing.example/manage'})
+    b, pg, errs, calls = setup(p, "window.__pay={webLink:'https://pay.rev.cat/abc/',webLinkSandbox:''};", sync={'ok': True, 'plan_until': FUTURE, 'plan_store': 'rc_billing', 'management_url': 'https://billing.example/manage'})
     pg.click('nav.tabs button[data-tab=admin]'); pg.wait_for_timeout(200)
     acc = pg.inner_text('.acc')
     check('管理タブにプラン（無料期間）', '無料期間' in acc, acc.replace('\n', ' '))
@@ -60,7 +60,7 @@ with sync_playwright() as p:
     check('エラーなし(1)', not errs, errs); b.close()
 
     # 2) Web：準備中（リンク未設定）
-    b, pg, errs, calls = setup(p, "window.__pay={webLink:''};")
+    b, pg, errs, calls = setup(p, "window.__pay={webLink:'',webLinkSandbox:''};")
     pg.click('nav.tabs button[data-tab=admin]'); pg.click('#planBtn'); pg.wait_for_timeout(200)
     check('リンク未設定なら準備中', '準備中' in pg.inner_text('#form') and pg.locator('#plWeb').count() == 0)
     check('エラーなし(2)', not errs, errs); b.close()
