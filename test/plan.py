@@ -13,7 +13,13 @@ def check(name, ok, extra=''):
     print(('OK  ' if ok else 'NG  ') + name, extra)
     if not ok: fails.append(name)
 
-def setup(p, pre='', sync=None):
+# Web 用の部品（purchases-js）の偽物：月額 ￥600・年額 ￥6,000。申し込むと、サーバーに課金が記録されたことにする
+WEBSDK = """window.Purchases={Purchases:{configure(c){window.__webcfg=c;return {
+ getOfferings:async()=>({current:{availablePackages:[{packageType:'MONTHLY',identifier:'$rc_monthly',webBillingProduct:{currentPrice:{formattedPrice:'￥600'}}},{packageType:'ANNUAL',identifier:'$rc_annual',webBillingProduct:{currentPrice:{formattedPrice:'￥6,000'}}}]}}),
+ purchase:async p=>{window.__wbuy={locale:p.selectedLocale,type:p.rcPackage.packageType,sheetOpen:!!document.querySelector('#sheet.open')};
+  if(window.__wcancel){const e=new Error('cancel');e.errorCode=1;throw e}
+  __db.salons[0].plan_until='2099-01-01T00:00:00Z';__db.salons[0].plan_store='rc_billing';return {}}}}}};"""
+def setup(p, pre='', sync=None, websdk=True):
     b = p.chromium.launch(**LAUNCH); pg = b.new_page(viewport={'width': 390, 'height': 844})
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.route('**/supabase-js@*/**', lambda r: r.fulfill(body=pre + MOCK, content_type='application/javascript'))
@@ -24,6 +30,7 @@ def setup(p, pre='', sync=None):
         resp = sync or {'ok': True, 'plan_until': None, 'plan_store': None, 'management_url': None}
         r.fulfill(status=200, body=json.dumps(resp), content_type='application/json')
     pg.route('**/functions/v1/**', fn)
+    pg.route('**/purchases-js@*/**', (lambda r: r.fulfill(body=WEBSDK, content_type='application/javascript')) if websdk else (lambda r: r.fulfill(status=404, body='')))
     pg.goto(INDEX); pg.wait_for_timeout(500)
     return b, pg, errs, calls
 
@@ -37,30 +44,43 @@ window.__rc=[];window.RCPurchases=(o=>new Proxy(o,{get:(t,k)=>k in t?t[k]:(()=>P
  restorePurchases:async()=>{__rc.push(['restore']);return {}}});"""
 
 with sync_playwright() as p:
-    # 1) Web：無料期間中・課金なし → 管理タブにプラン、スタッフ追加で有料プランの案内
-    b, pg, errs, calls = setup(p, "window.__pay={webLink:'https://pay.rev.cat/abc/',webLinkSandbox:''};", sync={'ok': True, 'plan_until': FUTURE, 'plan_store': 'rc_billing', 'management_url': 'https://billing.example/manage'})
+    # 1) Web：無料期間中・課金なし → 管理タブにプラン、スタッフ追加で有料プランの案内 → 部品で日本語の申し込み
+    b, pg, errs, calls = setup(p, "", sync={'ok': True, 'plan_until': FUTURE, 'plan_store': 'rc_billing', 'management_url': 'https://billing.example/manage'})
     pg.click('nav.tabs button[data-tab=admin]'); pg.wait_for_timeout(200)
     acc = pg.inner_text('.acc')
     check('管理タブにプラン（無料期間）', '無料期間' in acc, acc.replace('\n', ' '))
-    pg.click('#addS'); pg.wait_for_timeout(200)
+    pg.click('#addS'); pg.wait_for_timeout(400)
     form = pg.inner_text('#form')
     check('スタッフ追加 → 有料プランの案内', pg.inner_text('#form h3') == '有料プラン' and 'スタッフを追加するには' in form)
-    check('Web の値段（600円・6,000円）', '600円' in form and '6,000円' in form)
-    href = pg.get_attribute('#plWeb', 'href')
-    check('申し込みリンクにお店のID', href == 'https://pay.rev.cat/abc/s1', href)
+    check('Web：部品の値段（￥600・￥6,000）を出す', '￥600' in form and '￥6,000' in form, form.replace('\n',' ')[:200])
+    check('Web：お試し中はお試し用のキー・お客様ID＝お店のID', pg.evaluate('__webcfg.apiKey').startswith('rcb_sb_') and pg.evaluate('__webcfg.appUserId') == 's1', pg.evaluate('__webcfg'))
     check('特定商取引法の表記へのリンク', pg.locator('#form a[href="tokushoho.html"]').count() == 1)
     pg.screenshot(path=OUT + 'plan_web.png', full_page=True)
-    # 払った（サーバーが記録した）→ 確認する
-    pg.evaluate(f"__db.salons[0].plan_until='{FUTURE}';__db.salons[0].plan_store='rc_billing'")
-    pg.click('#plCheck'); pg.wait_for_timeout(600)
-    check('確認するで sync_plan を呼ぶ', calls and calls[-1].get('action') == 'sync_plan')
-    check('お申し込み後はシートが閉じる', not pg.locator('#sheet.open').count())
+    pg.click('[data-wpk="0"]'); pg.wait_for_timeout(800)
+    wb = pg.evaluate('__wbuy')
+    check('Web：日本語（ja）で月額を申し込む・シートは閉じてから', wb['locale'] == 'ja' and wb['type'] == 'MONTHLY' and not wb['sheetOpen'], wb)
+    check('Web：申し込みのあと sync_plan', any(c.get('action') == 'sync_plan' for c in calls))
+    check('Web：申し込みのあと有料プランになる', '有料プラン（2099年' in pg.inner_text('.acc'), pg.inner_text('.acc').replace('\n',' '))
     pg.click('#addS'); pg.wait_for_timeout(200)
     check('課金後はスタッフ追加の画面', pg.inner_text('#form h3') == 'スタッフを追加', pg.inner_text('#form h3'))
     check('エラーなし(1)', not errs, errs); b.close()
 
+    # 1b) Web：やめた（キャンセル）→ 何も変わらず、エラーも出さない
+    b, pg, errs, calls = setup(p, "window.__wcancel=true;")
+    pg.click('nav.tabs button[data-tab=admin]'); pg.click('#planBtn'); pg.wait_for_timeout(400)
+    pg.click('[data-wpk="1"]'); pg.wait_for_timeout(500)
+    check('Web：やめたら無料期間のまま', '無料期間' in pg.inner_text('.acc') and pg.evaluate('__wbuy.type') == 'ANNUAL')
+    check('エラーなし(1b)', not errs, errs); b.close()
+
+    # 1c) Web：部品が読めない → 申し込みページ（Web Purchase Link）にお店のIDをつけて案内
+    b, pg, errs, calls = setup(p, "window.__pay={webLink:'https://pay.rev.cat/abc/',webLinkSandbox:''};", websdk=False)
+    pg.click('nav.tabs button[data-tab=admin]'); pg.click('#planBtn'); pg.wait_for_timeout(600)
+    href = pg.get_attribute('#plWeb', 'href') if pg.locator('#plWeb').count() else None
+    check('Web：部品が読めないときは申し込みページへ（お店のIDつき）', href == 'https://pay.rev.cat/abc/s1', href)
+    check('エラーなし(1c)', not errs, errs); b.close()
+
     # 2) Web：準備中（リンク未設定）
-    b, pg, errs, calls = setup(p, "window.__pay={webLink:'',webLinkSandbox:''};")
+    b, pg, errs, calls = setup(p, "window.__pay={webLink:'',webLinkSandbox:'',webKey:'',webKeySandbox:''};")
     pg.click('nav.tabs button[data-tab=admin]'); pg.click('#planBtn'); pg.wait_for_timeout(200)
     check('リンク未設定なら準備中', '準備中' in pg.inner_text('#form') and pg.locator('#plWeb').count() == 0)
     check('エラーなし(2)', not errs, errs); b.close()
