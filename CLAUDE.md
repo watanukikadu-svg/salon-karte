@@ -98,6 +98,8 @@
     - そのとき試しに StoreKit 1 にしたが、元の既定（StoreKit 2）に戻した。**出す前にもう一度 TestFlight で支払いを確かめる**
   - 11/28：Apple のスモールビジネスプログラム（手数料15%）に申し込んだ（関連する開発者アカウントは「なし」）。結果はメールで届く
   - 11/28：Stripe のアカウントを作り、本番の有効化（本人確認）を出して審査中。セキュリティ対策措置状況申告書は「従業員」が対策・ログイン対策は「ログイン試行回数の制限」（Supabase Auth の Rate Limits：sign-ups and sign-ins 30回/5分）で答えた
+  - 11/28：RevenueCat の Web（RevenueCat Billing・Stripe とつないだ）・商品 salonkarte_web_monthly（¥600）・salonkarte_web_yearly（¥6,000）・pro と default につないだ・Web Purchase Link（本番 https://pay.rev.cat/wlszzzqfjmgsxngb/ ・お試し https://pay.rev.cat/sandbox/iioniuxwwqfhjjqx/）。PAY.debug のときはお試し用を使う
+  - **お試し用の Web 版を main の `beta/` に置いた**（https://watanukikadu-svg.github.io/salon-karte/beta/ 。ブランチの index.html などを手でコピー。データは本番と同じ）。**1.1.0 を出すときに beta/ を消す**
   - サブスクリプションの審査用スクリーンショット：`store/make_iap_screenshot.py` → `store/iap/paywall.png`
   - tokushoho.html の運営責任者は「綿貫和也」（11/26 決定）
-  - 出す前にやること：**PAY.debug を false にする（原因調べ用の記録を消す）**、PAY.webLink を入れる、App Store Connect の商品・App のプライバシー（購入履歴）、利用規約・プライバシーポリシーの改定日をそろえる、PLAN_ENFORCE=1、main に入れる
+  - 出す前にやること：**PAY.debug を false にする（原因調べ用の記録を消す・Web は本番の申し込みページになる）**、**main の beta/ を消す**、App Store Connect の商品・App のプライバシー（購入履歴）、利用規約・プライバシーポリシーの改定日をそろえる、PLAN_ENFORCE=1、main に入れる
