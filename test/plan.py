@@ -123,6 +123,17 @@ with sync_playwright() as p:
     check('Web で申し込んだ人：お支払いの管理ボタン', a.count() == 1 and a.get_attribute('href') == 'https://billing.example/manage', pg.inner_text('#form').replace('\n',' ')[-80:])
     check('エラーなし(5b)', not errs, errs); b.close()
 
+    # 5c) 無料であげた期限なしのプラン（RevenueCat の Grant・Lifetime）：「期限なし」と出し、解約の案内は出さない
+    b, pg, errs, calls = setup(p, EXPIRED + "window.__planUntil='9999-12-31T00:00:00Z';window.__planStore='promotional';")
+    pg.click('nav.tabs button[data-tab=admin]'); pg.wait_for_timeout(200)
+    check('期限なし：管理タブの表示', '有料プラン（期限なし）' in pg.inner_text('.acc'), pg.inner_text('.acc').replace('\n',' '))
+    pg.click('#planBtn'); pg.wait_for_timeout(300)
+    f = pg.inner_text('#form')
+    check('期限なし：解約・自動更新の案内を出さない', '期限なし' in f and '解約' not in f and '自動で更新' not in f and 'まで' not in f, f.replace('\n',' ')[:160])
+    pg.click('#form [type=submit]'); pg.wait_for_timeout(400); pg.click('#addS'); pg.wait_for_timeout(400)
+    check('期限なし：スタッフを追加できる', pg.inner_text('#form h3') == 'スタッフを追加', pg.inner_text('#form h3'))
+    check('エラーなし(5c)', not errs, errs); b.close()
+
     # 6) 期限が過ぎた記録があれば、読み込みのあと RevenueCat に確かめ直す（自動更新されているかも）
     b, pg, errs, calls = setup(p, EXPIRED + "window.__planUntil='2020-01-01T00:00:00Z';", sync={'ok': True, 'plan_until': FUTURE, 'plan_store': 'app_store'})
     pg.wait_for_timeout(500)

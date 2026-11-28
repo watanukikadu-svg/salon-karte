@@ -100,6 +100,7 @@
   - 11/28：RevenueCat の Web（RevenueCat Billing・Stripe とつないだ）・商品 salonkarte_web_monthly（¥600）・salonkarte_web_yearly（¥6,000）・pro と default につないだ・Web Purchase Link（本番 https://pay.rev.cat/wlszzzqfjmgsxngb/ ・お試し https://pay.rev.cat/sandbox/iioniuxwwqfhjjqx/）。PAY.debug のときはお試し用を使う
   - 11/29：Web の申し込みを **RevenueCat の Web 用の部品（purchases-js 1.74.0・jsdelivr から必要なときだけ読む）** に切りかえ。美容室カルテの画面の上で **日本語（selectedLocale: 'ja'）** の申し込み画面を出す（Web Purchase Link は日本語にできないため。部品が読めないときだけ Web Purchase Link に切りかえる）。キー：PAY.webKey（rcb_…）・PAY.webKeySandbox（rcb_sb_…、PAY.debug のとき）。領収書の PDF は英語のまま（RevenueCat の決まり）。11/29 にお試しで成功（申し込み画面・RevenueCat からのメールとも日本語。メールの言い方は「定期購読」で変えられない）
   - **お試し用の Web 版を main の `beta/` に置いた**（https://watanukikadu-svg.github.io/salon-karte/beta/ 。`bash scripts/deploy_beta.sh` でブランチの中身をコピーする。データは本番と同じ）。**1.1.0 を出すときに beta/ を消す**
+  - 自分のお店（STAYGOLD）は、RevenueCat の Customers →「+ Grant」で pro を Lifetime（無料・期限なし）であげる（11/29 に手順を伝えた）。期限なし（plan_until が2100年より先、または plan_store が promotional）のときは「有料プラン（期限なし）」と出し、解約・自動更新の案内は出さない
   - サブスクリプションの審査用スクリーンショット：`store/make_iap_screenshot.py` → `store/iap/paywall.png`
   - tokushoho.html の運営責任者は「綿貫和也」（11/26 決定）
   - 出す前にやること：**PAY.debug を false にする（原因調べ用の記録を消す・Web は本番の申し込みページになる）**、**main の beta/ を消す**、App Store Connect の商品・App のプライバシー（購入履歴）、利用規約・プライバシーポリシーの改定日をそろえる、PLAN_ENFORCE=1、main に入れる

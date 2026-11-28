@@ -1164,7 +1164,10 @@ const webLink = () => (PAY.debug && PAY.webLinkSandbox) ? PAY.webLinkSandbox : P
 const isApp = () => !!window.Capacitor?.isNativePlatform?.();
 const paid = () => !!S.salon?.plan_until && new Date(S.salon.plan_until).getTime() > Date.now();
 const ymdJ = d => d.getFullYear() >= 9999 ? '期限なし' : d.getFullYear() + '年' + mdj(d);
-const planLabel = () => paid() ? `有料プラン（${ymdJ(new Date(S.salon.plan_until))}まで${S.salon.plan_until.startsWith('9999') ? '' : '・自動更新'}）`
+// 期限なし（RevenueCat で無料であげた Lifetime など）：期限がとても先、または plan_store が promotional（無料であげたもの）
+const planForever = () => new Date(S.salon.plan_until).getFullYear() >= 2100;
+const planAuto = () => !planForever() && S.salon.plan_store !== 'promotional'; // 自動で更新されるもの（お金を払っているもの）
+const planLabel = () => paid() ? (planForever() ? '有料プラン（期限なし）' : `有料プラン（${ymdJ(new Date(S.salon.plan_until))}まで${planAuto() ? '・自動更新' : ''}）`)
   : trialLeft() <= 0 ? '無料期間は終わりました' : `無料期間（${ymdJ(trialEnd())}まで）`;
 async function syncPlan() {
   const r = await staffAdmin({ action: 'sync_plan' });
@@ -1208,14 +1211,14 @@ async function planForm(why) {
   let body;
   if (paid()) {
     const st = S.salon.plan_store, appStore = st === 'app_store';
-    const manageHtml = () => appStore
+    const manageHtml = () => st === 'promotional' ? '' : appStore
       ? (app ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${PAY.appleSubs}" target="_blank" rel="noopener">ご契約の確認・解約（App Store）</a>`
              : '<p class="hint">iPhone の App Store でお申し込み中です。ご契約の確認・解約は、iPhone の「設定」→ 一番上の名前 →「サブスクリプション」から行えます。</p>')
       : (!app && S.planMgmt ? `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${esc(S.planMgmt)}" target="_blank" rel="noopener">お支払いの管理（カードの変更・解約）</a>`
              : '<p class="hint">ご契約の確認・解約は、お申し込みのときに届いたメールから行えます。</p>');
     const manage = `<div id="plManage">${manageHtml()}</div>`;
-    const pu = new Date(S.salon.plan_until), forever = pu.getFullYear() >= 9999;
-    body = `<p><b>有料プランをご利用中です。</b></p><dl class="acc"><dt>ご利用期間</dt><dd>${forever ? '期限なし' : `${ymdJ(pu)}まで<br><span class="hint">（解約しない限り、自動で更新されます）</span>`}</dd></dl>${PLAN_FEATURES_PAID}${owner ? manage : ''}`;
+    const pu = new Date(S.salon.plan_until);
+    body = `<p><b>有料プランをご利用中です。</b></p><dl class="acc"><dt>ご利用期間</dt><dd>${planForever() ? '期限なし' : `${ymdJ(pu)}まで${planAuto() ? '<br><span class="hint">（解約しない限り、自動で更新されます）</span>' : ''}`}</dd></dl>${PLAN_FEATURES_PAID}${owner ? manage : ''}`;
   } else if (!owner) {
     body = `${PLAN_FEATURES}<p>有料プランのお申し込みは、<b>オーナー</b>が行います。オーナーに伝えてください。</p>`;
   } else if (S.trial) {
@@ -1239,7 +1242,7 @@ async function planForm(why) {
   const done = async () => { await loadAll(); close(); toast('有料プランのお申し込みが確認できました。ありがとうございます') };
   if ($('#plReg')) $('#plReg').onclick = () => { close(); regForm() };
   // Web で申し込んだお店：お支払いの管理ページの住所はサーバー（RevenueCat）から毎回もらう（開き直してもボタンが出るように）
-  if (paid() && owner && !app && S.salon.plan_store !== 'app_store' && !S.planMgmt && $('#plManage')) {
+  if (paid() && owner && !app && !['app_store', 'promotional'].includes(S.salon.plan_store) && !S.planMgmt && $('#plManage')) {
     syncPlan().then(() => {
       const m = $('#plManage'); if (m && S.planMgmt) m.innerHTML = `<a class="btn wide" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="${esc(S.planMgmt)}" target="_blank" rel="noopener">お支払いの管理（カードの変更・解約）</a>`;
     }).catch(() => {});
